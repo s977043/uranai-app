@@ -61,7 +61,7 @@ uranai-app/
 ├── lib/                  # ユーティリティ (Supabase/Firebase初期化など)
 ├── public/               # 画像やPWAマニフェスト
 ├── styles/               # Tailwindやグローバルスタイル
-├── supabase/             # Supabase設定ファイルやSQLスクリプト
+├── supabase/             # (Supabase選択時) Supabase設定ファイルやSQLスクリプト
 ├── README.md             # プロジェクト概要
 └── ...
 ```
