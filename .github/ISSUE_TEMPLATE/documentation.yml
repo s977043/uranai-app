@@ -1,0 +1,59 @@
+name: 📚 Documentation
+description: Improvements or additions to documentation
+title: "[Docs]: "
+labels: ["documentation", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve our documentation!
+
+  - type: dropdown
+    id: doc-type
+    attributes:
+      label: Type of documentation
+      description: What kind of documentation needs attention?
+      options:
+        - README improvements
+        - API documentation
+        - Setup/installation guide
+        - User guide
+        - Developer guide
+        - Code comments
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What documentation needs to be improved or added?
+      placeholder: Describe what's missing or could be improved...
+    validations:
+      required: true
+
+  - type: textarea
+    id: location
+    attributes:
+      label: Location
+      description: Where should this documentation be added or what files need to be updated?
+      placeholder: File names, sections, or new locations...
+
+  - type: textarea
+    id: content
+    attributes:
+      label: Suggested content
+      description: If you have specific content to suggest, please include it here
+      placeholder: Proposed text, examples, or structure...
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/s977043/uranai-app/blob/main/CODE_OF_CONDUCT.md)
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true
