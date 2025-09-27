@@ -4,7 +4,17 @@ Uranai App is a Next.js fortune-telling application with numerology, tarot, and 
 
 **ALWAYS reference these instructions first and fallback to search or bash commands only when you encounter unexpected information that does not match the info here.**
 
+**NOTE**: This repository also contains `AGENTS.md` (in Japanese) with AI development guidelines that mention `pnpm`, but the actual project uses `npm`. Always use `npm` commands as documented in this file.
+
 ## Working Effectively
+
+### Instruction Files in This Repository
+This repository has multiple instruction files for different purposes:
+- **`.github/copilot-instructions.md`** (this file): Primary GitHub Copilot instructions in English - **USE THESE**
+- **`AGENTS.md`**: AI development guidelines in Japanese with some outdated references (mentions pnpm vs npm)
+- **`development_notes.md`**: Japanese documentation about the fortune-telling app concept
+
+When there are conflicts, prioritize the instructions in this file (`.github/copilot-instructions.md`).
 
 ### Bootstrap and Build
 - Install dependencies: `npm install` -- takes ~8 seconds
@@ -21,7 +31,7 @@ Uranai App is a Next.js fortune-telling application with numerology, tarot, and 
 
 ### Environment Setup
 - Node.js version: 20.x (verified working)
-- Package manager: npm (not yarn or pnpm)
+- Package manager: npm (not yarn or pnpm) - **Note: AGENTS.md mentions pnpm but project actually uses npm**
 - The app uses Turbopack for faster builds (Next.js 15.5.2 feature)
 
 ## Validation
@@ -47,6 +57,8 @@ Uranai App is a Next.js fortune-telling application with numerology, tarot, and 
 uranai-app/
 ├── .env.example              # Environment variables template
 ├── .github/                  # GitHub configuration
+│   └── copilot-instructions.md  # Primary Copilot instructions (this file)
+├── AGENTS.md                 # AI development guidelines (Japanese)
 ├── development_notes.md      # Japanese documentation about app concept
 ├── docker-compose.yml        # Docker setup with PostgreSQL
 ├── Dockerfile               # Node.js container definition
@@ -54,6 +66,9 @@ uranai-app/
 │   ├── page.tsx            # Main page
 │   ├── layout.tsx          # Root layout
 │   └── globals.css         # Global styles
+├── src/domain/              # Fortune-telling logic (no side effects)
+├── src/tests/               # Domain unit tests
+├── src/adapters/            # External dependency adapters
 ├── public/                  # Static assets
 ├── package.json            # Dependencies and scripts
 └── tsconfig.json           # TypeScript configuration
@@ -106,12 +121,38 @@ PORT=3000
 - **SWC binary errors**: Alpine containers may have library compatibility issues. Use npm commands directly instead
 - **Port conflicts**: Ensure port 3000 is available or change PORT environment variable
 
+### Development Restrictions
+**NEVER DO** (from AGENTS.md):
+- Hardcode secrets or API keys in source code
+- Use unverifiable sources like "intuition" for fortune-telling logic
+- Break backward compatibility in `src/domain/*` interfaces (only extend them)
+- Use random/time-dependent code without seed/freeze for testing
+
+### Environment Variables and Security
+- `.env.local` can be created but **MUST NOT** be committed
+- Update `.env.example` with key names only (no actual values)
+- Never create public `.env*` files
+
 ### Development Workflow
 - **Hot reload not working**: Restart `npm run dev` if file changes aren't detected
 - **Build cache issues**: Delete `.next` directory if builds behave unexpectedly
 - **Type errors**: Run `npm run lint` to catch TypeScript issues early
 
+### Pull Request Guidelines
+Based on AGENTS.md standards:
+- **Title format**: `[uranai] <summary>`
+- **Required**: `npm run lint` and tests must pass (include logs in PR description)
+- **Description should include**: Purpose / Spec links / Changes / Impact scope / Recovery risks / Screenshots (for UI changes)
+
 ## Future Development Notes
+
+### Development Philosophy
+The project follows **AI-TDD (Test Driven Development)** approach as outlined in AGENTS.md:
+- Write failing domain tests first for fortune-telling logic
+- Keep implementation minimal, follow Green → Refactor cycle
+- Pay attention to date/timezone handling (Asia/Tokyo)
+- Use seed/freeze for test stability with random/time-dependent code
+- Focus on domain logic (`src/domain/*`) with no side effects
 
 Based on development_notes.md, the planned features include:
 - **Numerology**: Calculate life path numbers from birth dates and names
