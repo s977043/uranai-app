@@ -26,13 +26,28 @@ const isMasterNumber = (value: number): boolean =>
 export const isLeapYear = (year: number): boolean =>
   (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
 
-/** 指定した年月の日数。 */
+const MONTH_LENGTHS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+/**
+ * 有効な暦年の下限。西暦（グレゴリオ暦の紀年法）に 0 年は存在せず、
+ * 負の年は「桁の合計」というライフパスの計算前提そのものが成り立たないため 1 とする。
+ * 上限は UI の入力仕様が固まるまで設けない。
+ */
+export const MIN_CALENDAR_YEAR = 1;
+
+/**
+ * 指定した年月の日数。
+ * export しているため、呼び出し順に依存せず関数単体で範囲を検証する
+ * （範囲外の月で undefined を返さない）。
+ */
 export const daysInMonth = (year: number, month: number): number => {
-  const lengths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  if (!Number.isInteger(month) || month < 1 || month > 12) {
+    throw new RangeError(INVALID_DATE_MESSAGE);
+  }
   if (month === 2 && isLeapYear(year)) {
     return 29;
   }
-  return lengths[month - 1];
+  return MONTH_LENGTHS[month - 1];
 };
 
 /**
@@ -45,6 +60,9 @@ export const assertValidCalendarDate = (date: CalendarDate): void => {
   if (!allIntegers) {
     throw new RangeError(INVALID_DATE_MESSAGE);
   }
+  if (year < MIN_CALENDAR_YEAR) {
+    throw new RangeError(INVALID_DATE_MESSAGE);
+  }
   if (month < 1 || month > 12) {
     throw new RangeError(INVALID_DATE_MESSAGE);
   }
@@ -53,11 +71,23 @@ export const assertValidCalendarDate = (date: CalendarDate): void => {
   }
 };
 
-/** 数値の各桁の和。 */
-const sumDigits = (value: number): number =>
-  String(value)
-    .split("")
-    .reduce((total, digit) => total + Number(digit), 0);
+/**
+ * 非負整数の各桁の和。
+ * 符号や小数点が混じると桁として解釈できず NaN が伝播するため、
+ * 数値演算のみで桁を取り出し、前提を満たさない入力は明示的に弾く。
+ */
+const sumDigits = (value: number): number => {
+  if (!Number.isInteger(value) || value < 0) {
+    throw new RangeError(INVALID_DATE_MESSAGE);
+  }
+  let remaining = value;
+  let total = 0;
+  while (remaining > 0) {
+    total += remaining % 10;
+    remaining = Math.floor(remaining / 10);
+  }
+  return total;
+};
 
 /**
  * 生年月日の全数字を合計し、1桁になるまで digital root を取る。

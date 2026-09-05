@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { calculateLifePathNumber } from "@/domain/numerology";
+import { calculateLifePathNumber, daysInMonth } from "@/domain/numerology";
 
 /**
  * ライフパスナンバーのドメインテスト。
@@ -104,6 +104,34 @@ describe("calculateLifePathNumber", () => {
       ).toThrow();
     });
 
+    it("負の年 (-5) は受け付けず、NaN を返さない", () => {
+      expect(() =>
+        calculateLifePathNumber({ year: -5, month: 1, day: 1 }),
+      ).toThrow(RangeError);
+    });
+
+    it("負の年 (-1990) は受け付けず、NaN を返さない", () => {
+      expect(() =>
+        calculateLifePathNumber({ year: -1990, month: 6, day: 15 }),
+      ).toThrow(RangeError);
+    });
+
+    it("西暦 0 年は受け付けない (西暦に 0 年は存在しない)", () => {
+      expect(() =>
+        calculateLifePathNumber({ year: 0, month: 1, day: 1 }),
+      ).toThrow(RangeError);
+    });
+
+    it("負の年のメッセージも既存の中立文言と同じ", () => {
+      expect(() =>
+        calculateLifePathNumber({ year: -1990, month: 6, day: 15 }),
+      ).toThrow("日付を読み取れませんでした。年月日をもう一度ご確認ください。");
+    });
+
+    it("西暦 1 年は下限として受け付ける (1+1+1=3)", () => {
+      expect(calculateLifePathNumber({ year: 1, month: 1, day: 1 })).toBe(3);
+    });
+
     it("エラーメッセージは断定的・不安を与える表現を含まない", () => {
       try {
         calculateLifePathNumber({ year: 2023, month: 2, day: 29 });
@@ -124,5 +152,31 @@ describe("calculateLifePathNumber", () => {
     const second = calculateLifePathNumber(input);
     expect(second).toBe(first);
     expect(input).toEqual({ year: 1990, month: 1, day: 1 });
+  });
+});
+
+describe("daysInMonth", () => {
+  it("平年の 2 月は 28 日", () => {
+    expect(daysInMonth(2023, 2)).toBe(28);
+  });
+
+  it("うるう年の 2 月は 29 日", () => {
+    expect(daysInMonth(2024, 2)).toBe(29);
+  });
+
+  it("4 月は 30 日", () => {
+    expect(daysInMonth(2024, 4)).toBe(30);
+  });
+
+  it("範囲外の月 (13) は undefined を返さず例外を投げる", () => {
+    expect(() => daysInMonth(2024, 13)).toThrow(RangeError);
+  });
+
+  it("範囲外の月 (0) は undefined を返さず例外を投げる", () => {
+    expect(() => daysInMonth(2024, 0)).toThrow(RangeError);
+  });
+
+  it("整数でない月は例外を投げる", () => {
+    expect(() => daysInMonth(2024, 1.5)).toThrow(RangeError);
   });
 });
