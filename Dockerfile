@@ -1,23 +1,19 @@
-# Dockerfile for Next.js fortune-telling app development
+# 開発用 Dockerfile（本番ビルドは未対応。開発サーバ起動専用）
+# Alpine では Next.js の SWC バイナリ読み込みに失敗することがあるため
+# glibc ベースの slim イメージを使う。
+FROM node:22-slim
 
-# Use the official Node LTS version as the base image
-FROM node:20-alpine
-
-# Create app directory and set it as the working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json to install dependencies first
-# (This allows Docker to cache npm install results when only application code changes)
-COPY package*.json ./
+# 依存だけ先にコピーしてレイヤキャッシュを効かせる
+COPY package.json package-lock.json ./
 
-# Install dependencies
-RUN npm install
+# ロックファイルどおりに再現インストールする
+RUN npm ci
 
-# Copy the rest of the application source code
 COPY . .
 
-# Expose the port Next.js will run on
 EXPOSE 3000
 
-# Start the development server
-CMD ["npm", "run", "dev"]
+# コンテナ外からアクセスできるよう 0.0.0.0 で待ち受ける
+CMD ["npm", "run", "dev", "--", "--hostname", "0.0.0.0"]
