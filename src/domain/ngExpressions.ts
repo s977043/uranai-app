@@ -40,6 +40,23 @@ export interface NgExpressionRule {
 /** 句読点・文末記号。ここをまたぐマッチは誤検出になりやすいので除外する。 */
 const SENTENCE_BREAK = "[^。、,.!?]";
 
+/**
+ * 主語語彙と断定述語の共起を探す窓幅（文字数）。カテゴリのリスクで変える。
+ *
+ * CAUTIOUS(12): 断定・運命論。ここを広げると「絶対に大丈夫、とは言い切れませんが」
+ *   のような、安心を先に出す正常文まで弾いてしまう（concept-board「話し方」）。
+ *   長い修飾を挟んだ断定は意図的に見逃す。
+ * MODERATE(16): 不幸の予告。主語語彙（不幸・災い・破滅）自体が強い否定語で、
+ *   正常文にはまず現れないため、断定より広くしても過検出しにくい。
+ * RESTRICTED(26): 医療・法律・投資。外したときの被害が体験の硬さでは済まず、
+ *   ユーザーの健康・金銭・法的判断に及ぶため、過検出寄りに倒す。
+ *   concept-board が他の NG 表現と別立てで「医療 / 法律 / 投資の断定助言」と
+ *   書いているのも危険度が違うためと解する。
+ */
+const CAUTIOUS_WINDOW = 12;
+const MODERATE_WINDOW = 16;
+const RESTRICTED_WINDOW = 26;
+
 export const NG_EXPRESSION_RULES: readonly NgExpressionRule[] = [
   // --- 断定: concept-board 「絶対にこうなる」 ---
   {
@@ -49,9 +66,11 @@ export const NG_EXPRESSION_RULES: readonly NgExpressionRule[] = [
     description:
       "「絶対 / 必ず / 100% / 間違いなく」＋結果の断定。未来を言い切る表現。",
     pattern: new RegExp(
-      "(絶対|ぜったい|必ず|かならず|100%|間違いなく|まちがいなく|確実に)" +
-        `${SENTENCE_BREAK}{0,12}` +
-        "(なります|なる|なるでしょう|叶います|叶う|かないます|うまくいきます|うまくいく|成功します|成功する|実現します|実現する|手に入ります|訪れます|来ます|良くなります|よくなります|できます|勝てます|儲かります|値上がりします)",
+      // 「必ずしも〜とは限りません」は逆に断定を避ける正常文なので除外する
+      "(絶対|ぜったい|必ず(?!しも)|かならず(?!しも)|100%|間違いなく|まちがいなく|確実に)" +
+        `${SENTENCE_BREAK}{0,${CAUTIOUS_WINDOW}}` +
+        "(なります|なる|なるでしょう|叶います|叶う|かないます|うまくいきます|うまくいく|成功します|成功する|実現します|実現する|手に入ります|訪れます|来ます|良くなります|よくなります|できます|勝てます|儲かります|値上がりします)" +
+        "(?!とは限|とは言|わけでは|かどうか|かもしれ)",
     ),
   },
   {
@@ -109,8 +128,8 @@ export const NG_EXPRESSION_RULES: readonly NgExpressionRule[] = [
     description: "不幸・災い・破滅が起こると予告する表現。",
     pattern: new RegExp(
       "(不幸|災い|不運|最悪の事態|破滅|バチ|罰)" +
-        `${SENTENCE_BREAK}{0,8}` +
-        "(になります|になる|が訪れます|が訪れる|が待っています|が起こります|が起きます|に見舞われます)",
+        `${SENTENCE_BREAK}{0,${MODERATE_WINDOW}}` +
+        "(になります|になる|が?訪れます|が?訪れる|が?待っています|が?起こります|が?起きます|に見舞われます|が?続きます)",
     ),
   },
   {
@@ -131,8 +150,9 @@ export const NG_EXPRESSION_RULES: readonly NgExpressionRule[] = [
     description: "病気や症状が治ると断定する表現。",
     pattern: new RegExp(
       "(病気|症状|うつ|がん|癌|持病|不調|痛み)" +
-        `${SENTENCE_BREAK}{0,8}` +
-        "(治ります|治る|完治します|完治する|消えてなくなります)",
+        `${SENTENCE_BREAK}{0,${RESTRICTED_WINDOW}}` +
+        "(治ります|治る|完治します|完治する|消えてなくなります)" +
+        "(?!かどうか|とは限|かもしれ)",
     ),
   },
   {
@@ -142,8 +162,8 @@ export const NG_EXPRESSION_RULES: readonly NgExpressionRule[] = [
     description: "受診・服薬・治療の中止や不要を指示する表現。",
     pattern: new RegExp(
       "(通院|受診|服薬|薬|治療|手術|病院|医者|医師)" +
-        `${SENTENCE_BREAK}{0,8}` +
-        "(は不要|は必要ありません|は必要ない|しなくて大丈夫|をやめて|をやめましょう|に行かなくて)",
+        `${SENTENCE_BREAK}{0,${RESTRICTED_WINDOW}}` +
+        "(は不要|は必要ありません|は必要ない|しなくて大丈夫|やめて大丈夫|をやめて|をやめましょう|に行かなくて)",
     ),
   },
 
@@ -155,8 +175,8 @@ export const NG_EXPRESSION_RULES: readonly NgExpressionRule[] = [
     description: "裁判・訴訟の結果を断定する表現。",
     pattern: new RegExp(
       "(裁判|訴訟|訴え|告訴|調停)" +
-        `${SENTENCE_BREAK}{0,8}` +
-        "(に勝てます|勝てます|勝ちます|は勝訴します)",
+        `${SENTENCE_BREAK}{0,${RESTRICTED_WINDOW}}` +
+        "(勝てます|勝ちます|勝訴します)",
     ),
   },
   {
@@ -176,7 +196,7 @@ export const NG_EXPRESSION_RULES: readonly NgExpressionRule[] = [
     description: "相場の値動きや利益、売買行動を断定・指示する表現。",
     pattern: new RegExp(
       "(株|投資|仮想通貨|暗号資産|FX|ビットコイン|不動産|銘柄|宝くじ)" +
-        `${SENTENCE_BREAK}{0,10}` +
+        `${SENTENCE_BREAK}{0,${RESTRICTED_WINDOW}}` +
         "(は上がります|が上がります|値上がりします|儲かります|は当たります|損はしません|買うべき|売るべき|に全額)",
     ),
   },
