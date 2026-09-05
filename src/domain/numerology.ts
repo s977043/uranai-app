@@ -12,8 +12,12 @@ export type CalendarDate = {
   day: number;
 };
 
-/** 還元せずに保持するマスターナンバー。 */
-export const MASTER_NUMBERS = [11, 22, 33] as const;
+/**
+ * 還元せずに保持するマスターナンバー。
+ * export しているため、import 側から書き換えられないよう実行時にも凍結する
+ * （`as const` は型のみの保証で、実行時の変更を防げない）。
+ */
+export const MASTER_NUMBERS = Object.freeze([11, 22, 33] as const);
 
 /** 日付を確認できないときのユーザー向け文言。断定・不安を与える表現は用いない。 */
 const INVALID_DATE_MESSAGE =
@@ -41,6 +45,9 @@ export const MIN_CALENDAR_YEAR = 1;
  * （範囲外の月で undefined を返さない）。
  */
 export const daysInMonth = (year: number, month: number): number => {
+  if (!Number.isInteger(year) || year < MIN_CALENDAR_YEAR) {
+    throw new RangeError(INVALID_DATE_MESSAGE);
+  }
   if (!Number.isInteger(month) || month < 1 || month > 12) {
     throw new RangeError(INVALID_DATE_MESSAGE);
   }
@@ -54,6 +61,11 @@ export const daysInMonth = (year: number, month: number): number => {
  * 実在する日付かを検証する。実在しない場合は中立な文言の例外を投げる。
  */
 export const assertValidCalendarDate = (date: CalendarDate): void => {
+  // null / undefined / 非オブジェクトを分解代入より先に弾く。
+  // 分解代入に到達させると TypeError + 内部文言になり、例外の型と文言が入力によってブレるため。
+  if (typeof date !== "object" || date === null) {
+    throw new RangeError(INVALID_DATE_MESSAGE);
+  }
   const { year, month, day } = date;
   const allIntegers =
     Number.isInteger(year) && Number.isInteger(month) && Number.isInteger(day);

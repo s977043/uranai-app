@@ -63,3 +63,44 @@ describe("getCurrentCalendarDate", () => {
     expect(date.day).toBeGreaterThanOrEqual(1);
   });
 });
+
+describe("getCurrentCalendarDate の異常系", () => {
+  const NEUTRAL_MESSAGE =
+    "日付を読み取れませんでした。時間をおいてお試しください。";
+
+  it("Invalid Date は内部の英語エラーではなく中立文言の RangeError になる", () => {
+    expect(() => getCurrentCalendarDate(new Date("invalid"))).toThrow(
+      RangeError,
+    );
+    expect(() => getCurrentCalendarDate(new Date("invalid"))).toThrow(
+      NEUTRAL_MESSAGE,
+    );
+  });
+
+  it("NaN 時刻の Date も中立文言の RangeError になる", () => {
+    expect(() => getCurrentCalendarDate(new Date(Number.NaN))).toThrow(
+      NEUTRAL_MESSAGE,
+    );
+  });
+
+  // undefined は「引数省略 = 現在時刻」の既定引数に落ちるため、ここでは対象外。
+  it("Date でない値 (数値・文字列・null) も中立文言の RangeError になる", () => {
+    for (const invalid of [0, "2024-03-09T15:00:00Z", null, {}]) {
+      expect(() => getCurrentCalendarDate(invalid as unknown as Date)).toThrow(
+        RangeError,
+      );
+    }
+  });
+
+  it("例外メッセージに不安を与える表現を含まない", () => {
+    try {
+      getCurrentCalendarDate(new Date("invalid"));
+      expect.unreachable("例外が投げられるはず");
+    } catch (error) {
+      const message = (error as Error).message;
+      for (const ng of ["Invalid", "不正", "エラー", "失敗", "無効"]) {
+        expect(message).not.toContain(ng);
+      }
+    }
+  });
+});

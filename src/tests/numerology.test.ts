@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { calculateLifePathNumber, daysInMonth } from "@/domain/numerology";
+import {
+  calculateLifePathNumber,
+  daysInMonth,
+  isLeapYear,
+  MASTER_NUMBERS,
+} from "@/domain/numerology";
 
 /**
  * ライフパスナンバーのドメインテスト。
@@ -132,6 +137,29 @@ describe("calculateLifePathNumber", () => {
       expect(calculateLifePathNumber({ year: 1, month: 1, day: 1 })).toBe(3);
     });
 
+    it("null は TypeError ではなく中立文言の RangeError になる", () => {
+      expect(() =>
+        calculateLifePathNumber(null as unknown as { year: number; month: number; day: number }),
+      ).toThrow(RangeError);
+      expect(() =>
+        calculateLifePathNumber(null as unknown as { year: number; month: number; day: number }),
+      ).toThrow("日付を読み取れませんでした。年月日をもう一度ご確認ください。");
+    });
+
+    it("undefined は TypeError ではなく中立文言の RangeError になる", () => {
+      expect(() =>
+        calculateLifePathNumber(undefined as unknown as { year: number; month: number; day: number }),
+      ).toThrow(RangeError);
+    });
+
+    it("オブジェクトでない値 (文字列・数値) も RangeError になる", () => {
+      for (const invalid of ["2000-01-01", 20000101]) {
+        expect(() =>
+          calculateLifePathNumber(invalid as unknown as { year: number; month: number; day: number }),
+        ).toThrow(RangeError);
+      }
+    });
+
     it("エラーメッセージは断定的・不安を与える表現を含まない", () => {
       try {
         calculateLifePathNumber({ year: 2023, month: 2, day: 29 });
@@ -178,5 +206,60 @@ describe("daysInMonth", () => {
 
   it("整数でない月は例外を投げる", () => {
     expect(() => daysInMonth(2024, 1.5)).toThrow(RangeError);
+  });
+
+  it("負の年は値を返さず例外を投げる", () => {
+    expect(() => daysInMonth(-4, 2)).toThrow(RangeError);
+  });
+
+  it("NaN の年は値を返さず例外を投げる", () => {
+    expect(() => daysInMonth(Number.NaN, 2)).toThrow(RangeError);
+  });
+
+  it("整数でない年は値を返さず例外を投げる", () => {
+    expect(() => daysInMonth(2024.5, 2)).toThrow(RangeError);
+  });
+
+  it("西暦 0 年は値を返さず例外を投げる", () => {
+    expect(() => daysInMonth(0, 2)).toThrow(RangeError);
+  });
+});
+
+describe("isLeapYear", () => {
+  it("4 で割り切れる年はうるう年", () => {
+    expect(isLeapYear(2024)).toBe(true);
+    expect(isLeapYear(1996)).toBe(true);
+  });
+
+  it("4 で割り切れない年は平年", () => {
+    expect(isLeapYear(2023)).toBe(false);
+    expect(isLeapYear(1999)).toBe(false);
+  });
+
+  it("100 で割り切れる年は平年 (100年例外)", () => {
+    expect(isLeapYear(1700)).toBe(false);
+    expect(isLeapYear(1800)).toBe(false);
+    expect(isLeapYear(1900)).toBe(false);
+    expect(isLeapYear(2100)).toBe(false);
+  });
+
+  it("400 で割り切れる年はうるう年 (400年例外)", () => {
+    expect(isLeapYear(1600)).toBe(true);
+    expect(isLeapYear(2000)).toBe(true);
+    expect(isLeapYear(2400)).toBe(true);
+  });
+});
+
+describe("MASTER_NUMBERS", () => {
+  it("実行時に凍結されており、外部から書き換えられない", () => {
+    expect(Object.isFrozen(MASTER_NUMBERS)).toBe(true);
+    expect(() => {
+      (MASTER_NUMBERS as unknown as number[]).push(12);
+    }).toThrow();
+    expect([...MASTER_NUMBERS]).toEqual([11, 22, 33]);
+  });
+
+  it("凍結後もマスターナンバー判定は既存どおり (1969-12-29 は 3)", () => {
+    expect(calculateLifePathNumber({ year: 1969, month: 12, day: 29 })).toBe(3);
   });
 });
