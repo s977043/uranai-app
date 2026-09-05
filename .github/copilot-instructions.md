@@ -4,41 +4,44 @@ Uranai App is a Next.js fortune-telling application with numerology, tarot, and 
 
 **ALWAYS reference these instructions first and fallback to search or bash commands only when you encounter unexpected information that does not match the info here.**
 
-**NOTE**: This repository also contains `AGENTS.md` (in Japanese) with AI development guidelines that mention `pnpm`, but the actual project uses `npm`. Always use `npm` commands as documented in this file.
+**NOTE**: `AGENTS.md` (in Japanese) holds the AI development guidelines. It is kept in sync with this file; both document `npm` as the package manager.
 
 ## Working Effectively
 
 ### Instruction Files in This Repository
 This repository has multiple instruction files for different purposes:
 - **`.github/copilot-instructions.md`** (this file): Primary GitHub Copilot instructions in English - **USE THESE**
-- **`AGENTS.md`**: AI development guidelines in Japanese with some outdated references (mentions pnpm vs npm)
+- **`AGENTS.md`**: AI development guidelines in Japanese (TDD rules, directory conventions, PR requirements)
 - **`development_notes.md`**: Japanese documentation about the fortune-telling app concept
 
 When there are conflicts, prioritize the instructions in this file (`.github/copilot-instructions.md`).
 
 ### Bootstrap and Build
-- Install dependencies: `npm install` -- takes ~8 seconds
+- Install dependencies: `npm ci` -- reproducible install from package-lock.json
 - Start development server: `npm run dev` -- starts in ~1 second, runs on http://localhost:3000
 - Build for production: `npm run build` -- takes ~15 seconds. NEVER CANCEL. Set timeout to 60+ seconds
 - Start production server: `npm run start` -- starts in ~1 second after build
 - Lint code: `npm run lint` -- takes ~2 seconds
+- Typecheck: `npm run typecheck` -- `tsc --noEmit`
+- Run tests: `npm run test` -- Vitest, always runs with `TZ=Asia/Tokyo`
+- Full gate before a PR: `npm run verify` -- lint + typecheck + test
 
 ### Docker Setup (Optional)
 - Copy environment file: `cp .env.example .env`
 - Build Docker image: `docker compose build` -- takes ~90 seconds. NEVER CANCEL. Set timeout to 120+ seconds
-- **WARNING**: Docker Compose may fail with SWC binary issues in Alpine containers. If you see "failed-loading-swc" errors, use the npm commands directly instead
+- The dev image is `node:22-slim` (glibc). Alpine was dropped because Next.js SWC binaries fail to load there
 - Run with Docker: `docker compose up` -- starts PostgreSQL database and Next.js app
 
 ### Environment Setup
-- Node.js version: 20.x (verified working)
-- Package manager: npm (not yarn or pnpm) - **Note: AGENTS.md mentions pnpm but project actually uses npm**
+- Node.js version: see `.nvmrc` (22.x; `engines` allows >=20.9.0)
+- Package manager: npm (not yarn or pnpm)
 - The app uses Turbopack for faster builds (Next.js 15.5.2 feature)
 
 ## Validation
 
 ### ALWAYS run through these validation steps after making changes:
 1. **Build validation**: Run `npm run build` and ensure it completes without errors
-2. **Lint validation**: Run `npm run lint` and fix any issues
+2. **Lint / type / test validation**: Run `npm run verify` and fix any issues
 3. **Runtime validation**: Start `npm run dev` and navigate to http://localhost:3000
 4. **Manual testing**: Verify the Next.js welcome page loads with "Uranai App - Fortune Telling" title
 5. **Production validation**: Run `npm run build && npm run start` and test production mode
