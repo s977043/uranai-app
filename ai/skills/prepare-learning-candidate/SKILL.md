@@ -9,7 +9,7 @@ AIは候補を作るだけで、Accepted Learningへ自己昇格しない。
 ## Preconditions
 
 - `evaluate-experiment`のEvaluationがある
-- Evidence refsがある
+- `facts[].evidence_refs`からEvidenceを追跡できる
 - `learning_candidate_allowed=true`
 - Safety / guardrail findingsが明示されている
 
@@ -19,26 +19,35 @@ AIは候補を作るだけで、Accepted Learningへ自己昇格しない。
 experiment_id: string
 evaluation:
   result: positive | negative | inconclusive | stopped
-  facts: []
+  facts:
+    - statement: string
+      evidence_refs:
+        - string
+  target_result: improved | worsened | unchanged | unknown
+  guardrail_results:
+    - metric: string
+      result: improved | worsened | unchanged | unknown
   causal_claim_allowed: boolean
-  limitations: []
+  limitations:
+    - string
   recommendation: adopt | reject | iterate | gather_more_evidence
   learning_candidate_allowed: boolean
-  evidence_refs: []
+  evaluated_by: string
 existing_learning_refs:
   - string
 ```
 
 ## Process
 
-1. Factと解釈を分離
+1. `facts[].evidence_refs`を集約し、Factと解釈を分離
 2. Experiment scopeを確認
-3. causal claim境界を維持
-4. contradicting evidenceを確認
-5. statementを最小範囲で作る
-6. confidenceを設定
-7. revisit conditionを定義
-8. `status: candidate`で返す
+3. target / guardrail resultを同時に確認
+4. causal claim境界を維持
+5. contradicting evidenceを確認
+6. statementを最小範囲で作る
+7. confidenceを設定
+8. revisit conditionを定義
+9. `status: candidate`で返す
 
 ## Output contract
 
@@ -63,9 +72,11 @@ accepted_at: null
 ## Rules
 
 - `accepted`へ変更しない
+- EvidenceはEvaluationのFactからのみ引き継ぎ、存在しないrefを作らない
 - negative resultからもLearning Candidateを作れる
-- inconclusiveの場合は「何が分からなかったか」をLearning候補にできるが、効果主張はしない
-- stopped / Safety incidentでは、危険な条件・中止判断をLearning候補にできる
+- inconclusiveの場合は「何が分からなかったか」を候補化できるが、効果主張はしない
+- stopped / Safety incidentでは危険条件・中止判断を候補化できる
+- target改善だけでguardrail悪化を無視しない
 - 実験範囲を超えて一般化しない
 - causal claim不可なら「〜が原因」と書かない
 - contradicting evidenceを隠さない
@@ -73,9 +84,10 @@ accepted_at: null
 ## Review checklist
 
 - [ ] status=candidate
-- [ ] accepted_by=null
-- [ ] Evidence refあり
+- [ ] accepted_by=null / accepted_at=null
+- [ ] Evidence refがEvaluation facts由来
 - [ ] scope明示
+- [ ] target / guardrailを両方確認
 - [ ] causal boundary維持
 - [ ] contradicting evidence確認
 - [ ] limitationsあり
@@ -84,6 +96,6 @@ accepted_at: null
 ## Stop conditions
 
 - `learning_candidate_allowed=false`
-- Evidenceなし
+- factsにEvidence refがない
 - Evaluation矛盾
 - Accepted Learningへの自己昇格要求
