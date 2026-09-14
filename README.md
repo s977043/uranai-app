@@ -31,7 +31,10 @@ npm run dev          # http://localhost:3000
 | `npm run typecheck` | `tsc --noEmit` による型検査 |
 | `npm run test` | Vitest（1回実行） |
 | `npm run test:watch` | Vitest ウォッチ |
-| `npm run verify` | lint → typecheck → test をまとめて実行（PR 前必須） |
+| `npm run eval:contracts` | AI-Native regression fixture の構造・必須contractを検証 |
+| `npm run verify` | lint → typecheck → test → AI eval contract validation をまとめて実行（PR 前必須） |
+
+`eval:contracts` はモデル出力品質そのものを採点するものではありません。`ai/evals/` のfixture構造や必須のSafety/Evidence期待値を機械検証し、意味品質は `ai/evals/review-rubric.md` に基づくレビューで確認します。
 
 ## Docker で起動する場合
 
@@ -51,6 +54,12 @@ src/
 ├── domain/     # 占いロジック（副作用なし）
 ├── adapters/   # 暦・天文・時刻など外部依存の薄い適合層
 └── tests/      # ドメイン単体テスト
+
+ai/
+├── agents/     # AI-Native Agent Contract
+├── skills/     # 再利用可能な分析Skill Contract
+├── evals/      # Regression fixture / validator / review rubric
+└── workflows/  # Learning workflow / template
 ```
 
 テストは常に `TZ=Asia/Tokyo` で実行されます（`vitest.config.ts`）。日付境界のズレを
@@ -59,4 +68,5 @@ src/
 ## 開発ルール
 
 AI エージェント・人間ともに [`AGENTS.md`](./AGENTS.md) の手順に従ってください。
+AI-Native事業運用の設計は [`docs/ai-native/README.md`](./docs/ai-native/README.md) を参照してください。
 GitHub Copilot 向けの補足は [`.github/copilot-instructions.md`](./.github/copilot-instructions.md) にあります。
