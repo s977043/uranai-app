@@ -33,4 +33,23 @@ describe("telemetry canonical envelope", () => {
       }).ok,
     ).toBe(false);
   });
+
+  it("rejects non-v4 UUIDs even when their UUID shape is otherwise valid", () => {
+    expect(
+      validateTelemetryEvent({
+        ...baseEvent,
+        anonymous_session_id: "session_11111111-1111-1111-8111-111111111111",
+      }).ok,
+    ).toBe(false);
+
+    expect(
+      validateTelemetryEvent({
+        ...baseEvent,
+        properties: {
+          ...baseEvent.properties,
+          reading_flow_id: "reading-flow_aaaaaaaa-aaaa-1aaa-8aaa-aaaaaaaaaaaa",
+        },
+      }).ok,
+    ).toBe(false);
+  });
 });
