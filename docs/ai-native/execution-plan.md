@@ -1,6 +1,6 @@
 # AI-Native Execution Plan
 
-Tracking: #18, #20, #23, #27
+Tracking: #18, #20, #23, #27, #30, #31
 
 ## Objective
 
@@ -10,13 +10,16 @@ Tracking: #18, #20, #23, #27
 
 ## Current state
 
-- Foundation: PR #19 merge済み
-- Observe: PR #21 merge済み / Issue #20 close済み
-- Deterministic message guardrail: PR #22 merge済み
-- MLP First: PR #24 merge済み
-- Assist: PR #25 merge済み / Issue #23 close済み
-- Iteration 4 Closed Learning Loop: Issue #27 / PR #28 — 実装・7視点レビュー・CI完了、merge ready
-- PR #16 数秘術ドメインは別系統で進行中
+- Iteration 1 Foundation: PR #19 — 完了
+- Iteration 2 Observe: PR #21 / Issue #20 — 完了
+- Deterministic message guardrail: PR #22 — 完了
+- MLP First: PR #24 — 完了
+- Iteration 3 Assist: PR #25 / Issue #23 — 完了
+- Iteration 4 Closed Learning Loop: PR #28 / Issue #27 — **merge / close済み**
+- Iteration 4.5 Operational Pilot: Issue #30 / `feature/closed-loop-pilot` — 実装・Readiness評価中
+- Pilot telemetry foundation: Issue #31 — Real PilotのBlocking dependency
+- Deployment / shared test surface: Issue #15 — 判断待ち
+- PR #16 数秘術ドメインは別系統
 
 # Iteration 1 — Foundation ✅
 
@@ -39,6 +42,13 @@ Tracking: #20 / PR #21
 - [x] Weekly Learning Report template
 - [x] 7視点レビュー / CI / merge
 
+実装を意図的にScope out:
+
+- Analytics SDK
+- DB migration
+- real user data ingestion
+- identifier lifecycle
+
 # Iteration 3 — Assist ✅
 
 Tracking: #23 / PR #25
@@ -53,185 +63,214 @@ Tracking: #23 / PR #25
 - [x] Growth `metric_definition_ref`
 - [x] 7視点レビュー / CI / merge / Issue close
 
-Intentional scope out:
-
-- 鑑定生成Agent
-- 自動SNS / CRM
-- 自動Price / Charge
-- Human Gate解除
-
-# Iteration 4 — Closed Learning Loop ✅ implementation/review complete
+# Iteration 4 — Closed Learning Loop ✅
 
 Tracking: #27 / PR #28
 
-## Goal
-
-Humanが承認・実行したExperimentをEvidence付きで評価し、独立Reviewを経てAccepted Learningへ昇格し、次のExperience Hypothesis / MLP Polishへ戻す。
-
 ```text
-Evidence / Accepted Learning
-  ↓
-Hypothesis
-  ↓
 Experiment Proposal
   ↓
-Human Approval
-  ↓
-Manual / external execution
+Human Approval / Manual Execution
   ↓
 Experiment Result Record
   ↓
-Evaluation
+Evaluator / Candidate Maker
   ↓
 Learning Candidate + provenance
   ↓
-Independent Learning Review
+Independent Learning Reviewer
   ↓
-Human Accept / Reject
+Human Gate
   ↓
 Accepted Learning
   ↓
 Next Experience Hypothesis / MLP Polish
 ```
 
+Completed:
+
+- [x] Experiment Result / Learning Candidate Contract
+- [x] `evaluate-experiment`
+- [x] Learning Reviewer Agent / Skill
+- [x] execution status / evaluation validity分離
+- [x] stable `metric:<id>` Registry
+- [x] Candidate `candidate_maker_id` / `source_evaluation_refs`
+- [x] Safety / Guardrail integrity
+- [x] 12+ Closed Loop fixtures
+- [x] Metric Registry / fixture validators
+- [x] 7視点レビュー / blocker修正
+- [x] Final CI Green
+- [x] PR #28 squash merge (`dcf5622`)
+- [x] Issue #27 close
+
+# Iteration 4.5 — Closed Loop Operational Pilot 🚧
+
+Tracking: #30  
+Telemetry unblocker: #31  
+Deployment/test surface: #15
+
+## Why this iteration exists
+
+Iteration 5 Controlled AutonomyのEntry条件は「Closed Loopが**実運用で安定**していること」。
+
+Iteration 4で証明したのはContract / Eval / Human Gateの設計整合性であり、以下は未検証:
+
+- 実Evidence取得
+- Metric observability
+- Human待ち時間
+- Evidence準備コスト
+- 実行 / rollbackの摩擦
+- Accepted Learning → MLP改善の実運用
+
+したがってControlled Autonomyへ直行しない。
+
 ## Plan review / changes
 
-当初のClosed Workflowから以下を変更した。
+当初計画から以下を更新した。
 
-1. 自動Experiment実行はしない。外部副作用は引き続きHuman Gate。
-2. Experiment Result Recordを正本化し、Metric / sample / guardrail / limitationを保持する。
-3. EvaluatorとLearning Reviewerを分離する。
-4. Learning Reviewerは推薦まで。Accepted Learning確定はHumanのみ。
-5. Accepted LearningをKnowledge蓄積で終わらせず、次のExperience Hypothesis / MLP Polishへ戻す。
-6. Model Harness未確定のため、output runnerよりfixture contract / Human rubricを先行する。
-7. Markdown anchorではなくMachine-readable Metric Registryのstable IDを導入する。
-8. Learning Candidate自身に`candidate_maker_id` / `source_evaluation_refs`を残し、Reviewer独立性を監査可能にする。
-9. Experiment execution statusとevaluation validityを分離する。
+1. **Metric definitionとobservabilityを分離**
+   - `status: active | provisional` = 定義状態
+   - `observability_status: uninstrumented | partial | observable` = 実測能力
+   - Real Pilotは両方を要求する。
+2. **Synthetic rehearsalをCI検証**
+   - Markdown例だけでなくmachine-readable JSON + validatorを正本化。
+3. **Blockedを正しいReadiness結果として扱う**
+   - Evidence/source/surface不足を隠して擬似Real Pilotを作らない。
+4. **最初のTelemetryはsession-levelに限定**
+   - Cross-session identityを先に導入しない。
+5. **Automation範囲を増やさない**
+   - PilotではhandoffとEvidence品質を観測する。
 
-## Entry criteria
+## Phase A — Synthetic rehearsal
 
-- [x] Foundation / Observe / Assist merge済み
-- [x] Growth Metric Contract refが追跡可能
-- [x] reviewer != maker / Human Gate成立
-- [x] Accepted Learning自己昇格禁止がFoundationで定義済み
+- [x] Positive pathを表現
+- [x] Safety-blocked pathを表現
+- [x] Human start decision
+- [x] Result Evidence ref
+- [x] Candidate provenance
+- [x] Reviewer independence
+- [x] Synthetic learning promotion禁止
+- [x] Machine-readable `closed-loop-pilot-synthetic.json`
+- [x] `validate-pilot-rehearsal.mjs`
+- [x] `npm run eval:contracts`への組み込み
 
-## Deliverables
+## Phase B — Manual Real Pilot readiness
 
-### Contracts / templates
+### Required
 
-- [x] `experiment-result.md`
-- [x] `learning-candidate.md`
-- [x] Experiment state machine
-- [x] Learning state machine
-- [x] Candidate provenance contract
-- [x] Stable Metric Registry
+- [x] Pilot Run Template
+- [x] readiness / blocker contract
+- [x] Metric definition / observability分離
+- [x] Evidence source必須化
+- [x] Human owner / stop / rollback必須化
+- [x] Privacy / Safety条件
+- [x] Current blocking dependencyを特定
 
-### Skills / Agent
+### Current result
 
-- [x] `evaluate-experiment`
-- [x] `review-learning-candidate`
-- [x] Learning Reviewer Agent — Reviewer only
+**Blocked — expected and valid readiness result.**
 
-### Workflow
+Blocking:
 
-- [x] `closed-learning-loop.md`
-- [x] evaluator / learning reviewer / Human decision ownerを分離
-- [x] Accepted Learning → Experience Hypothesis / MLP PolishへのReturn path
-- [x] execution status / evaluation validityを分離
+1. Product Analytics event sender / ingestion未実装
+2. Metric Registry対象Metricは`observability_status: uninstrumented`
+3. operational Evidence source ref未設定
+4. production/shared test surfaceは#15で判断待ち
 
-### Regression / Eval
+Unblocker:
 
-- [x] Experiment evaluation fixture >= 6
-- [x] Learning review fixture >= 6
-- [x] Fixture validator拡張
-- [x] Metric Registry validator追加
-- [x] Result Evidence / Candidate provenance検証
-- [x] Human review rubric拡張
-- [x] Eval README更新
+- #31: privacy-safe session telemetry
+- #15: deployment / test surface
 
-### Repository integration / validation
+## Phase C — Manual Real Pilot
 
-- [x] AI-Native README更新
-- [x] Execution Plan更新
-- [x] Closed Loop review record
-- [x] Issue #27進捗更新
-- [x] PR #28作成
-- [x] Reviewed implementation CI Green
-- [x] タスク完了前の7視点レビュー
-- [x] Review blocker反映
-- [x] Final diff / unresolved thread確認
-- [ ] merge / Issue close
+- [ ] target Metricが`observable`
+- [ ] guardrail Metricが1つ以上`observable`
+- [ ] Evidence source operational
+- [ ] execution surface available
+- [ ] Human start / stop owner確定
+- [ ] 低リスク・可逆Experimentを1サイクル実施
+- [ ] Result → Evaluation → Candidate → Review → Human Decision
+- [ ] Accepted Learning → MLP Polish / Next Hypothesisへ返却
 
-## Multi-perspective review findings resolved
+**#31 / #15の条件成立まで開始しない。**
 
-1. **Metric参照がMarkdown anchor依存 / 未定義KPI参照**
-   - `ai/contracts/metric-registry.json` と `metric:<stable-id>` を導入
-   - Registry専用validatorでfixture参照をCI検証
-2. **Learning Reviewのmaker identityが曖昧 / 重複入力可能**
-   - Candidate自身の`candidate_maker_id`をprovenanceの唯一の正本へ変更
-   - `source_evaluation_refs`をCandidateへ保持し、source evaluationへの解決をvalidatorで確認
-3. **Experiment statusと分析validityの混同**
-   - `completed|stopped|invalid` と `valid|limited|invalid` を分離
-   - Sample不足は隠さず`limited / inconclusive`へ反映
+## Iteration 4.5 Definition of Done
 
-## Safety / Learning rules
+Issue #30はOperational Readiness評価のIterationとして完了可能。
 
-- Safety/Trust悪化をBusiness metric改善で上書きしない
-- Registryで解決できないMetricを通常評価に使わない
-- invalid ExperimentからAccepted Learningを作らない
-- insufficient sampleをhigh confidenceで一般化しない
-- conflicting evidenceを隠さない
-- `reviewer_id != candidate.candidate_maker_id`
-- Human decision無しで`accepted_learning`へ遷移しない
-- Raw PII / consultation textをResult/Learningへ保存しない
+- [x] Synthetic positive + failure pathをMachine-readable Contract化
+- [x] Pilot Runbook / Template
+- [x] Real Pilot readinessを評価可能
+- [x] Blocking dependencyをIssue分離
+- [x] Controlled Autonomy候補 / Human-only候補を明示
+- [ ] CI Green
+- [ ] タスク完了前の7視点レビュー
+- [ ] Review blocker反映
+- [ ] PR merge / Issue #30 close
 
-## Scope out
+Real Pilotそのものは#31 / #15解消後に実施し、**Iteration 5のEntry Evidence**として扱う。
 
-- 自動Experiment開始
-- SNS / CRM自動実行
-- 自動価格変更 / 実課金
-- 実Analytics SDK / 実ユーザーデータ ingestion
-- AgentによるAccepted Learning自動確定
-- Orchestrator
+# Iteration 5 — Controlled Autonomy 🔒 blocked
 
-# Iteration 5 — Controlled Autonomy
+Entry gate:
 
-Entry条件はClosed LoopのExperiment Result / Learning Reviewが実運用で安定していること。
+- Manual Real Pilotを1サイクル完了
+- Evidence / Metric / provenance欠損なし
+- Safety / Privacy incident 0
+- Human bottleneck観測済み
+- Accepted Learning → MLP return pathを実運用で確認
+- 自律化候補を7視点レビューで限定
 
-Candidate:
+現時点の**candidate only**:
 
-- 定期集計
-- レポート生成
-- 分類
-- Regression eval
-- Knowledge candidate生成
-- 異常検知
+- Contract validation
+- Metric ref resolution
+- fixture / regression execution
+- report formatting
+- Evidence ref existence check
+- 将来の定期集計
 
 Human Gate維持:
 
+- Experiment start / stop
 - 本番投稿 / CRM送信
-- 価格 / 課金変更
-- 高額商品方針
-- High-stakes reading
+- price / charge
+- High-stakes content / reading
+- Accepted Learning
 - Safety Policy変更
 
-# Iteration 6 — Orchestration
+# Iteration 6 — Orchestration 🔒
 
 Entry criteria:
 
 - 主要Agent Contract安定
 - Skill Eval存在
-- Decision Queue / Closed Learning Loop実運用
-- 自律レベル定義済み
-- 監査ログ
-- Stop condition検証済み
+- Closed Learning Loop実運用
+- Controlled Autonomy範囲の実測検証
+- Decision Queue実運用
+- 監査ログ / Stop condition / rollback検証済み
 
 Orchestratorは `Signal → Priority → Agent/Skill Routing` に限定する。
 
 ## Dependency map
 
 ```text
-Foundation → Observe → Assist → Closed Learning Loop → Controlled Autonomy → Orchestration
+Foundation
+  ↓
+Observe
+  ↓
+Assist
+  ↓
+Closed Learning Loop
+  ↓
+Operational Pilot
+  ↓
+Pilot Telemetry / Real Pilot
+  ↓
+Controlled Autonomy
+  ↓
+Orchestration
 ```
 
 後段から先に導入しない。
