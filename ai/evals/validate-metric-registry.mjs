@@ -9,6 +9,7 @@ const registry = JSON.parse(fs.readFileSync(registryPath, "utf8"));
 
 const validIdentityRequirements = new Set(["session", "cross_session", "none"]);
 const validStatuses = new Set(["active", "provisional"]);
+const validObservabilityStatuses = new Set(["uninstrumented", "partial", "observable"]);
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -24,6 +25,13 @@ for (const metric of registry.metrics) {
   assert(typeof metric.name === "string" && metric.name.length > 0, `${metric.ref}: name required`);
   assert(validIdentityRequirements.has(metric.identity_requirement), `${metric.ref}: invalid identity_requirement`);
   assert(validStatuses.has(metric.status), `${metric.ref}: invalid status`);
+  assert(validObservabilityStatuses.has(metric.observability_status), `${metric.ref}: invalid observability_status`);
+  assert(Array.isArray(metric.required_events), `${metric.ref}: required_events must be an array`);
+  assert(metric.required_events.every((eventName) => typeof eventName === "string" && eventName.length > 0), `${metric.ref}: required_events must contain non-empty strings`);
+  assert(metric.evidence_source_ref === null || typeof metric.evidence_source_ref === "string", `${metric.ref}: evidence_source_ref must be string or null`);
+  if (metric.observability_status === "observable") {
+    assert(typeof metric.evidence_source_ref === "string" && metric.evidence_source_ref.length > 0, `${metric.ref}: observable metric requires evidence_source_ref`);
+  }
   assert(typeof metric.definition_source === "string" && metric.definition_source.length > 0, `${metric.ref}: definition_source required`);
 
   const [sourceFile] = metric.definition_source.split("#");
@@ -69,4 +77,5 @@ for (const fixtureFile of fixtureFiles) {
   }
 }
 
-console.log(`✓ metric registry: ${refs.size} metrics, ${checkedRefs} fixture refs validated`);
+const observableCount = registry.metrics.filter((metric) => metric.observability_status === "observable").length;
+console.log(`✓ metric registry: ${refs.size} metrics, ${checkedRefs} fixture refs validated, ${observableCount} observable`);
