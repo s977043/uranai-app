@@ -22,20 +22,47 @@ AI-Native Observe フェーズで使う、**プロダクト行動の論理イベ
 
 ## Common envelope
 
+将来の実装では次の論理項目を持つ。
+
 ```yaml
 event_name: string
 event_version: 1
-occurred_at: canonical ISO-8601
-anonymous_session_id: session_<uuid-v4>
+occurred_at: ISO-8601
+anonymous_session_id: string
 anonymous_visitor_id: string | null
 properties: object
 ```
 
-`anonymous_visitor_id` はcross-session集計が必要でPrivacy条件を満たす場合のみ利用する。#31 / #33ではsession-level telemetryに限定し、`null`固定とする。
+### Required
+
+- `event_name`
+- `event_version`
+- `occurred_at`
+- `anonymous_session_id`
+
+### Conditional
+
+`anonymous_visitor_id` は、D1/D7 Return・Repeat Reading・複数sessionにまたがるPaid Conversionなど、**cross-session集計が必要でPrivacy条件を満たす場合のみ**利用する。
+
+条件:
+
+- ランダム生成したpseudonymous identifierであること
+- 氏名、メール、電話番号、端末固有情報等から決定論的に生成しない
+- authentication identifierをそのまま流用しない
+- 利用目的をRetention等の明示済み分析に限定する
+- 保持期間・rotation・削除方針を実装前Privacy reviewで確定する
+- 外部サービス間の追跡キーとして使わない
+
+`anonymous_visitor_id` を安全に保持できない場合、cross-session KPIは `N/A` とし、session単位の指標だけを利用する。
+
+Iteration #31 / #33ではsession-level telemetryに限定し、`anonymous_visitor_id` は `null` 固定とする。
 
 ### Forbidden by default
 
-- name / email / phone / address
+- name
+- email
+- phone
+- address
 - free-form consultation text
 - authentication token
 - payment card data
@@ -44,78 +71,206 @@ properties: object
 
 ## Reading flow correlation
 
-`reading_started` / `reading_completed` / `reading_feedback_submitted` は1回のReadingを識別する `reading_flow_id` を共有する。
+`reading_started` / `reading_completed` / `reading_feedback_submitted` は、1回の鑑定フローを識別する `reading_flow_id` を持つ。
 
 ```yaml
-reading_flow_id: reading-flow_<uuid-v4>
+reading_flow_id: reading-flow_<random-uuid-v4>
 ```
 
-- Reading開始時にランダム生成
-- 同一Flowのstarted / completed / feedbackで共有
+Rules:
+
+- Reading Flow開始時にランダム生成する
+- 同一Flowのstarted / completed / feedbackで同じ値を使う
 - sessionを跨いで再利用しない
-- user identityやPIIから導出しない
-- cross-session identityとして利用しない
+- user ID / email / phone /相談本文等から導出しない
+- cross-session user identityとして利用しない
+
+これはユーザー識別のためではなく、**同一session内で複数Readingが起きてもflow単位の分母・分子を壊さないためのcorrelation key**である。
 
 ## Product events
 
-### `reading_started`
+### `app_opened`
+
+意味: アプリ体験が開始された。
+
+Allowed properties:
 
 ```yaml
-reading_flow_id: reading-flow_<uuid-v4>
+entry_point: direct | shared_link | campaign | unknown
+```
+
+禁止:
+- 「engaged」等の評価語を入れる
+
+---
+
+### `reading_started`
+
+意味: ユーザーが鑑定フローを開始した。
+
+Allowed properties:
+
+```yaml
+reading_flow_id: reading-flow_<random-uuid-v4>
 reading_type: tarot | numerology | maya | reflection | other
 entry_context: daily | relationship | work | self_reflection | other
 ```
 
+`entry_context` はユーザー入力本文ではなく粗いカテゴリのみ。
+
 `reflection` はIssue #33の1枚リフレクションReadingを表す独立dimension。
+
+---
 
 ### `reading_completed`
 
+意味: 鑑定フローが正常終了し、結果表示まで到達した。
+
+Allowed properties:
+
 ```yaml
-reading_flow_id: reading-flow_<uuid-v4>
+reading_flow_id: reading-flow_<random-uuid-v4>
 reading_type: tarot | numerology | maya | reflection | other
 duration_bucket: lt_30s | 30s_2m | gt_2m | unknown
 ```
 
-このイベント単独で満足・価値提供成功とは判断しない。
+このイベントだけで「満足」「価値提供成功」と判断しない。
+
+---
 
 ### `reading_feedback_submitted`
 
+意味: 鑑定後フィードバックが送信された。
+
+Allowed properties:
+
 ```yaml
-reading_flow_id: reading-flow_<uuid-v4>
+reading_flow_id: reading-flow_<random-uuid-v4>
 helpfulness: helpful | neutral | not_helpful
 feedback_reason_category: clear | reassuring | actionable | inaccurate | too_generic | unsafe_feeling | other | none
 ```
 
-自由記述は載せない。Helpful Feedback集約では、対応する`reading_completed`と同一flow / sessionで相関できるfeedbackだけをeligibleとする。
+自由記述本文はanalytics eventへ載せない。別のVoC管理経路で扱う。
 
-## Other logical events
+Helpful Feedback集約では、対応する`reading_completed`と同一flow / sessionで相関できるfeedbackだけをeligibleとし、orphan / cross-session / pre-completion feedbackはData Quality異常として扱う。
 
-将来利用する論理taxonomyとして以下を維持する。
+---
 
-- `app_opened`
-- `followup_action_selected`
-- `session_returned`
-- `paywall_viewed`
-- `purchase_completed`
-- `ai_output_rejected`
-- `ai_output_regenerated`
+### `followup_action_selected`
 
-これらは#33のVertical Sliceではemitしない。
+意味: 鑑定後に提示した次の行動候補が選択された。
 
-## Browser session surface — #33
+Allowed properties:
 
-#33では3つのReading Eventを実Product Flowからemitし、browser `sessionStorage`へsession-localに保持する。
+```yaml
+action_type: reflect | save | share | another_reading | close | other
+```
 
-- process / browser sessionを越える中央集約ではない
-- Product instrumentationの成立確認には使える
-- Manual Real Pilot用のoperational Evidence sourceとはみなさない
-- Metric Registryは`partial`まで。`observable`にはしない
+`another_reading` の増加を単独で成功指標にしない。
 
-## Naming / change rules
+---
+
+### `session_returned`
+
+意味: Privacy条件を満たす `anonymous_visitor_id` で、過去sessionの存在を確認できる匿名訪問者が新しいsessionを開始した。
+
+Allowed properties:
+
+```yaml
+return_window: d1 | d2_d7 | d8_d30 | gt_d30
+```
+
+Precondition:
+
+- `anonymous_visitor_id` が利用可能
+- 保持期間・rotation・削除方針がPrivacy review済み
+
+利用できない場合、このイベントは生成せずD1/D7 Returnを `N/A` とする。
+
+---
+
+### `paywall_viewed`
+
+意味: 有料導線が表示された。
+
+Allowed properties:
+
+```yaml
+offer_id: string
+placement: post_reading | feature_gate | other
+```
+
+禁止:
+- 相談内容本文
+- 不安度など推測した心理属性
+
+---
+
+### `purchase_completed`
+
+意味: 決済完了が確認された。
+
+Allowed properties:
+
+```yaml
+offer_id: string
+price_tier: low | mid | high
+currency: string
+```
+
+決済事業者のtransaction idやカード情報を分析payloadへ載せない。
+
+## AI / Safety internal events
+
+プロダクトイベントと別namespaceで扱う。
+
+### `ai_output_rejected`
+
+意味: AI出力がQuality / Safety Gateで却下された。
+
+Allowed properties:
+
+```yaml
+gate: deterministic_guardrail | safety_judge | quality_judge | human_review
+reason_code: string
+```
+
+Raw model responseはanalytics payloadへ入れない。
+
+### `ai_output_regenerated`
+
+意味: 出力再生成が行われた。
+
+Allowed properties:
+
+```yaml
+trigger: safety | quality | technical | other
+attempt: number
+```
+
+## Naming rules
 
 - snake_case
 - 過去形の行動 (`*_started`, `*_completed`, `*_submitted`)
 - UI部品名ではなくドメイン行動を使う
 - KPI名をイベント名にしない
 - 意味変更はversion bump
-- 変更時はaffected metrics / compatibility / privacy / safety影響を記録する
+
+## Change policy
+
+Eventを変更する際は以下を記録する。
+
+- reason
+- affected metrics
+- backward compatibility
+- migration / mapping rule
+- privacy impact
+- safety impact
+
+## Scope note
+
+Issue #31で `reading_started` / `reading_completed` / `reading_feedback_submitted` のTypeScript Contract、session / reading-flow identifier、local/test sink、集約を実装した。
+
+Issue #33では3イベントを実Product Flowへ接続し、browser `sessionStorage`をsession-local Evidence surfaceとして利用する。ただし中央集約されたoperational Evidence sourceではないため、対象MetricのObservabilityは`partial`までとし、`observable`へは昇格しない。
+
+外部Analytics SDK、同意管理、cross-session identifier保持/削除は別Iterationで扱う。
