@@ -12,9 +12,13 @@ AI-Native Skill / Agentの変更時に、出力品質を感覚ではなく再現
 
 ## Eval layers
 
-### 1. Fixture contract validation — automated now
+### 1. Contract validation — automated now
 
-`npm run eval:contracts` が現在機械検証するのは、**Regression fixture自体の契約**です。
+`npm run eval:contracts` は次の2種類のContractを機械検証する。
+
+#### Fixture contracts
+
+`ai/evals/validate-fixtures.mjs`
 
 対象:
 
@@ -41,11 +45,25 @@ AI-Native Skill / Agentの変更時に、出力品質を感覚ではなく再現
 - Readingでfortune fact矛盾・high-stakes・guardrail violationをblock
 - Experiment評価でSafety悪化をsuccessで上書きしない
 - invalid / insufficient sample / conflicting segmentの扱い
-- Learning Reviewerの`reviewer != maker`
+- Learning Reviewで`reviewer_id != candidate_maker_id`
 - invalid experiment由来Learningのreject
 - safe Learning CandidateでもHuman Gate維持
 
-このvalidatorは**モデル出力品質そのものを合格判定していない**。fixture定義の退行をCIで防ぐ役割に限定する。
+#### Metric registry contracts
+
+`ai/evals/validate-metric-registry.mjs`
+
+[`ai/contracts/metric-registry.json`](../contracts/metric-registry.json) をMetric参照の正本とし、次を確認する。
+
+- `metric:<stable-id>` の一意性
+- identity requirement / statusの妥当性
+- 定義元ファイルが存在する
+- fixture内の全`metric_definition_ref`がRegistryへ解決できる
+- fixtureが`provisional` metricを通常の評価Contractとして利用していない
+
+Markdown見出しURLは変更に弱いため、Agent / Skill / Experiment Resultではstable Metric IDを使用する。
+
+このContract validator群は**モデル出力品質そのものを合格判定していない**。定義・fixture・参照関係の退行をCIで防ぐ役割に限定する。
 
 ### 2. Output assertions — Harness確定後
 
@@ -65,7 +83,7 @@ Agent/Skill実行結果をfixtureの`expect`へ照合するrunnerは、モデル
 - Reading verdictとguardrail結果の整合
 - Experiment outcomeとSafety/Guardrailの整合
 - Learning recommendationとsource validityの整合
-- reviewer / maker independence
+- `reviewer_id != candidate_maker_id`
 
 Harness未確定の現時点で、特定モデルSDKへEval基盤を結合しない。
 
@@ -102,6 +120,7 @@ Closed Loop系:
 - Learning scope correctness
 - Contradiction handling
 - Learning reviewer independence
+- Candidate provenance
 - MLP loop reuse
 
 ## Fixtures
@@ -126,7 +145,7 @@ FixtureはSyntheticデータのみをコミットする。実ユーザーの相�
 
 ## Regression trigger
 
-以下を変更した場合は関連fixtureを再評価する。
+以下を変更した場合は関連fixture / registry validationを再評価する。
 
 - Skill
 - Agent Contract
@@ -138,6 +157,7 @@ FixtureはSyntheticデータのみをコミットする。実ユーザーの相�
 - Knowledge source
 - Safety policy
 - Event / Metric contract
+- Metric Registry
 - identity semantics
 - deterministic message guardrail
 - Experiment Result / Learning Candidate contract
@@ -151,7 +171,7 @@ Analyze:
 - EvidenceのないFact / Insight
 - Fact/Hypothesis混同
 - PII転載
-- 小サンプルを高confidenceで一般化
+- 小サンプルをhigh confidenceで一般化
 - cross-session identity無しでKPI推定
 
 Assist:
@@ -171,12 +191,14 @@ Assist:
 
 Closed Loop:
 
+- Registryで解決できないMetric refを使用
 - Metric definition ref無しでExperiment successを判定
 - Safety/Trust悪化をBusiness metric改善で上書き
 - invalid experimentからLearning Candidateを昇格
 - insufficient sampleをhigh confidenceで一般化
 - conflicting evidenceを隠す
-- evaluator / makerが自己レビューしてAccepted Learning化
+- Candidate provenanceが無い
+- evaluator / candidate makerが自己レビューしてAccepted Learning化
 - Human Gate無しで`accepted_learning`へ遷移
 - Raw PII / consultation textをResult/Learningへ保存
 
