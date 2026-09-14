@@ -127,8 +127,7 @@ export default function Home() {
       properties: {
         reading_flow_id: flowId,
         helpfulness: value,
-        feedback_reason_category:
-          value === "helpful" ? "actionable" : value === "not_helpful" ? "too_generic" : "none",
+        feedback_reason_category: "none",
       },
     }));
   }
@@ -177,19 +176,28 @@ export default function Home() {
           <section className="rounded-3xl border border-violet-300/20 bg-white/[0.07] p-7 text-center shadow-2xl shadow-black/30 backdrop-blur sm:p-10">
             <p className="text-sm text-violet-200">{CONTEXTS.find((item) => item.value === context)?.label}</p>
             <div className="mx-auto my-7 flex h-40 w-28 items-center justify-center rounded-[1.4rem] border border-violet-200/30 bg-gradient-to-b from-violet-300/20 to-indigo-950 shadow-[0_0_50px_rgba(167,139,250,0.16)]">
-              <span className="text-4xl">✦</span>
+              <span aria-hidden="true" className="text-4xl">✦</span>
             </div>
             <h2 className="text-2xl font-medium">今のあなたに向けた一枚</h2>
             <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-slate-300">
               正解を当てるのではなく、今の見方を少し広げるために使います。
             </p>
-            <button
-              type="button"
-              onClick={drawCard}
-              className="mt-7 rounded-full bg-violet-200 px-7 py-3 text-sm font-semibold text-slate-950 transition hover:bg-violet-100 focus:outline-none focus:ring-2 focus:ring-white"
-            >
-              一枚ひく
-            </button>
+            <div className="mt-7 flex flex-col items-center gap-3">
+              <button
+                type="button"
+                onClick={drawCard}
+                className="rounded-full bg-violet-200 px-7 py-3 text-sm font-semibold text-slate-950 transition hover:bg-violet-100 focus:outline-none focus:ring-2 focus:ring-white"
+              >
+                一枚ひく
+              </button>
+              <button
+                type="button"
+                onClick={reset}
+                className="text-sm text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline focus:outline-none focus:ring-2 focus:ring-violet-300"
+              >
+                テーマを選び直す
+              </button>
+            </div>
           </section>
         ) : (
           <section className="space-y-5 rounded-3xl border border-violet-300/20 bg-white/[0.07] p-6 shadow-2xl shadow-black/30 backdrop-blur sm:p-9">
@@ -199,7 +207,7 @@ export default function Home() {
                 <h2 className="mt-2 text-3xl font-semibold">{reading.card.title}</h2>
                 <p className="mt-1 text-sm text-slate-400">{reading.card.keyword}</p>
               </div>
-              <div className="flex h-16 w-12 shrink-0 items-center justify-center rounded-xl border border-violet-200/30 bg-violet-300/10 text-xl">✦</div>
+              <div aria-hidden="true" className="flex h-16 w-12 shrink-0 items-center justify-center rounded-xl border border-violet-200/30 bg-violet-300/10 text-xl">✦</div>
             </div>
 
             <div className="space-y-3">
@@ -219,7 +227,7 @@ export default function Home() {
 
             <div className="border-t border-white/10 pt-5">
               <p className="text-center text-sm text-slate-300">このReadingは、今の整理に役立ちましたか？</p>
-              <div className="mt-4 grid grid-cols-3 gap-2">
+              <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
                 {([
                   ["helpful", "役立った"],
                   ["neutral", "どちらでもない"],
@@ -230,7 +238,7 @@ export default function Home() {
                     type="button"
                     disabled={feedback !== null}
                     onClick={() => submitFeedback(value)}
-                    className={`rounded-xl border px-3 py-3 text-xs transition sm:text-sm ${
+                    className={`rounded-xl border px-3 py-3 text-sm transition ${
                       feedback === value
                         ? "border-violet-200 bg-violet-200 text-slate-950"
                         : "border-white/10 bg-white/[0.04] text-slate-300 hover:border-violet-300/40 disabled:opacity-40"
