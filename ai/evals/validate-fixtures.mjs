@@ -180,13 +180,21 @@ const specs = [
     minFixtures: 6,
     validate(fixture) {
       const candidate = fixture.input?.candidate;
+      const sourceEvaluations = fixture.input?.source_evaluations ?? [];
       assert(typeof fixture.input?.candidate_ref === "string" && fixture.input.candidate_ref.length > 0, `${fixture.id}: candidate_ref required`);
       assert(candidate?.status === "candidate", `${fixture.id}: input must remain candidate`);
+      assert(typeof candidate?.candidate_maker_id === "string" && candidate.candidate_maker_id.length > 0, `${fixture.id}: candidate_maker_id required in candidate provenance`);
+      assert(Array.isArray(candidate?.source_evaluation_refs) && candidate.source_evaluation_refs.length > 0, `${fixture.id}: source_evaluation_refs required in candidate provenance`);
       assert(Array.isArray(candidate?.evidence_refs) && candidate.evidence_refs.length > 0, `${fixture.id}: candidate evidence_refs required`);
-      assert(Array.isArray(fixture.input?.source_evaluations) && fixture.input.source_evaluations.length > 0, `${fixture.id}: source_evaluations required`);
+      assert(Array.isArray(sourceEvaluations) && sourceEvaluations.length > 0, `${fixture.id}: source_evaluations required`);
       assert(typeof fixture.input?.reviewer_id === "string" && fixture.input.reviewer_id.length > 0, `${fixture.id}: reviewer_id required`);
-      assert(typeof fixture.input?.candidate_maker_id === "string" && fixture.input.candidate_maker_id.length > 0, `${fixture.id}: candidate_maker_id required`);
-      assert(fixture.input.reviewer_id !== fixture.input.candidate_maker_id, `${fixture.id}: reviewer must differ from candidate maker`);
+      assert(fixture.input.reviewer_id !== candidate.candidate_maker_id, `${fixture.id}: reviewer must differ from candidate maker`);
+
+      const availableEvaluationRefs = new Set(sourceEvaluations.map((evaluation) => evaluation.evaluation_ref));
+      for (const ref of candidate.source_evaluation_refs) {
+        assert(availableEvaluationRefs.has(ref), `${fixture.id}: source_evaluation_ref ${ref} must resolve to supplied source evaluation`);
+      }
+
       requireExpect(fixture);
       if (fixture.id === "learning-01-strong-narrow") {
         assert(fixture.expect.recommendation === "accept_candidate", `${fixture.id}: strong narrow candidate may be recommended`);
