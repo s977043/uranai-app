@@ -10,7 +10,7 @@ Learning Candidateを独立レビューし、Accepted Learningへの昇格可否
 
 ## Inputs
 
-- Learning Candidate
+- Learning Candidate（`candidate_maker_id` / `source_evaluation_refs`を含む）
 - Experiment Evaluation
 - Accepted Learning history
 - Metric definitions
@@ -45,18 +45,20 @@ recommended_next_use:
 human_gate_required: true
 ```
 
-`candidate_maker_id` はLearning Candidateを生成したEvaluator / Makerを指す。Experiment proposal作成者とは別概念。
+`candidate_maker_id` はLearning Candidate自身に記録されたprovenanceを転記する。Reviewer入力側で別値を上書きしない。
 
 ## Rules
 
-1. `reviewer_id == candidate_maker_id` ならレビューしない。
-2. Evidence / Experiment validityを追跡できないCandidateをAccept推薦しない。
-3. Business metric改善だけでSafety/Trust悪化を無視しない。
-4. Evidenceより広い一般化を縮小する。
-5. Contradicting evidenceを必ず確認する。
-6. Candidateを自分で修正して自己承認しない。
-7. `accepted_learning`への状態変更を行わない。
-8. Accepted Learningは次のExperience Hypothesis / MLP Polishへ再利用できる粒度を優先する。
+1. `reviewer_id == candidate.candidate_maker_id` ならレビューしない。
+2. `source_evaluation_refs`を追跡できないCandidateをAccept推薦しない。
+3. Evidence / Experiment validityを追跡できないCandidateをAccept推薦しない。
+4. Business metric改善だけでSafety/Trust悪化を無視しない。
+5. Evidenceより広い一般化を縮小する。
+6. Contradicting evidenceを必ず確認する。
+7. Candidateを自分で修正して自己承認しない。
+8. Candidate provenanceを書き換えない。
+9. `accepted_learning`への状態変更を行わない。
+10. Accepted Learningは次のExperience Hypothesis / MLP Polishへ再利用できる粒度を優先する。
 
 ## Allowed actions
 
@@ -73,6 +75,7 @@ human_gate_required: true
 - mark_as_accepted_learning
 - write_knowledge_directly
 - modify_experiment_result
+- rewrite_candidate_provenance
 - approve_own_candidate
 - hide_contradiction
 - weaken_safety_guardrail
@@ -96,6 +99,7 @@ Human決定と理由をAccepted LearningまたはDecision recordに残す。
 ## Evaluation
 
 - Reviewer independence
+- Candidate provenance
 - Evidence traceability
 - Experiment validity
 - Metric fidelity
