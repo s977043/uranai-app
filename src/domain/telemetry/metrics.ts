@@ -117,20 +117,42 @@ export function calculateReadingFlowCompletion(
 export function calculateHelpfulFeedbackRate(
   events: readonly ProductTelemetryEvent[],
 ): MetricEvidence {
+  const completions = new Map<string, ReadingCompletedEvent>();
   const feedbackByFlow = new Map<string, ReadingFeedbackEvent>();
   let duplicateEvents = 0;
+  let orphanEvents = 0;
+  let outOfOrderEvents = 0;
 
   for (const event of events) {
-    if (event.event_name !== "reading_feedback_submitted") continue;
-    const flowId = event.properties.reading_flow_id;
-    if (feedbackByFlow.has(flowId)) {
-      duplicateEvents += 1;
-      continue;
+    if (event.event_name === "reading_completed") {
+      const flowId = event.properties.reading_flow_id;
+      if (!completions.has(flowId)) completions.set(flowId, event);
     }
-    feedbackByFlow.set(flowId, event);
+    if (event.event_name === "reading_feedback_submitted") {
+      const flowId = event.properties.reading_flow_id;
+      if (feedbackByFlow.has(flowId)) {
+        duplicateEvents += 1;
+        continue;
+      }
+      feedbackByFlow.set(flowId, event);
+    }
   }
 
-  if (feedbackByFlow.size === 0) {
+  const eligibleFeedback: ReadingFeedbackEvent[] = [];
+  for (const [flowId, feedback] of feedbackByFlow) {
+    const completion = completions.get(flowId);
+    if (!completion || completion.anonymous_session_id !== feedback.anonymous_session_id) {
+      orphanEvents += 1;
+      continue;
+    }
+    if (timestamp(feedback.occurred_at) < timestamp(completion.occurred_at)) {
+      outOfOrderEvents += 1;
+      continue;
+    }
+    eligibleFeedback.push(feedback);
+  }
+
+  if (eligibleFeedback.length === 0) {
     return {
       status: "not_computable",
       reason: events.length === 0 ? "missing_required_evidence" : "zero_denominator",
@@ -138,20 +160,20 @@ export function calculateHelpfulFeedbackRate(
     };
   }
 
-  const helpful = [...feedbackByFlow.values()].filter(
+  const helpful = eligibleFeedback.filter(
     (event) => event.properties.helpfulness === "helpful",
   ).length;
 
   return {
     status: "computed",
     numerator: helpful,
-    denominator: feedbackByFlow.size,
-    rate: helpful / feedbackByFlow.size,
-    sample_size: feedbackByFlow.size,
+    denominator: eligibleFeedback.length,
+    rate: helpful / eligibleFeedback.length,
+    sample_size: eligibleFeedback.length,
     data_quality: {
       duplicate_events: duplicateEvents,
-      orphan_events: 0,
-      out_of_order_events: 0,
+      orphan_events: orphanEvents,
+      out_of_order_events: outOfOrderEvents,
       dimension_mismatch_events: 0,
     },
   };
