@@ -6,7 +6,7 @@ Iteration 4 Closed Learning Loopを、Product / Agent Architecture / Safety / Da
 
 ## Review conclusion
 
-**Approved with changes. Review findings are reflected; final CI confirmation remains.**
+**Approved with changes. All review blockers are reflected.**
 
 当初案の方向性は妥当だったが、Closed Loopとして長期運用するにはMetric参照の安定性、Learning Candidateのprovenance、Experiment execution statusと分析validityの分離が不足していたため修正した。
 
@@ -42,16 +42,19 @@ Experiment EvaluatorがLearning Candidateを生成し、そのまま自分でレ
 - Learning ReviewerをReviewer-only Agentとして追加
 - Accepted Learning確定はHumanのみ
 
-### Finding B — `maker_id` ambiguity
+### Finding B — Candidate maker identity ambiguity
 
 `maker_id` がExperiment proposal makerなのかLearning Candidateを生成したEvaluatorなのか曖昧で、独立性Contractとして弱かった。
 
+さらにReviewer入力側へmaker IDを別フィールドで渡す方式では、Candidate本体のprovenanceと食い違う余地があった。
+
 ### Fix
 
-- `candidate_maker_id` に改名
-- Learning Candidate templateへprovenanceを追加
-- `reviewer_id != candidate_maker_id` をSkill / Agent / fixture / validatorで固定
+- Learning Candidate自身の `candidate_maker_id` をprovenanceの唯一の正本に変更
 - `source_evaluation_refs` をCandidate Contractへ追加
+- Reviewerは `candidate.candidate_maker_id` を参照
+- `reviewer_id != candidate.candidate_maker_id` をSkill / Agent / fixture / validatorで固定
+- `source_evaluation_refs` が実際のsource evaluationへ解決することをvalidatorで確認
 
 ### Status
 
@@ -151,13 +154,14 @@ Closed Loop regressionを追加。
 Contract validatorで次を固定。
 
 - Human-approved execution
-- Result Evidence refs
+- Result Evidence refs / hypothesis ref
 - Metric ref存在
 - Safety degradation block
 - insufficient sample / conflicting segment
 - invalid experiment source reject
-- Candidate Evidence refs / source evaluations
-- `reviewer_id != candidate_maker_id`
+- Candidate Evidence refs / source evaluations / provenance
+- `reviewer_id != candidate.candidate_maker_id`
+- source evaluation ref解決
 - safe candidateでもHuman Gate
 
 さらにMetric Registry専用validatorを追加し、`npm run eval:contracts`でFixture ContractとMetric Registry Contractの両方を検証する。
@@ -180,12 +184,12 @@ Resolved for Iteration 4.
 - Agent/Skill/Workflow/fixture/docs中心でrevert容易
 - `eval:contracts`へMetric Registry validatorを追加
 - PR #28は最新mainをbaseとしてmergeable
-
-Final CIのみ最新headで確認する。
+- reviewed implementation headで `npm ci / lint / typecheck / test / AI eval contracts / build` Green
+- unresolved review thread 0
 
 ### Status
 
-Pending final CI only.
+Resolved.
 
 ---
 
@@ -213,7 +217,7 @@ Iteration 4では意図的に残す。
 - [x] Execution status / Evaluation validity分離
 - [x] 12+ Closed Loop fixtures
 - [x] Fixture + Metric Registry validators
-- [ ] Latest CI Green
-- [ ] Final PR diff / unresolved threads確認
+- [x] Reviewed implementation CI Green
+- [x] Final PR diff / unresolved threads確認
 
-最新CIと最終差分レビューがGreenならIteration 4はマージ可能。
+**Blocker 0。Iteration 4はmerge可能。**
