@@ -5,8 +5,13 @@ import {
 } from "@/domain/ngExpressions";
 
 /**
- * ユーザーに表示する占い文言が、concept-board の NG 表現を踏んでいないかを
- * 検証する純粋関数群（副作用・時刻依存・ネットワークなし: AGENTS.md 4.）。
+ * concept-board 由来の既知 NG 表現を機械的に検査する deterministic guardrail。
+ * 副作用・時刻依存・ネットワーク依存を持たない。
+ *
+ * 重要: このモジュールは「安全性全体」を判定しない。
+ * 正規表現で定義済みの表現を検出する一層であり、文脈依存のSafety判断、
+ * 依存促進・恐怖による課金誘導・AI/人間の誤認表示などは別のSafety Gateで扱う。
+ * `report.ok === true` は「既知ルールに違反しなかった」ことだけを意味する。
  *
  * 想定する使い方:
  *   const report = inspectMessage(generatedText);
@@ -14,11 +19,10 @@ import {
  *     // 違反ルールをログに残し、再生成またはフォールバック文言へ切り替える
  *   }
  *
- * 文章生成そのものはこのモジュールの責務ではない。生成器（将来の OpenAI 連携）と
- * 表示層の間に挟む検査だけを担う。
+ * AI-Native Safety全体の境界は docs/ai-native/safety-policy.md を正本とする。
  */
 
-/** 検出された違反 1 件。 */
+/** 検出された既知ルール違反 1 件。 */
 export interface GuardrailViolation {
   /** 違反したルールの ID（NG_EXPRESSION_RULES と対応）。 */
   readonly ruleId: string;
@@ -34,9 +38,9 @@ export interface GuardrailViolation {
   readonly index: number;
 }
 
-/** 検査結果。真偽値だけでなく、どのルールに引っかかったかを返す。 */
+/** 既知NG表現の検査結果。`ok` は包括的なSafety判定ではない。 */
 export interface GuardrailReport {
-  /** 違反が 1 件もなければ true。 */
+  /** 定義済みのNG表現ルールに 1 件も該当しなければ true。 */
   readonly ok: boolean;
   /** 検出された違反（ルール定義順）。 */
   readonly violations: readonly GuardrailViolation[];
@@ -69,10 +73,10 @@ function toViolation(
 }
 
 /**
- * 文言を検査し、違反したルールの一覧を返す。
+ * 文言を既知NG表現ルールで検査し、違反一覧を返す。
  *
  * @param text 検査対象の文言（未加工でよい。内部で正規化する）
- * @returns 違反の有無と、違反したルールの詳細
+ * @returns 定義済みルールへの違反有無と、その詳細
  */
 export function inspectMessage(text: string): GuardrailReport {
   const normalized = normalizeMessage(text);
@@ -91,9 +95,9 @@ export function inspectMessage(text: string): GuardrailReport {
 }
 
 /**
- * 表示してよい文言かどうかだけを判定する簡易版。
- * どのルールに引っかかったかが必要なら inspectMessage を使う。
+ * 定義済みの deterministic message guardrail を通過したかだけを返す簡易版。
+ * 包括的なSafety判定ではない。違反詳細が必要なら inspectMessage を使う。
  */
-export function isSafeMessage(text: string): boolean {
+export function passesMessageGuardrail(text: string): boolean {
   return inspectMessage(text).ok;
 }
