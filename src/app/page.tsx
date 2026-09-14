@@ -41,8 +41,8 @@ const CONTEXTS: readonly {
   },
 ] as const;
 
-function durationBucket(startedAt: number): DurationBucket {
-  const seconds = (Date.now() - startedAt) / 1000;
+function durationBucket(startedAt: number, completedAt: number): DurationBucket {
+  const seconds = (completedAt - startedAt) / 1000;
   if (seconds < 30) return "lt_30s";
   if (seconds <= 120) return "30s_2m";
   return "gt_2m";
@@ -56,17 +56,18 @@ export default function Home() {
   const [feedback, setFeedback] = useState<Helpfulness | null>(null);
   const [telemetryError, setTelemetryError] = useState(false);
 
-  async function emit(event: ProductTelemetryEvent) {
+  async function emit(buildEvent: (sessionId: string) => ProductTelemetryEvent) {
     try {
-      const sink = new SessionStorageTelemetrySink(window.sessionStorage);
-      await recordTelemetryEvent(event, sink);
+      const storage = window.sessionStorage;
+      const sessionId = getOrCreateAnonymousSessionId(storage);
+      const sink = new SessionStorageTelemetrySink(storage);
+      await recordTelemetryEvent(buildEvent(sessionId), sink);
     } catch {
       setTelemetryError(true);
     }
   }
 
   function startReading(nextContext: ReadingContext) {
-    const sessionId = getOrCreateAnonymousSessionId(window.sessionStorage);
     const nextFlowId = createReadingFlowId();
     const now = Date.now();
 
@@ -77,7 +78,7 @@ export default function Home() {
     setFeedback(null);
     setTelemetryError(false);
 
-    void emit({
+    void emit((sessionId) => ({
       event_name: "reading_started",
       event_version: 1,
       occurred_at: new Date(now).toISOString(),
@@ -88,7 +89,7 @@ export default function Home() {
         reading_type: "reflection",
         entry_context: nextContext,
       },
-    });
+    }));
   }
 
   function drawCard() {
@@ -96,10 +97,9 @@ export default function Home() {
 
     const nextReading = createReflectionReading(flowId, context);
     const completedAt = Date.now();
-    const sessionId = getOrCreateAnonymousSessionId(window.sessionStorage);
     setReading(nextReading);
 
-    void emit({
+    void emit((sessionId) => ({
       event_name: "reading_completed",
       event_version: 1,
       occurred_at: new Date(completedAt).toISOString(),
@@ -108,18 +108,17 @@ export default function Home() {
       properties: {
         reading_flow_id: flowId,
         reading_type: "reflection",
-        duration_bucket: durationBucket(startedAt),
+        duration_bucket: durationBucket(startedAt, completedAt),
       },
-    });
+    }));
   }
 
   function submitFeedback(value: Helpfulness) {
     if (flowId === null || feedback !== null) return;
 
-    const sessionId = getOrCreateAnonymousSessionId(window.sessionStorage);
     setFeedback(value);
 
-    void emit({
+    void emit((sessionId) => ({
       event_name: "reading_feedback_submitted",
       event_version: 1,
       occurred_at: new Date().toISOString(),
@@ -131,7 +130,7 @@ export default function Home() {
         feedback_reason_category:
           value === "helpful" ? "actionable" : value === "not_helpful" ? "too_generic" : "none",
       },
-    });
+    }));
   }
 
   function reset() {
