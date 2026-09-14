@@ -50,3 +50,10 @@ AIエージェントは本ファイルを最初に読み、手順と禁止事項
 - [ ] 主要ロジックの境界テスト（境界日・うるう年・時差）
 - [ ] 型エラー無し（`npm run typecheck`）
 - [ ] 追跡: 例外時のユーザー向けメッセージが過度に断定的でないこと
+
+## 10. AI-Native 事業運用
+- 分析、VoC、Growth、CRM、コンテンツ等の **AI-Native事業運用**を変更する場合は、最初に [`docs/ai-native/README.md`](./docs/ai-native/README.md) を読む
+- Product/Brandの正本は [`docs/concept-board.md`](./docs/concept-board.md)、AI-Native運用の責務・Safety・Evalの正本は `docs/ai-native/`
+- `ai/agents/*` / `ai/skills/*` / `ai/workflows/*` の変更では、Evidence要件・Human Gate・Safety Policy・Regression方針を維持する
+- 生の相談内容、不要なPII、秘密情報をKnowledgeやGitへ保存しない
+- Agentが自分の仮説・Insightを自己承認して `Accepted Learning` へ昇格させない
