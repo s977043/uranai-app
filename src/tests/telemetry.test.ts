@@ -11,6 +11,7 @@ import {
 import {
   validateTelemetryEvent,
   type ProductTelemetryEvent,
+  type ReadingType,
 } from "@/domain/telemetry/events";
 import {
   calculateHelpfulFeedbackRate,
@@ -28,6 +29,7 @@ function started(
   flowId: string,
   occurredAt = "2026-09-15T10:00:00.000Z",
   sessionId = SESSION_ID,
+  readingType: ReadingType = "tarot",
 ): ProductTelemetryEvent {
   return {
     event_name: "reading_started",
@@ -37,7 +39,7 @@ function started(
     anonymous_visitor_id: null,
     properties: {
       reading_flow_id: flowId,
-      reading_type: "tarot",
+      reading_type: readingType,
       entry_context: "self_reflection",
     },
   };
@@ -47,6 +49,7 @@ function completed(
   flowId: string,
   occurredAt = "2026-09-15T10:01:00.000Z",
   sessionId = SESSION_ID,
+  readingType: ReadingType = "tarot",
 ): ProductTelemetryEvent {
   return {
     event_name: "reading_completed",
@@ -56,7 +59,7 @@ function completed(
     anonymous_visitor_id: null,
     properties: {
       reading_flow_id: flowId,
-      reading_type: "tarot",
+      reading_type: readingType,
       duration_bucket: "30s_2m",
     },
   };
@@ -103,30 +106,29 @@ describe("telemetry event contract", () => {
       properties: { ...event.properties, [key]: value },
     };
 
-    const result = validateTelemetryEvent(unsafe);
-    expect(result.ok).toBe(false);
+    expect(validateTelemetryEvent(unsafe).ok).toBe(false);
   });
 
   it("rejects cross-session visitor identity", () => {
-    const unsafe = {
-      ...started(FLOW_ID),
-      anonymous_visitor_id: "visitor-123",
-    };
-    const result = validateTelemetryEvent(unsafe);
-    expect(result.ok).toBe(false);
+    expect(
+      validateTelemetryEvent({
+        ...started(FLOW_ID),
+        anonymous_visitor_id: "visitor-123",
+      }).ok,
+    ).toBe(false);
   });
 
   it("rejects non-random-looking session and reading-flow identifiers", () => {
-    const unsafe = {
-      ...started(FLOW_ID),
-      anonymous_session_id: "session_person@example.com",
-      properties: {
-        ...started(FLOW_ID).properties,
-        reading_flow_id: "reading-flow_user-123",
-      },
-    };
-    const result = validateTelemetryEvent(unsafe);
-    expect(result.ok).toBe(false);
+    expect(
+      validateTelemetryEvent({
+        ...started(FLOW_ID),
+        anonymous_session_id: "session_person@example.com",
+        properties: {
+          ...started(FLOW_ID).properties,
+          reading_flow_id: "reading-flow_user-123",
+        },
+      }).ok,
+    ).toBe(false);
   });
 });
 
@@ -186,6 +188,7 @@ describe("Reading Flow Completion", () => {
         duplicate_events: 1,
         orphan_events: 1,
         out_of_order_events: 0,
+        dimension_mismatch_events: 0,
       },
     });
   });
@@ -207,6 +210,19 @@ describe("Reading Flow Completion", () => {
     }
   });
 
+  it("does not count a completion whose reading_type differs from its start", () => {
+    const result = calculateReadingFlowCompletion([
+      started(FLOW_ID, undefined, undefined, "tarot"),
+      completed(FLOW_ID, undefined, undefined, "numerology"),
+    ]);
+
+    expect(result.status).toBe("computed");
+    if (result.status === "computed") {
+      expect(result.numerator).toBe(0);
+      expect(result.data_quality.dimension_mismatch_events).toBe(1);
+    }
+  });
+
   it("returns not_computable instead of 0% when no start evidence exists", () => {
     expect(calculateReadingFlowCompletion([])).toEqual({
       status: "not_computable",
@@ -218,13 +234,13 @@ describe("Reading Flow Completion", () => {
 
 describe("Helpful Feedback Rate", () => {
   it("deduplicates feedback by reading flow and keeps sample size explicit", () => {
-    const result = calculateHelpfulFeedbackRate([
-      feedback(FLOW_ID, "helpful"),
-      feedback(FLOW_ID, "not_helpful", "2026-09-15T10:03:00.000Z"),
-      feedback(FLOW_ID_2, "not_helpful"),
-    ]);
-
-    expect(result).toEqual({
+    expect(
+      calculateHelpfulFeedbackRate([
+        feedback(FLOW_ID, "helpful"),
+        feedback(FLOW_ID, "not_helpful", "2026-09-15T10:03:00.000Z"),
+        feedback(FLOW_ID_2, "not_helpful"),
+      ]),
+    ).toEqual({
       status: "computed",
       numerator: 1,
       denominator: 2,
@@ -234,6 +250,7 @@ describe("Helpful Feedback Rate", () => {
         duplicate_events: 1,
         orphan_events: 0,
         out_of_order_events: 0,
+        dimension_mismatch_events: 0,
       },
     });
   });
