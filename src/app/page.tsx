@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import {
   getOrCreateAnonymousSessionId,
@@ -60,6 +60,9 @@ export default function Home() {
   const [reading, setReading] = useState<ReflectionReading | null>(null);
   const [feedback, setFeedback] = useState<Helpfulness | null>(null);
   const [telemetryError, setTelemetryError] = useState(false);
+  const activeFlowRef = useRef<string | null>(null);
+  const completedFlowRef = useRef<string | null>(null);
+  const feedbackFlowRef = useRef<string | null>(null);
 
   async function emit(buildEvent: (sessionId: string) => ProductTelemetryEvent) {
     try {
@@ -73,8 +76,13 @@ export default function Home() {
   }
 
   function startReading(nextContext: ReadingContext) {
+    if (activeFlowRef.current !== null) return;
+
     const nextFlowId = createReadingFlowId();
     const now = Date.now();
+    activeFlowRef.current = nextFlowId;
+    completedFlowRef.current = null;
+    feedbackFlowRef.current = null;
 
     setContext(nextContext);
     setFlowId(nextFlowId);
@@ -94,8 +102,17 @@ export default function Home() {
   }
 
   function drawCard() {
-    if (context === null || flowId === null || startedAt === null) return;
+    if (
+      context === null ||
+      flowId === null ||
+      startedAt === null ||
+      activeFlowRef.current !== flowId ||
+      completedFlowRef.current === flowId
+    ) {
+      return;
+    }
 
+    completedFlowRef.current = flowId;
     const nextReading = createReflectionReading(flowId, context);
     const completedAt = Date.now();
     setReading(nextReading);
@@ -111,8 +128,16 @@ export default function Home() {
   }
 
   function submitFeedback(value: Helpfulness) {
-    if (flowId === null || feedback !== null) return;
+    if (
+      flowId === null ||
+      feedback !== null ||
+      completedFlowRef.current !== flowId ||
+      feedbackFlowRef.current === flowId
+    ) {
+      return;
+    }
 
+    feedbackFlowRef.current = flowId;
     setFeedback(value);
 
     void emit((sessionId) =>
@@ -126,6 +151,9 @@ export default function Home() {
   }
 
   function reset() {
+    activeFlowRef.current = null;
+    completedFlowRef.current = null;
+    feedbackFlowRef.current = null;
     setContext(null);
     setFlowId(null);
     setStartedAt(null);
@@ -242,7 +270,9 @@ export default function Home() {
                 ))}
               </div>
               {feedback !== null && (
-                <p className="mt-3 text-center text-xs text-slate-400">ありがとう。次の改善の参考にします。</p>
+                <p className="mt-3 text-center text-xs text-slate-400">
+                  ありがとう。現在、この回答はこの端末から外部へ送信されません。
+                </p>
               )}
             </div>
 
