@@ -27,5 +27,8 @@ jobs:
       - name: Test
         run: npm run test
 
+      - name: AI eval contracts
+        run: npm run eval:contracts
+
       - name: Build
         run: npm run build

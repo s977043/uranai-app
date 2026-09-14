@@ -60,7 +60,7 @@ AI-Native化の価値は各作業の自動化ではなく、**この学習ルー
 5. **Controlled autonomy**
    - 自律化は低リスクで可逆な操作から段階的に広げる。
 
-## ドキュメント
+## Core documents
 
 - [North Star](./north-star.md)
 - [Operating Model](./operating-model.md)
@@ -69,11 +69,22 @@ AI-Native化の価値は各作業の自動化ではなく、**この学習ルー
 - [Safety Policy](./safety-policy.md)
 - [Metrics & Evals](./metrics-and-evals.md)
 
-## Iteration 1
+## Observe contracts
 
-Iteration 1は Foundation に限定します。
+Iteration 2では、実データ接続より前に分析の入力・評価境界を固定します。
 
-実装対象:
+- [Event Taxonomy](./event-taxonomy.md)
+- [Funnel Metrics](./funnel-metrics.md)
+- [`ai/evals/`](../../ai/evals/README.md) — regression fixture / review rubric / validator
+- [`weekly-learning-report.md`](../../ai/workflows/templates/weekly-learning-report.md) — 週次Learningの標準テンプレート
+
+### Why contracts first
+
+Analytics SDKや外部サービスを先に入れると、計測項目が実装都合で固定されやすくなります。先に論理Event / KPI / Evalを定義し、後で任意の計測基盤へマッピングします。
+
+## Iteration 1 — Foundation
+
+PR #19で完了・マージ済み。
 
 - AI/Human/Deterministic の責務境界
 - Analyst / VoC Analyst のAgent Contract
@@ -81,17 +92,30 @@ Iteration 1は Foundation に限定します。
 - Weekly Learning Loop
 - Safety / Metrics / Eval / Knowledge更新規則
 
-実装しないもの:
+## Iteration 2 — Observe
 
+対象:
+
+- Event taxonomy
+- Funnel metric definitions
+- Synthetic regression fixtures
+- Machine-checkable fixture contract validation
+- Human review rubric
+- Weekly Learning Report template / synthetic example
+
+まだ実装しないもの:
+
+- 本番Analytics SDK
+- 実ユーザーデータ接続
 - SNS自動投稿
 - LINE / メール / Pushの自動送信
 - 自動価格変更
-- 自動課金施策
-- 高リスク鑑定の自動判断
-- Orchestratorによる全自動運用
+- Growth / Content / CRM Agent
+- Orchestrator
 
 ## 関連
 
-- Tracking issue: #18
+- Foundation: Issue #18 / PR #19
+- Observe: Issue #20
 - 数秘術ドメイン: PR #16
 - 文言ガードレール: PR #17

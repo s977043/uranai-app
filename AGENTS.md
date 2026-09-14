@@ -14,7 +14,7 @@ AIエージェントは本ファイルを最初に読み、手順と禁止事項
 - 環境変数: `cp .env.example .env.local`
 - 開発起動: `npm run dev`（または `docker compose up --build`）
 - ビルド: `npm run build`
-- Lint/型/テスト: `npm run verify`（= lint → typecheck → test）
+- 検証: `npm run verify`（= lint → typecheck → test → AI eval fixture contract validation）
 
 ## 3. 環境変数と秘密
 - `.env.local` は **作成可だがコミット禁止**
@@ -49,11 +49,12 @@ AIエージェントは本ファイルを最初に読み、手順と禁止事項
 ## 9. リリース前チェック（抜粋）
 - [ ] 主要ロジックの境界テスト（境界日・うるう年・時差）
 - [ ] 型エラー無し（`npm run typecheck`）
+- [ ] AI eval fixture contractが有効（`npm run eval:contracts`）
 - [ ] 追跡: 例外時のユーザー向けメッセージが過度に断定的でないこと
 
 ## 10. AI-Native 事業運用
 - 分析、VoC、Growth、CRM、コンテンツ等の **AI-Native事業運用**を変更する場合は、最初に [`docs/ai-native/README.md`](./docs/ai-native/README.md) を読む
 - Product/Brandの正本は [`docs/concept-board.md`](./docs/concept-board.md)、AI-Native運用の責務・Safety・Evalの正本は `docs/ai-native/`
-- `ai/agents/*` / `ai/skills/*` / `ai/workflows/*` の変更では、Evidence要件・Human Gate・Safety Policy・Regression方針を維持する
+- `ai/agents/*` / `ai/skills/*` / `ai/workflows/*` / `ai/evals/*` の変更では、Evidence要件・Human Gate・Safety Policy・Regression方針を維持する
 - 生の相談内容、不要なPII、秘密情報をKnowledgeやGitへ保存しない
 - Agentが自分の仮説・Insightを自己承認して `Accepted Learning` へ昇格させない

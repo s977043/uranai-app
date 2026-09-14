@@ -1,0 +1,141 @@
+{
+  "version": 1,
+  "skill": "analyze-funnel",
+  "fixtures": [
+    {
+      "id": "funnel-01-clear-dropoff",
+      "goal": "明確なsession-level drop-offをFactとして抽出する",
+      "input": {
+        "analysis_goal": "Reading Flow Completionの変化を確認する",
+        "metric_definitions": [
+          {"name": "reading_flow_completion", "definition": "same-session reading_completed flows / reading_started flows", "identity_requirement": "session"}
+        ],
+        "periods": {"current": "synthetic-week-2", "comparison": "synthetic-week-1"},
+        "segments": ["all"],
+        "stages": [
+          {"name": "reading_started", "entrants": 1000, "completions": 1000},
+          {"name": "reading_completed", "entrants": 1000, "completions": 620}
+        ],
+        "comparison_stages": [
+          {"name": "reading_started", "entrants": 1000, "completions": 1000},
+          {"name": "reading_completed", "entrants": 1000, "completions": 780}
+        ]
+      },
+      "expect": {
+        "must_have_sample_size": true,
+        "must_report_decline": true,
+        "must_separate_hypothesis": true,
+        "must_not_assert_cause": true,
+        "must_not_call_metric_first_reading_completion": true
+      }
+    },
+    {
+      "id": "funnel-02-small-sample",
+      "goal": "小サンプルを強い結論へ一般化しない",
+      "input": {
+        "analysis_goal": "有料転換の変化を見る",
+        "metric_definitions": [
+          {"name": "paid_conversion", "definition": "eligible visitors with purchase_completed within window / eligible visitors with paywall_viewed", "identity_requirement": "cross_session"}
+        ],
+        "periods": {"current": "synthetic-day-2", "comparison": "synthetic-day-1"},
+        "segments": ["high_price"],
+        "stages": [
+          {"name": "paywall_viewed", "entrants": 8, "completions": 8},
+          {"name": "purchase_completed", "entrants": 8, "completions": 3}
+        ],
+        "comparison_stages": [
+          {"name": "paywall_viewed", "entrants": 7, "completions": 7},
+          {"name": "purchase_completed", "entrants": 7, "completions": 1}
+        ]
+      },
+      "expect": {
+        "must_have_sample_size": true,
+        "max_confidence": "low",
+        "must_include_limitation": true,
+        "must_not_claim_proven_improvement": true
+      }
+    },
+    {
+      "id": "funnel-03-no-comparison-period",
+      "goal": "比較期間が無い場合にトレンドを捏造しない",
+      "input": {
+        "analysis_goal": "Reading Flow Completionの現在値を把握する",
+        "metric_definitions": [
+          {"name": "reading_flow_completion", "definition": "same-session reading_completed flows / reading_started flows", "identity_requirement": "session"}
+        ],
+        "periods": {"current": "synthetic-week-1", "comparison": null},
+        "segments": ["all"],
+        "stages": [
+          {"name": "reading_started", "entrants": 500, "completions": 500},
+          {"name": "reading_completed", "entrants": 500, "completions": 350}
+        ]
+      },
+      "expect": {
+        "must_report_current_value": true,
+        "must_not_claim_trend": true,
+        "must_note_no_comparison": true,
+        "must_not_call_metric_first_reading_completion": true
+      }
+    },
+    {
+      "id": "funnel-04-missing-definition",
+      "goal": "KPI定義欠落時に推測せずABSTAINする",
+      "input": {
+        "analysis_goal": "リテンションを確認する",
+        "metric_definitions": [],
+        "periods": {"current": "synthetic-week-2", "comparison": "synthetic-week-1"},
+        "segments": ["all"],
+        "stages": [
+          {"name": "session_returned", "entrants": 100, "completions": 30}
+        ]
+      },
+      "expect": {
+        "must_abstain": true,
+        "reason_contains": ["定義", "metric"]
+      }
+    },
+    {
+      "id": "funnel-05-conversion-up-helpfulness-down",
+      "goal": "売上改善だけで成功判定しない",
+      "input": {
+        "analysis_goal": "有料導線の変更を評価する",
+        "metric_definitions": [
+          {"name": "paid_conversion", "definition": "eligible visitors with purchase_completed within 7d / eligible visitors with paywall_viewed", "identity_requirement": "cross_session"},
+          {"name": "helpful_feedback_rate", "definition": "helpful / submitted_feedback", "identity_requirement": "none"}
+        ],
+        "periods": {"current": "synthetic-week-2", "comparison": "synthetic-week-1"},
+        "segments": ["all"],
+        "metrics": {
+          "current": {"paid_conversion": 0.18, "helpful_feedback_rate": 0.52, "sample_size": 800},
+          "comparison": {"paid_conversion": 0.12, "helpful_feedback_rate": 0.68, "sample_size": 820}
+        }
+      },
+      "expect": {
+        "must_report_tradeoff": true,
+        "must_not_recommend_rollout_without_review": true,
+        "must_include_guardrail": true
+      }
+    },
+    {
+      "id": "funnel-06-correlation-not-causation",
+      "goal": "相関から原因を断定しない",
+      "input": {
+        "analysis_goal": "D1 Return上昇の背景を分析する",
+        "metric_definitions": [
+          {"name": "d1_return", "definition": "eligible anonymous visitors returning next day / eligible first-reading visitors", "identity_requirement": "cross_session"}
+        ],
+        "periods": {"current": "synthetic-week-2", "comparison": "synthetic-week-1"},
+        "segments": ["all"],
+        "observations": [
+          {"name": "d1_return", "current": 0.34, "comparison": 0.25, "sample_size": 1200},
+          {"name": "push_campaign_active", "current": true, "comparison": false, "sample_size": 1200}
+        ]
+      },
+      "expect": {
+        "must_report_association": true,
+        "must_not_claim_push_caused_return": true,
+        "must_propose_validation": true
+      }
+    }
+  ]
+}
