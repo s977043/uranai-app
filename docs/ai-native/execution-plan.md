@@ -15,8 +15,8 @@ Tracking: #18, #20, #23, #27, #30, #31
 - Deterministic message guardrail: PR #22 — 完了
 - MLP First: PR #24 — 完了
 - Iteration 3 Assist: PR #25 / Issue #23 — 完了
-- Iteration 4 Closed Learning Loop: PR #28 / Issue #27 — **merge / close済み**
-- Iteration 4.5 Operational Pilot: Issue #30 / `feature/closed-loop-pilot` — 実装・Readiness評価中
+- Iteration 4 Closed Learning Loop: PR #28 / Issue #27 — 完了
+- Iteration 4.5 Operational Pilot: Issue #30 / PR #32 — 実装・7視点レビュー完了、final validation中
 - Pilot telemetry foundation: Issue #31 — Real PilotのBlocking dependency
 - Deployment / shared test surface: Issue #15 — 判断待ち
 - PR #16 数秘術ドメインは別系統
@@ -42,12 +42,7 @@ Tracking: #20 / PR #21
 - [x] Weekly Learning Report template
 - [x] 7視点レビュー / CI / merge
 
-実装を意図的にScope out:
-
-- Analytics SDK
-- DB migration
-- real user data ingestion
-- identifier lifecycle
+Intentional scope out: Analytics SDK / DB migration / real user data ingestion / identifier lifecycle。
 
 # Iteration 3 — Assist ✅
 
@@ -103,77 +98,72 @@ Completed:
 - [x] PR #28 squash merge (`dcf5622`)
 - [x] Issue #27 close
 
-# Iteration 4.5 — Closed Loop Operational Pilot 🚧
+# Iteration 4.5 — Closed Loop Operational Pilot 🚧 final validation
 
-Tracking: #30  
+Tracking: #30 / PR #32  
 Telemetry unblocker: #31  
-Deployment/test surface: #15
+Deployment/test surface: #15  
+Review: [`closed-loop-pilot-review-record.md`](./closed-loop-pilot-review-record.md)
 
 ## Why this iteration exists
 
-Iteration 5 Controlled AutonomyのEntry条件は「Closed Loopが**実運用で安定**していること」。
+Iteration 5 Controlled AutonomyのEntry条件は、Closed Loopが**実運用で安定**していること。
 
-Iteration 4で証明したのはContract / Eval / Human Gateの設計整合性であり、以下は未検証:
-
-- 実Evidence取得
-- Metric observability
-- Human待ち時間
-- Evidence準備コスト
-- 実行 / rollbackの摩擦
-- Accepted Learning → MLP改善の実運用
-
-したがってControlled Autonomyへ直行しない。
+Iteration 4で証明したのはContract / Eval / Human Gateの設計整合性であり、実Evidence取得・Metric observability・Human待ち時間・Evidence準備コスト・実行/rollback摩擦・MLP return pathは未検証。したがってControlled Autonomyへ直行しない。
 
 ## Plan review / changes
-
-当初計画から以下を更新した。
 
 1. **Metric definitionとobservabilityを分離**
    - `status: active | provisional` = 定義状態
    - `observability_status: uninstrumented | partial | observable` = 実測能力
-   - Real Pilotは両方を要求する。
-2. **Synthetic rehearsalをCI検証**
-   - Markdown例だけでなくmachine-readable JSON + validatorを正本化。
+   - Real Pilotは両方を要求。
+2. **SyntheticをContract E2EとしてCI検証**
+   - machine-readable JSON + validatorを正本化。
+   - Agent/Skill runtime E2Eとは明確に分離。
 3. **Blockedを正しいReadiness結果として扱う**
    - Evidence/source/surface不足を隠して擬似Real Pilotを作らない。
-4. **最初のTelemetryはsession-levelに限定**
+4. **Readinessは現在状態をハードコードせずルールから導出**
+   - Metric observability / Evidence source / execution surface / controls / blockersで`ready|blocked`を判定。
+5. **最初のTelemetryはsession-levelに限定**
    - Cross-session identityを先に導入しない。
-5. **Automation範囲を増やさない**
+6. **Automation範囲を増やさない**
    - PilotではhandoffとEvidence品質を観測する。
 
-## Phase A — Synthetic rehearsal
+## Phase A — Synthetic Contract E2E rehearsal ✅
 
-- [x] Positive pathを表現
-- [x] Safety-blocked pathを表現
+- [x] Positive path
+- [x] Safety-blocked path
 - [x] Human start decision
 - [x] Result Evidence ref
 - [x] Candidate provenance
 - [x] Reviewer independence
 - [x] Synthetic learning promotion禁止
-- [x] Machine-readable `closed-loop-pilot-synthetic.json`
+- [x] `closed-loop-pilot-synthetic.json`
 - [x] `validate-pilot-rehearsal.mjs`
-- [x] `npm run eval:contracts`への組み込み
+- [x] `npm run eval:contracts`へ統合
 
-## Phase B — Manual Real Pilot readiness
+未検証: Agent/Skill runtime E2E、live Analytics、実ユーザー挙動。
 
-### Required
+## Phase B — Manual Real Pilot readiness ✅ evaluated
 
 - [x] Pilot Run Template
 - [x] readiness / blocker contract
 - [x] Metric definition / observability分離
 - [x] Evidence source必須化
+- [x] execution surface必須化
 - [x] Human owner / stop / rollback必須化
 - [x] Privacy / Safety条件
 - [x] Current blocking dependencyを特定
+- [x] Readiness判定をCIでルール導出
 
 ### Current result
 
-**Blocked — expected and valid readiness result.**
+**BLOCKED — expected and valid readiness result.**
 
 Blocking:
 
 1. Product Analytics event sender / ingestion未実装
-2. Metric Registry対象Metricは`observability_status: uninstrumented`
+2. Pilot対象Metricは`observability_status: uninstrumented`
 3. operational Evidence source ref未設定
 4. production/shared test surfaceは#15で判断待ち
 
@@ -182,7 +172,7 @@ Unblocker:
 - #31: privacy-safe session telemetry
 - #15: deployment / test surface
 
-## Phase C — Manual Real Pilot
+## Phase C — Manual Real Pilot 🔒 not started
 
 - [ ] target Metricが`observable`
 - [ ] guardrail Metricが1つ以上`observable`
@@ -195,18 +185,33 @@ Unblocker:
 
 **#31 / #15の条件成立まで開始しない。**
 
+## Multi-perspective review
+
+Product / Agent Architecture / Safety / Data & Privacy / Experimentation / QA & Eval / Delivery の7視点でレビュー済み。
+
+Reviewで解消したBlocker:
+
+- Metric definitionとObservabilityの混同
+- Pilot template / readiness schema不整合
+- Readiness validatorの現状態ハードコード
+- Synthetic Contract E2E / runtime E2Eの表現混同
+
+Residual riskはReview Recordに記録し、Iteration 5 Entry Evidenceとして残す。
+
 ## Iteration 4.5 Definition of Done
 
 Issue #30はOperational Readiness評価のIterationとして完了可能。
 
-- [x] Synthetic positive + failure pathをMachine-readable Contract化
+- [x] Synthetic positive + safety failure pathをMachine-readable Contract化
 - [x] Pilot Runbook / Template
 - [x] Real Pilot readinessを評価可能
 - [x] Blocking dependencyをIssue分離
 - [x] Controlled Autonomy候補 / Human-only候補を明示
-- [ ] CI Green
-- [ ] タスク完了前の7視点レビュー
-- [ ] Review blocker反映
+- [x] Reviewed technical head CI Green
+- [x] タスク完了前の7視点レビュー
+- [x] Review blocker反映
+- [ ] Review recordを含むfinal head CI Green
+- [ ] Final diff / unresolved thread 0
 - [ ] PR merge / Issue #30 close
 
 Real Pilotそのものは#31 / #15解消後に実施し、**Iteration 5のEntry Evidence**として扱う。
@@ -264,7 +269,7 @@ Assist
   ↓
 Closed Learning Loop
   ↓
-Operational Pilot
+Operational Readiness
   ↓
 Pilot Telemetry / Real Pilot
   ↓
