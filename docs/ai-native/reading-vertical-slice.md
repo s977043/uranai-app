@@ -90,8 +90,8 @@ Telemetry失敗はReadingを停止しない。
 Product Flowから次をemitする。
 
 ```text
-theme selected   → reading_started
-result created   → reading_completed
+theme selected    → reading_started
+result created    → reading_completed
 feedback selected → reading_feedback_submitted
 ```
 
@@ -100,6 +100,30 @@ feedback selected → reading_feedback_submitted
 - `reading_type = reflection`
 - same `reading_flow_id`
 - same browser session ID
+- feedback reasonはユーザーに理由を聞いていないため`none`。helpfulnessから推測しない
+
+### Session-local Evidence source
+
+Metric Registryの `browser-session-storage:v1` は以下を指す。
+
+```text
+session id key: uranai.telemetry.session-id.v1
+event key:      uranai.telemetry.events.v1
+```
+
+Evidence取得手順:
+
+1. 同一browser sessionでVertical Sliceを実行する
+2. `sessionStorage["uranai.telemetry.events.v1"]` を取得する
+3. `validateTelemetryEvent` と同じContractでschema-valid eventだけを扱う
+4. `calculateReadingFlowCompletion` / `calculateHelpfulFeedbackRate`でsession-level集約する
+
+注意:
+
+- これは開発・proxy observation用のsession-local Evidence
+- browserを跨いだ中央集約ではない
+- Product運用の正本Evidenceにはしない
+- invalid session IDをローテーションした場合は古いeventをクリアし、別session Evidenceを混在させない
 
 ### Observability status
 
