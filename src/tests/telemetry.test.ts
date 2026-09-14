@@ -25,6 +25,13 @@ const FLOW_ID = "reading-flow_aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const FLOW_ID_2 = "reading-flow_bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const FLOW_ID_3 = "reading-flow_cccccccc-cccc-4ccc-8ccc-cccccccccccc";
 
+const CLEAN_DATA_QUALITY = {
+  duplicate_events: 0,
+  orphan_events: 0,
+  out_of_order_events: 0,
+  dimension_mismatch_events: 0,
+} as const;
+
 function started(
   flowId: string,
   occurredAt = "2026-09-15T10:00:00.000Z",
@@ -102,12 +109,12 @@ describe("telemetry event contract", () => {
     const event = started(FLOW_ID) as ProductTelemetryEvent & {
       properties: Record<string, unknown>;
     };
-    const unsafe = {
-      ...event,
-      properties: { ...event.properties, [key]: value },
-    };
-
-    expect(validateTelemetryEvent(unsafe).ok).toBe(false);
+    expect(
+      validateTelemetryEvent({
+        ...event,
+        properties: { ...event.properties, [key]: value },
+      }).ok,
+    ).toBe(false);
   });
 
   it("rejects cross-session visitor identity", () => {
@@ -171,15 +178,15 @@ describe("telemetry sink", () => {
 
 describe("Reading Flow Completion", () => {
   it("counts flows, not sessions, and reports data-quality anomalies", () => {
-    const result = calculateReadingFlowCompletion([
-      started(FLOW_ID),
-      completed(FLOW_ID),
-      started(FLOW_ID_2, "2026-09-15T10:03:00.000Z"),
-      started(FLOW_ID_2, "2026-09-15T10:03:01.000Z"),
-      completed(FLOW_ID_3, "2026-09-15T10:04:00.000Z"),
-    ]);
-
-    expect(result).toEqual({
+    expect(
+      calculateReadingFlowCompletion([
+        started(FLOW_ID),
+        completed(FLOW_ID),
+        started(FLOW_ID_2, "2026-09-15T10:03:00.000Z"),
+        started(FLOW_ID_2, "2026-09-15T10:03:01.000Z"),
+        completed(FLOW_ID_3, "2026-09-15T10:04:00.000Z"),
+      ]),
+    ).toEqual({
       status: "computed",
       numerator: 1,
       denominator: 2,
@@ -229,6 +236,19 @@ describe("Reading Flow Completion", () => {
       status: "not_computable",
       reason: "missing_required_evidence",
       sample_size: 0,
+      data_quality: CLEAN_DATA_QUALITY,
+    });
+  });
+
+  it("preserves orphan completion evidence even when the metric is not computable", () => {
+    expect(calculateReadingFlowCompletion([completed(FLOW_ID)])).toEqual({
+      status: "not_computable",
+      reason: "zero_denominator",
+      sample_size: 0,
+      data_quality: {
+        ...CLEAN_DATA_QUALITY,
+        orphan_events: 1,
+      },
     });
   });
 });
@@ -258,19 +278,25 @@ describe("Helpful Feedback Rate", () => {
     });
   });
 
-  it("excludes orphan, cross-session, and pre-completion feedback", () => {
-    const result = calculateHelpfulFeedbackRate([
-      completed(FLOW_ID),
-      feedback(FLOW_ID, "helpful", "2026-09-15T10:00:00.000Z"),
-      completed(FLOW_ID_2),
-      feedback(FLOW_ID_2, "helpful", undefined, SESSION_ID_2),
-      feedback(FLOW_ID_3, "helpful"),
-    ]);
-
-    expect(result).toEqual({
+  it("excludes orphan, cross-session, and pre-completion feedback while preserving anomalies", () => {
+    expect(
+      calculateHelpfulFeedbackRate([
+        completed(FLOW_ID),
+        feedback(FLOW_ID, "helpful", "2026-09-15T10:00:00.000Z"),
+        completed(FLOW_ID_2),
+        feedback(FLOW_ID_2, "helpful", undefined, SESSION_ID_2),
+        feedback(FLOW_ID_3, "helpful"),
+      ]),
+    ).toEqual({
       status: "not_computable",
       reason: "zero_denominator",
       sample_size: 0,
+      data_quality: {
+        duplicate_events: 0,
+        orphan_events: 2,
+        out_of_order_events: 1,
+        dimension_mismatch_events: 0,
+      },
     });
   });
 
@@ -279,6 +305,7 @@ describe("Helpful Feedback Rate", () => {
       status: "not_computable",
       reason: "zero_denominator",
       sample_size: 0,
+      data_quality: CLEAN_DATA_QUALITY,
     });
   });
 });
