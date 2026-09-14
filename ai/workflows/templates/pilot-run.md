@@ -8,6 +8,7 @@ mode: synthetic | manual_real
 owner: human
 risk: low | medium | high
 status: planned | approved | running | completed | stopped | blocked
+readiness_status: ready | blocked
 ```
 
 ## Readiness
@@ -18,8 +19,15 @@ hypothesis_ref: string
 target_metric_ref: metric:<stable-id>
 guardrail_metric_refs:
   - metric:<stable-id>
+metric_observability:
+  target: uninstrumented | partial | observable
+  guardrails:
+    - ref: metric:<stable-id>
+      status: uninstrumented | partial | observable
 evidence_source_refs:
   - string
+evidence_source_operational: true | false
+deployment_or_test_surface_ref: string | null
 sample_or_duration_rule: string
 stop_conditions:
   - string
@@ -28,7 +36,27 @@ privacy_notes:
   - string
 safety_notes:
   - string
+blocking_dependencies:
+  - string
 ```
+
+## Readiness decision rules
+
+`mode: manual_real` は次をすべて満たす場合だけ `readiness_status: ready` にできる。
+
+- risk = low
+- target / guardrail Metricのdefinitionがactive
+- target / guardrail Metricの`observability_status = observable`
+- Evidence sourceが運用可能である
+- 実行対象surfaceが存在する
+- sample / duration ruleが事前定義済み
+- stop condition / rollbackが実行可能
+- Privacy / Safety reviewが完了
+- Human ownerがstart / stopできる
+
+1つでも欠ける場合は`status: blocked` / `readiness_status: blocked`とし、**Blocked dependencyを明文化すること自体をPilot readinessの有効な結果**として扱う。
+
+`mode: synthetic` はMetricが`uninstrumented`でもWorkflow Contract rehearsalとして実行可能。ただし実測可能性を証明したことにはしない。
 
 ## Human approvals
 
@@ -86,7 +114,8 @@ keep_human_controlled:
 
 - `mode: synthetic` の結果をProduct Accepted Learningとして扱わない
 - `mode: manual_real`でもHuman start / stop / learning decisionを維持する
-- Metric refはactiveなMetric Registry entryへ解決できること
+- Metric refはactiveなMetric Registry definitionへ解決できること
+- Real Pilotでは、定義済みだけでなく`observability_status: observable`を要求する
 - Raw consultation / PIIをArtifactへコピーしない
 - Safety findingが出たらstop conditionを優先する
 - `accepted_learning_ref`はHuman Accept後のみ設定する
