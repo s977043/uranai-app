@@ -21,7 +21,9 @@ function canonicalIso(value) {
 }
 
 function calendarDate(value) {
-  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00.000Z`));
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
 assert(document.version === 1, "execution receipt: fixture version must be 1");
@@ -40,9 +42,9 @@ for (const fixture of document.fixtures) {
   assert(result && typeof result === "object", `${fixture.id}: experiment_result required`);
   assert(execution && typeof execution === "object", `${fixture.id}: execution receipt required`);
   assert(execution.approved_by === "human", `${fixture.id}: execution must remain human-approved`);
-  assert(calendarDate(execution.approved_at), `${fixture.id}: approved_at must be YYYY-MM-DD`);
-  assert(calendarDate(execution.started_at), `${fixture.id}: started_at must be YYYY-MM-DD`);
-  assert(calendarDate(execution.ended_at), `${fixture.id}: ended_at must be YYYY-MM-DD`);
+  assert(calendarDate(execution.approved_at), `${fixture.id}: approved_at must be a real YYYY-MM-DD date`);
+  assert(calendarDate(execution.started_at), `${fixture.id}: started_at must be a real YYYY-MM-DD date`);
+  assert(calendarDate(execution.ended_at), `${fixture.id}: ended_at must be a real YYYY-MM-DD date`);
   assert(execution.approved_at <= execution.started_at, `${fixture.id}: approval must not be after start`);
   assert(execution.started_at <= execution.ended_at, `${fixture.id}: start must not be after end`);
   assert(canonicalIso(execution.executed_at), `${fixture.id}: executed_at must be canonical ISO-8601`);
