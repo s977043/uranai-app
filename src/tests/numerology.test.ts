@@ -5,13 +5,18 @@ import {
   calculateLifePathNumber,
   daysInMonth,
   isLeapYear,
+  LIFE_PATH_RULE_VERSION,
   MASTER_NUMBERS,
 } from "@/domain/numerology";
 
 const NEUTRAL_DATE_MESSAGE =
   "日付を読み取れませんでした。年月日をもう一度ご確認ください。";
 
-describe("calculateLifePathNumber", () => {
+describe("life path rule", () => {
+  it("rule versionを明示する", () => {
+    expect(LIFE_PATH_RULE_VERSION).toBe(1);
+  });
+
   it.each([
     [{ year: 1990, month: 1, day: 1 }, 3],
     [{ year: 2000, month: 12, day: 25 }, 3],
