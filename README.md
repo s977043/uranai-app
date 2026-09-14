@@ -68,5 +68,6 @@ ai/
 ## 開発ルール
 
 AI エージェント・人間ともに [`AGENTS.md`](./AGENTS.md) の手順に従ってください。
+ユーザー向けプロダクト開発は、MVPではなく **MLP First** を基本形とし、[`docs/product-development.md`](./docs/product-development.md) の `Experience Hypothesis → Vertical Slice → Lovability Review → User Observation → Polish Loop → MLP Release → Retention Validation` に従います。
 AI-Native事業運用の設計は [`docs/ai-native/README.md`](./docs/ai-native/README.md) を参照してください。
 GitHub Copilot 向けの補足は [`.github/copilot-instructions.md`](./.github/copilot-instructions.md) にあります。
