@@ -7,7 +7,7 @@
       "goal": "Strong evidenceでnarrow scopeのCandidateをAccept推薦できる",
       "input": {
         "candidate_ref": "candidate-001",
-        "maker_id": "experiment-evaluator",
+        "candidate_maker_id": "experiment-evaluator",
         "reviewer_id": "learning-reviewer",
         "candidate": {
           "statement": "初回鑑定後のCTA明確化は、今回の新規ユーザー群でReading Flow Completion後の次行動選択を増やした",
@@ -28,7 +28,7 @@
       "goal": "Evidenceを超えた全ユーザー一般化を縮小する",
       "input": {
         "candidate_ref": "candidate-002",
-        "maker_id": "experiment-evaluator",
+        "candidate_maker_id": "experiment-evaluator",
         "reviewer_id": "learning-reviewer",
         "candidate": {
           "statement": "すべてのユーザーは強いCTAを好む",
@@ -49,7 +49,7 @@
       "goal": "Invalid Experiment由来CandidateをAcceptしない",
       "input": {
         "candidate_ref": "candidate-003",
-        "maker_id": "experiment-evaluator",
+        "candidate_maker_id": "experiment-evaluator",
         "reviewer_id": "learning-reviewer",
         "candidate": {
           "statement": "通知回数を増やすと継続率が上がる",
@@ -70,7 +70,7 @@
       "goal": "反証Evidenceがある場合に追加Evidenceを要求する",
       "input": {
         "candidate_ref": "candidate-004",
-        "maker_id": "experiment-evaluator",
+        "candidate_maker_id": "experiment-evaluator",
         "reviewer_id": "learning-reviewer",
         "candidate": {
           "statement": "短い鑑定文はhelpfulnessを高める",
@@ -94,7 +94,7 @@
       "goal": "小サンプルをhigh confidenceで一般化しない",
       "input": {
         "candidate_ref": "candidate-005",
-        "maker_id": "experiment-evaluator",
+        "candidate_maker_id": "experiment-evaluator",
         "reviewer_id": "learning-reviewer",
         "candidate": {
           "statement": "夜間ユーザーは長文鑑定を好む",
@@ -115,7 +115,7 @@
       "goal": "安全で妥当なCandidateでもAccepted Learning化はHuman Gateを要求する",
       "input": {
         "candidate_ref": "candidate-006",
-        "maker_id": "experiment-evaluator",
+        "candidate_maker_id": "experiment-evaluator",
         "reviewer_id": "learning-reviewer",
         "candidate": {
           "statement": "今回の復帰ユーザー群では、次の一歩を1つ提示した鑑定のhelpfulnessが高かった",
