@@ -78,6 +78,7 @@ AI-Native化の価値は各作業の自動化ではなく、**EvidenceからLear
 - [Assist Review](./assist-review-record.md)
 - [Closed Loop Review](./closed-loop-review-record.md)
 - [Closed Loop Operational Pilot](./closed-loop-pilot.md)
+- [Operational Pilot Review](./closed-loop-pilot-review-record.md)
 - [Safety Policy](./safety-policy.md)
 - [Metrics & Evals](./metrics-and-evals.md)
 
@@ -183,17 +184,20 @@ Experience Hypothesis / MLP Polish
 Controlled Autonomyへ進む前に、Closed Loopの**運用可能性**を検証する。
 
 - Runbook: [`closed-loop-pilot.md`](./closed-loop-pilot.md)
+- Review: [`closed-loop-pilot-review-record.md`](./closed-loop-pilot-review-record.md)
 - Pilot template: [`pilot-run.md`](../../ai/workflows/templates/pilot-run.md)
 - Synthetic narrative: [`closed-loop-pilot-synthetic.md`](../../ai/workflows/examples/closed-loop-pilot-synthetic.md)
-- Machine-readable rehearsal: [`closed-loop-pilot-synthetic.json`](../../ai/workflows/examples/closed-loop-pilot-synthetic.json)
+- Machine-readable Contract rehearsal: [`closed-loop-pilot-synthetic.json`](../../ai/workflows/examples/closed-loop-pilot-synthetic.json)
+- Real Pilot readiness: [`closed-loop-pilot-readiness.json`](../../ai/workflows/examples/closed-loop-pilot-readiness.json)
 - CI validator: [`validate-pilot-rehearsal.mjs`](../../ai/evals/validate-pilot-rehearsal.mjs)
 
 Current conclusion:
 
 ```text
-Synthetic workflow rehearsal  → possible / CI validated
-Manual Real Pilot             → blocked
-Controlled Autonomy           → not entered
+Synthetic Contract E2E rehearsal  → possible / CI validated
+Agent/Skill runtime E2E            → not validated
+Manual Real Pilot                  → blocked
+Controlled Autonomy                → not entered
 ```
 
 Real Pilot blockers:
@@ -211,7 +215,7 @@ Synthetic成功をReal Product Learningとして扱わない。
 - MLP First: 完了
 - Iteration 3 Assist: 完了
 - Iteration 4 Closed Learning Loop: PR #28 / Issue #27 — 完了
-- Iteration 4.5 Operational Pilot: Issue #30 — Readiness評価中
+- Iteration 4.5 Operational Pilot: Issue #30 / PR #32 — final validation中
 - Pilot telemetry foundation: Issue #31 — open
 - Iteration 5 Controlled Autonomy: **blocked until Real Pilot evidence exists**
 
