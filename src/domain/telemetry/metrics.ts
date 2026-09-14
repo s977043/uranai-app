@@ -13,24 +13,27 @@ type ReadingFeedbackEvent = Extract<
   { event_name: "reading_feedback_submitted" }
 >;
 
+type DataQuality = {
+  duplicate_events: number;
+  orphan_events: number;
+  out_of_order_events: number;
+  dimension_mismatch_events: number;
+};
+
 type ComputedMetric = {
   status: "computed";
   numerator: number;
   denominator: number;
   rate: number;
   sample_size: number;
-  data_quality: {
-    duplicate_events: number;
-    orphan_events: number;
-    out_of_order_events: number;
-    dimension_mismatch_events: number;
-  };
+  data_quality: DataQuality;
 };
 
 type NotComputableMetric = {
   status: "not_computable";
   reason: "missing_required_evidence" | "zero_denominator";
   sample_size: 0;
+  data_quality: DataQuality;
 };
 
 export type MetricEvidence = ComputedMetric | NotComputableMetric;
@@ -39,15 +42,26 @@ function timestamp(value: string): number {
   return Date.parse(value);
 }
 
+function dataQuality(
+  duplicateEvents: number,
+  orphanEvents: number,
+  outOfOrderEvents: number,
+  dimensionMismatchEvents = 0,
+): DataQuality {
+  return {
+    duplicate_events: duplicateEvents,
+    orphan_events: orphanEvents,
+    out_of_order_events: outOfOrderEvents,
+    dimension_mismatch_events: dimensionMismatchEvents,
+  };
+}
+
 export function calculateReadingFlowCompletion(
   events: readonly ProductTelemetryEvent[],
 ): MetricEvidence {
   const starts = new Map<string, ReadingStartedEvent>();
   const completions = new Map<string, ReadingCompletedEvent>();
   let duplicateEvents = 0;
-  let orphanEvents = 0;
-  let outOfOrderEvents = 0;
-  let dimensionMismatchEvents = 0;
 
   for (const event of events) {
     if (event.event_name === "reading_started") {
@@ -74,10 +88,15 @@ export function calculateReadingFlowCompletion(
       status: "not_computable",
       reason: events.length === 0 ? "missing_required_evidence" : "zero_denominator",
       sample_size: 0,
+      data_quality: dataQuality(duplicateEvents, completions.size, 0),
     };
   }
 
   let completed = 0;
+  let orphanEvents = 0;
+  let outOfOrderEvents = 0;
+  let dimensionMismatchEvents = 0;
+
   for (const [flowId, completion] of completions) {
     const start = starts.get(flowId);
     if (!start) {
@@ -105,12 +124,12 @@ export function calculateReadingFlowCompletion(
     denominator: starts.size,
     rate: completed / starts.size,
     sample_size: starts.size,
-    data_quality: {
-      duplicate_events: duplicateEvents,
-      orphan_events: orphanEvents,
-      out_of_order_events: outOfOrderEvents,
-      dimension_mismatch_events: dimensionMismatchEvents,
-    },
+    data_quality: dataQuality(
+      duplicateEvents,
+      orphanEvents,
+      outOfOrderEvents,
+      dimensionMismatchEvents,
+    ),
   };
 }
 
@@ -120,8 +139,6 @@ export function calculateHelpfulFeedbackRate(
   const completions = new Map<string, ReadingCompletedEvent>();
   const feedbackByFlow = new Map<string, ReadingFeedbackEvent>();
   let duplicateEvents = 0;
-  let orphanEvents = 0;
-  let outOfOrderEvents = 0;
 
   for (const event of events) {
     if (event.event_name === "reading_completed") {
@@ -139,6 +156,9 @@ export function calculateHelpfulFeedbackRate(
   }
 
   const eligibleFeedback: ReadingFeedbackEvent[] = [];
+  let orphanEvents = 0;
+  let outOfOrderEvents = 0;
+
   for (const [flowId, feedback] of feedbackByFlow) {
     const completion = completions.get(flowId);
     if (!completion || completion.anonymous_session_id !== feedback.anonymous_session_id) {
@@ -157,6 +177,11 @@ export function calculateHelpfulFeedbackRate(
       status: "not_computable",
       reason: events.length === 0 ? "missing_required_evidence" : "zero_denominator",
       sample_size: 0,
+      data_quality: dataQuality(
+        duplicateEvents,
+        orphanEvents,
+        outOfOrderEvents,
+      ),
     };
   }
 
@@ -170,11 +195,10 @@ export function calculateHelpfulFeedbackRate(
     denominator: eligibleFeedback.length,
     rate: helpful / eligibleFeedback.length,
     sample_size: eligibleFeedback.length,
-    data_quality: {
-      duplicate_events: duplicateEvents,
-      orphan_events: orphanEvents,
-      out_of_order_events: outOfOrderEvents,
-      dimension_mismatch_events: 0,
-    },
+    data_quality: dataQuality(
+      duplicateEvents,
+      orphanEvents,
+      outOfOrderEvents,
+    ),
   };
 }
