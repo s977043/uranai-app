@@ -132,7 +132,7 @@ Residual:
 
 ### 7. QA / Delivery
 
-**Conclusion: Approve subject to final-head CI.**
+**Conclusion: Approve.**
 
 Regression added:
 - deterministic card selection
@@ -203,4 +203,15 @@ Residual:
 5. Manual Real Pilot
 6. Controlled Autonomy entry review
 
-Final statusはPR final head CI Green / mergeable / unresolved thread 0確認後に確定する。
+## Final status
+
+**Approved for the stated boundary.**
+
+PR #35 final head `931ef7ee83a885cac8e25e34117ab06fd48a61fc` で以下を確認した。
+
+- npm ci / lint / typecheck / test / AI eval contracts / build: Green
+- mergeable: true
+- unresolved review thread: 0
+- 7視点レビューのBlocker: すべて反映済み
+
+PR #35はsquash merge済み（`1a7fd5c069a4601dddc9fbb2d06d761b57938928`）。
