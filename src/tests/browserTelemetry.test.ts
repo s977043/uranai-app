@@ -31,16 +31,20 @@ describe("browser telemetry session", () => {
   it("reuses a valid session-scoped identifier", () => {
     const storage = new MemoryStorage();
     expect(getOrCreateAnonymousSessionId(storage, () => VALID_SESSION_ID)).toBe(VALID_SESSION_ID);
-    expect(getOrCreateAnonymousSessionId(storage, () => {
-      throw new Error("should not generate another id");
-    })).toBe(VALID_SESSION_ID);
+    expect(
+      getOrCreateAnonymousSessionId(storage, () => {
+        throw new Error("should not generate another id");
+      }),
+    ).toBe(VALID_SESSION_ID);
   });
 
-  it("rotates an invalid stored identifier instead of reusing it", () => {
+  it("rotates an invalid stored identifier and clears stale telemetry", () => {
     const storage = new MemoryStorage();
     storage.setItem("uranai.telemetry.session-id.v1", "session_person@example.com");
+    storage.setItem("uranai.telemetry.events.v1", JSON.stringify([{ stale: true }]));
 
     expect(getOrCreateAnonymousSessionId(storage, () => VALID_SESSION_ID)).toBe(VALID_SESSION_ID);
+    expect(storage.getItem("uranai.telemetry.events.v1")).toBeNull();
   });
 
   it("rejects a generator that does not return a UUID v4 session id", () => {
