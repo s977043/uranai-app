@@ -29,6 +29,10 @@ export function getOrCreateAnonymousSessionId(
   if (!isAnonymousSessionId(created)) {
     throw new Error("anonymous telemetry session id must be UUID v4 based");
   }
+
+  if (existing !== null) {
+    storage.removeItem(EVENTS_KEY);
+  }
   storage.setItem(SESSION_ID_KEY, created);
   return created;
 }
