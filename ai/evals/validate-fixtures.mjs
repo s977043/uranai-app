@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
+const validIdentityRequirements = new Set(["session", "cross_session", "none"]);
 
 const specs = [
   {
@@ -32,7 +33,28 @@ const specs = [
       assert(fixture.input?.analysis_goal, `${fixture.id}: analysis_goal required`);
       assert(fixture.expect && typeof fixture.expect === "object", `${fixture.id}: expect required`);
 
+      const metricDefinitions = fixture.input.metric_definitions ?? [];
+      for (const definition of metricDefinitions) {
+        assert(typeof definition.name === "string" && definition.name.length > 0, `${fixture.id}: metric name required`);
+        assert(
+          typeof definition.definition === "string" && definition.definition.length > 0,
+          `${fixture.id}: metric definition required`,
+        );
+        assert(
+          validIdentityRequirements.has(definition.identity_requirement),
+          `${fixture.id}: metric ${definition.name} must declare identity_requirement`,
+        );
+      }
+
+      if (fixture.id === "funnel-01-clear-dropoff" || fixture.id === "funnel-03-no-comparison-period") {
+        assert(
+          fixture.expect.must_not_call_metric_first_reading_completion === true,
+          `${fixture.id}: session metric must not be relabeled as First Reading Completion`,
+        );
+      }
+
       if (fixture.id === "funnel-04-missing-definition") {
+        assert(metricDefinitions.length === 0, `${fixture.id}: fixture must intentionally omit metric definitions`);
         assert(fixture.expect.must_abstain === true, `${fixture.id}: missing metric definition must abstain`);
       }
 
