@@ -69,12 +69,13 @@ function feedback(
   flowId: string,
   helpfulness: "helpful" | "neutral" | "not_helpful",
   occurredAt = "2026-09-15T10:02:00.000Z",
+  sessionId = SESSION_ID,
 ): ProductTelemetryEvent {
   return {
     event_name: "reading_feedback_submitted",
     event_version: 1,
     occurred_at: occurredAt,
-    anonymous_session_id: SESSION_ID,
+    anonymous_session_id: sessionId,
     anonymous_visitor_id: null,
     properties: {
       reading_flow_id: flowId,
@@ -233,11 +234,13 @@ describe("Reading Flow Completion", () => {
 });
 
 describe("Helpful Feedback Rate", () => {
-  it("deduplicates feedback by reading flow and keeps sample size explicit", () => {
+  it("counts only feedback correlated to a completed reading flow", () => {
     expect(
       calculateHelpfulFeedbackRate([
+        completed(FLOW_ID),
         feedback(FLOW_ID, "helpful"),
         feedback(FLOW_ID, "not_helpful", "2026-09-15T10:03:00.000Z"),
+        completed(FLOW_ID_2),
         feedback(FLOW_ID_2, "not_helpful"),
       ]),
     ).toEqual({
@@ -255,8 +258,24 @@ describe("Helpful Feedback Rate", () => {
     });
   });
 
+  it("excludes orphan, cross-session, and pre-completion feedback", () => {
+    const result = calculateHelpfulFeedbackRate([
+      completed(FLOW_ID),
+      feedback(FLOW_ID, "helpful", "2026-09-15T10:00:00.000Z"),
+      completed(FLOW_ID_2),
+      feedback(FLOW_ID_2, "helpful", undefined, SESSION_ID_2),
+      feedback(FLOW_ID_3, "helpful"),
+    ]);
+
+    expect(result).toEqual({
+      status: "not_computable",
+      reason: "zero_denominator",
+      sample_size: 0,
+    });
+  });
+
   it("returns not_computable when feedback evidence is absent", () => {
-    expect(calculateHelpfulFeedbackRate([started(FLOW_ID)])).toEqual({
+    expect(calculateHelpfulFeedbackRate([completed(FLOW_ID)])).toEqual({
       status: "not_computable",
       reason: "zero_denominator",
       sample_size: 0,
