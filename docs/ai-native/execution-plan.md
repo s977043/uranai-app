@@ -17,7 +17,7 @@ Tracking: #18, #20, #23, #27, #30, #31, #33
 - Iteration 3 Assist: PR #25 / Issue #23 — 完了
 - Iteration 4 Closed Learning Loop: PR #28 / Issue #27 — 完了
 - Iteration 4.5 Operational Readiness: Issue #30 / PR #32 — 完了
-- Iteration 4.6 Pilot Telemetry Foundation: Issue #31 — 実装・レビュー中
+- Iteration 4.6 Pilot Telemetry Foundation: Issue #31 / PR #34 — 実装・7視点レビュー・CI完了、merge ready
 - Reading Vertical Slice + Product instrumentation: Issue #33 — #31後
 - Deployment / shared test surface: Issue #15 — 実ユーザー観察前に判断
 - PR #16 数秘術ドメインは別系統
@@ -202,12 +202,13 @@ Reviewで解消したBlocker:
 - [x] PR #32 squash merge (`cb6ecef`)
 - [x] Issue #30 close
 
-# Iteration 4.6 — Pilot Telemetry Foundation 🚧
+# Iteration 4.6 — Pilot Telemetry Foundation 🚧 merge ready
 
-Tracking: #31  
+Tracking: #31 / PR #34  
 Product instrumentation: #33  
 Shared / production surface: #15  
-Design: [`telemetry-foundation.md`](./telemetry-foundation.md)
+Design: [`telemetry-foundation.md`](./telemetry-foundation.md)  
+Review: [`telemetry-foundation-review-record.md`](./telemetry-foundation-review-record.md)
 
 ## Why this iteration exists
 
@@ -234,7 +235,7 @@ Manual Real Pilot
 2. **Vendor SDKを先に入れない**
    - Domain Contract + Sink portを先に安定化。
 3. **Reading Flow correlationを追加**
-   - `reading_flow_id = reading-flow_<random-uuid>`
+   - `reading_flow_id = reading-flow_<random-uuid-v4>`
    - session内複数readingを正しく数える。
 4. **ComputationとObservabilityを分離**
    - aggregation: `computed | not_computable`
@@ -243,6 +244,10 @@ Manual Real Pilot
    - `anonymous_visitor_id = null`固定。
 6. **Data Qualityを明示**
    - duplicate / orphan / out-of-order / dimension mismatchを隠さない。
+7. **Canonical timestampを固定**
+   - `Date.toISOString()`形式のみ受理。
+8. **Helpful Feedbackをcompleted flowへ相関**
+   - orphan / cross-session / pre-completion feedbackを正常sampleへ入れない。
 
 ## Deliverables
 
@@ -251,17 +256,19 @@ Manual Real Pilot
 - [x] typed Event Contract
 - [x] strict property allowlist
 - [x] canonical timestamp validation
+- [x] UUID v4 identifier validation
 - [x] Reading Flow correlation
 - [x] Reading Flow Completion aggregation
 - [x] Helpful Feedback Rate aggregation
 - [x] Data Quality signals
+- [x] `not_computable`でもData Quality保持
 - [x] missing Evidence => `not_computable`
 - [x] Observability promotion assessment
 
 ### Adapter
 
-- [x] random `anonymous_session_id`
-- [x] random `reading_flow_id`
+- [x] random UUID v4 `anonymous_session_id`
+- [x] random UUID v4 `reading_flow_id`
 - [x] Telemetry Sink port
 - [x] InMemory sink
 - [x] validate-before-write
@@ -272,6 +279,7 @@ Manual Real Pilot
 - [x] raw consultation / raw prompt / raw responseをallowしない
 - [x] name / email / phone等をallowしない
 - [x] cross-session visitor IDをreject
+- [x] non-v4 UUIDをreject
 - [x] persistence無し
 - [x] external Analytics vendor無し
 
@@ -282,24 +290,25 @@ Manual Real Pilot
 - [x] #33 Reading Vertical Slice dependency分離
 - [x] AI-Native README更新
 - [x] Execution Plan更新
-- [ ] Review record
-- [ ] PR CI Green
-- [ ] 完了前7視点レビュー
-- [ ] Review blocker反映
+- [x] Review record
+- [x] PR final-head CI Green
+- [x] 完了前7視点レビュー
+- [x] Review blocker反映
 - [ ] merge / #31 close
 
 ## Foundation exit criteria
 
 - [x] Event Contract / PII boundary
-- [x] session / reading-flow random ID
+- [x] session / reading-flow random UUID v4
 - [x] Sink port + local/test sink
 - [x] flow-level aggregation
 - [x] missing Evidence semantics
+- [x] Data Quality traceability
 - [x] Observability promotion rule testable
 - [x] RegistryはProduct未接続のため`uninstrumented`維持
-- [ ] Final CI Green
-- [ ] Product / Architecture / Privacy / Safety / Analytics / QA / Delivery review
-- [ ] Blocker解消
+- [x] Final CI Green
+- [x] Product / Architecture / Privacy / Safety / Analytics / QA / Delivery review
+- [x] Blocker解消
 
 # Reading Vertical Slice + Product Instrumentation 🔒 next
 
