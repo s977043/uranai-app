@@ -28,6 +28,7 @@ evidence_source_refs:
   - string
 evidence_source_operational: true | false
 deployment_or_test_surface_ref: string | null
+execution_surface_available: true | false
 sample_or_duration_rule: string
 stop_conditions:
   - string
@@ -48,15 +49,17 @@ blocking_dependencies:
 - target / guardrail Metricのdefinitionがactive
 - target / guardrail Metricの`observability_status = observable`
 - Evidence sourceが運用可能である
-- 実行対象surfaceが存在する
+- `execution_surface_available = true`
+- `deployment_or_test_surface_ref` が存在する
 - sample / duration ruleが事前定義済み
 - stop condition / rollbackが実行可能
 - Privacy / Safety reviewが完了
 - Human ownerがstart / stopできる
+- `blocking_dependencies` が空
 
 1つでも欠ける場合は`status: blocked` / `readiness_status: blocked`とし、**Blocked dependencyを明文化すること自体をPilot readinessの有効な結果**として扱う。
 
-`mode: synthetic` はMetricが`uninstrumented`でもWorkflow Contract rehearsalとして実行可能。ただし実測可能性を証明したことにはしない。
+`mode: synthetic` はMetricが`uninstrumented`でも**Contract E2E rehearsal**として実行可能。ただしAgent/Skill runtimeや実測可能性を証明したことにはしない。
 
 ## Human approvals
 
@@ -69,7 +72,7 @@ start_reason: string
 ## Execution
 
 ```yaml
-execution_ref: string
+execution_ref: string | null
 started_at: string | null
 ended_at: string | null
 manual_actions:
@@ -113,6 +116,7 @@ keep_human_controlled:
 ## Rules
 
 - `mode: synthetic` の結果をProduct Accepted Learningとして扱わない
+- SyntheticはContract E2Eでありruntime E2Eと表現しない
 - `mode: manual_real`でもHuman start / stop / learning decisionを維持する
 - Metric refはactiveなMetric Registry definitionへ解決できること
 - Real Pilotでは、定義済みだけでなく`observability_status: observable`を要求する
