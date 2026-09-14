@@ -65,7 +65,7 @@ export const REFLECTION_CARDS: readonly ReflectionCard[] = [
   },
   {
     id: "release",
-    title: "手放す",
+    title: "軽くする",
     keyword: "抱えすぎを減らす",
     interpretation:
       "全部を同時に良くしようとすると、何が大切か見えにくくなります。いま優先しないものを決めることも前進です。",
