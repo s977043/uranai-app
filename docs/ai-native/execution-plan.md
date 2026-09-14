@@ -1,6 +1,6 @@
 # AI-Native Execution Plan
 
-Tracking: #18, #20, #23
+Tracking: #18, #20, #23, #26
 
 ## Objective
 
@@ -10,165 +10,132 @@ Tracking: #18, #20, #23
 
 ## Current state
 
-- Foundation: PR #19 merge済み
-- Observe: PR #21 merge済み / Issue #20 close済み
-- Deterministic message guardrail: PR #22 merge済み（旧PR #17を置換）
-- MLP First: PR #24 merge済み
-- Iteration 3 Assist: Issue #23 / PR #25 — 実装・7視点レビュー・CI完了、merge ready
+- Foundation: PR #19 — 完了
+- Observe: PR #21 — 完了
+- Deterministic Message Guardrail: PR #22 — 完了
+- MLP First: PR #24 — 完了
+- Assist: PR #25 / Issue #23 — 完了
+- Closed Learning Loop: Issue #26 — 実装中
 - PR #16 数秘術ドメインは別系統で進行中
 
 # Iteration 1 — Foundation ✅
 
-- [x] North Star / Non-goals
-- [x] Deterministic / AI / Human責務分離
-- [x] Autonomy levels
-- [x] Safety / Human Gate / Data safety
-- [x] Metrics / Evidence / Regression policy
-- [x] Analyst / VoC Analyst
-- [x] analyze-voc / analyze-funnel
-- [x] Weekly Learning Loop / Accepted Learning Gate
-- [x] 複数視点レビュー / CI / merge
+North Star、責務分離、Safety、Evidence、Analyst / VoC Analyst、Learning Gateを確立。
 
 # Iteration 2 — Observe ✅
 
-Tracking: #20 / PR #21
+Event / Metric / identity / regression fixture / Weekly Learning Reportの契約を確立。
 
-- [x] Event taxonomy
-- [x] Funnel metric definitions
-- [x] privacy-safe cross-session identity contract
-- [x] First Reading Completion / Reading Flow Completion分離
-- [x] VoC / Funnel regression fixtures
-- [x] Fixture contract validator
-- [x] Human review rubric
-- [x] Weekly Learning Report template / synthetic example
-- [x] 7視点レビュー
-- [x] CI Green / merge / Issue close
+# Iteration 3 — Assist ✅
 
-Intentional scope out: Analytics SDK / DB migration / 実ユーザーデータ接続 / identifier lifecycle実装。
+Draft Maker / Reviewer / Human Gateを確立。
 
-# Iteration 3 — Assist ✅ merge ready
+- Content Agent — Draft Maker
+- Growth Agent — Experiment / Draft Maker
+- Reading Quality Agent — Reviewer only
+- `reviewer != maker`
+- Growth metric / guardrailは`metric_definition_ref`で追跡
+- Content 5 / Growth 5 / Reading Quality 6 regression fixtures
+- PR #25 merge / Issue #23 close
 
-Tracking: #23 / PR #25
+Scope out継続: auto publish / CRM send / price / charge / reading generator / Orchestrator。
+
+# Iteration 4 — Closed Learning Loop 🚧
+
+Tracking: #26
 
 ## Goal
 
-ユーザー向けExecutionを**Draft-only**でAI化し、Maker / Reviewer / Human Gateを成立させる。
+AIに本番Experimentを実行させず、**Humanが承認・実行したExperimentをEvidence付きで評価し、Accepted Learning候補まで閉じる**。
 
 ```text
-Evidence / Brand / Objective
+Proposal
   ↓
-Maker Agent
+Human Approval
   ↓
-Draft / Proposal
+Manual Execution Receipt
   ↓
-Deterministic Message Guardrail
+Observation / Evidence
   ↓
-Independent Review (reviewer != maker)
+Independent Evaluation
   ↓
-Human Gate
+Learning Candidate
   ↓
-Manual execution only
-```
-
-## Plan review / changes
-
-1. Reading Quality Agentは鑑定生成を行わずReviewer-only
-2. Deterministic guardrailを包括SafetyとみなさずContextual Review + Human Gateを維持
-3. Product ReleaseはMLP FirstのCore Experience / Lovability / Retentionと接続
-4. 外部API・SNS自動投稿・CRM送信・価格変更は実装しない
-5. Model Harness未確定のためfixture contract validation + Human rubricを先行
-6. Growth target/guardrail metricは`metric_definition_ref`でObserve Contractへ追跡
-7. `reviewer != maker` をWorkflow Contract化
-
-## Entry criteria
-
-- [x] Foundation / Observe merge済み
-- [x] PR #22 message guardrail merge済み
-- [x] Guardrail責務をSafety全体から分離
-- [x] MLP First（PR #24）merge済み
-
-## Deliverables
-
-### Agent contracts
-- [x] Content Agent — Draft Maker
-- [x] Growth Agent — Experiment / Draft Maker
-- [x] Reading Quality Agent — Reviewer only
-
-### Skills
-- [x] `draft-content`
-- [x] `design-growth-experiment`
-- [x] `review-reading-quality`
-
-### Workflow
-- [x] `Draft → Guardrail → Independent Review → Human Gate`
-- [x] reviewer != maker
-
-### Regression / Eval
-- [x] Content fixture >= 5
-- [x] Growth fixture >= 5
-- [x] Reading Quality fixture >= 6
-- [x] Fixture validatorをAssistへ拡張
-- [x] Human review rubricをAssistへ拡張
-- [x] Growth Metric Contract refをmachine validation
-
-### Repository integration / validation
-- [x] Eval framework更新
-- [x] AI-Native README更新
-- [x] Execution Plan更新
-- [x] Assist review record
-- [x] Issue #23進捗更新
-- [x] PR #25作成
-- [x] CI Green
-- [x] 最終差分レビュー
-- [x] タスク完了前の7視点レビュー
-- [x] Review blocker反映
-- [ ] PR #25 merge / Issue #23 close
-
-## CI result
-
-- [x] npm ci
-- [x] lint
-- [x] typecheck
-- [x] test
-- [x] AI eval contracts
-- [x] build
-
-## Scope out
-
-- 鑑定生成Agent
-- 自動SNS投稿
-- CRM自動送信
-- 自動価格変更 / 実課金
-- Orchestrator
-- Human Gate解除
-
-# Iteration 4 — Closed Workflow
-
-```text
-VoC / Behavior
-  ↓
-Analysis
-  ↓
-Hypothesis
-  ↓
-Experiment proposal
-  ↓
-Human approval
-  ↓
-Experiment
-  ↓
-Evaluation
+Human / Independent Acceptance Gate
   ↓
 Accepted Learning
   ↓
 Next Experience Hypothesis / MLP Polish
 ```
 
-Entry条件:
+## Plan review / changes
 
-- AssistのMaker/Reviewer/Evalが安定
-- 実行結果を追跡できる
-- Accepted Learningへ昇格するEvidence Contractが実運用可能
+当初のClosed Workflowから次を明確化した。
+
+1. **Execution Receipt**を追加し、予定と実際の変更を分離
+2. EvaluatorはProposal Makerと別主体 (`evaluator != maker`)
+3. target / guardrailはMetric Contract ref必須
+4. target改善 + guardrail悪化ではadopt禁止
+5. negative / inconclusive / stoppedもLearning Evidenceとして保持
+6. AIはLearning Candidateまで。Accepted Learning自己昇格禁止
+7. 実行結果をMLPのExperience Hypothesis / Polish / Retentionへ戻す
+8. Production actionはHuman-onlyを維持
+
+## Deliverables
+
+### Contract
+- [x] `experiment-contract.md`
+
+### Skills
+- [x] `evaluate-experiment`
+- [x] `prepare-learning-candidate`
+
+### Workflow
+- [x] `closed-learning-loop.md`
+
+### Regression / Eval
+- [x] Experiment fixture 7 cases
+- [x] positive / negative / inconclusive / stopped
+- [x] target up + guardrail down
+- [x] causal overclaim / confounder
+- [x] evaluator independence / Execution Receipt contract
+- [x] fixture validator拡張
+- [x] Human review rubric拡張
+
+### Repository integration / validation
+- [x] Eval framework更新
+- [x] Execution Plan更新
+- [ ] AI-Native README更新
+- [ ] Closed Loop review record
+- [ ] Issue #26進捗更新
+- [ ] PR作成
+- [ ] CI Green
+- [ ] 最終差分レビュー
+- [ ] 7視点レビュー
+- [ ] Review blocker反映
+- [ ] merge / Issue close
+
+## Exit criteria
+
+- [x] Proposal → Human Approval → Receipt → Evaluation → CandidateのContract
+- [x] Human execution / acceptance境界
+- [x] evaluator != maker
+- [x] Metric Contract ref必須
+- [x] Guardrail悪化時adopt禁止
+- [x] Negative / inconclusive / stoppedを保持
+- [x] AI自己昇格禁止
+- [x] fixture validator拡張
+- [ ] CI Green
+- [ ] 7視点レビュー済み
+- [ ] Blocker 0、または全反映済み
+
+## Scope out
+
+- AIによる本番Experiment開始
+- SNS / CRM自動配信
+- price / charge操作
+- Analytics SDK / DB migration / 実ユーザーデータ接続
+- Orchestrator
 
 # Iteration 5 — Controlled Autonomy
 
@@ -185,7 +152,7 @@ Orchestratorは `Signal → Priority → Agent/Skill Routing` に限定する。
 ## Dependency map
 
 ```text
-Foundation → Observe → Assist → Closed Workflow → Controlled Autonomy → Orchestration
+Foundation → Observe → Assist → Closed Learning Loop → Controlled Autonomy → Orchestration
 ```
 
 後段から先に導入しない。
