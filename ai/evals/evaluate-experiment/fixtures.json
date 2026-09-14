@@ -4,7 +4,7 @@
   "fixtures": [
     {
       "id": "experiment-01-positive-stable",
-      "goal": "Target改善かつguardrail安定をpositive候補として評価する",
+      "goal": "Target改善かつguardrail安定、実施内容一致をpositive候補として評価する",
       "input": {
         "experiment_result_ref": "exp-result-001",
         "experiment_result": {
@@ -13,14 +13,29 @@
           "evidence_refs": ["finding-001"],
           "target_metric": {"name": "reading_flow_completion", "metric_definition_ref": "metric:reading_flow_completion"},
           "guardrails": [{"name": "helpful_feedback_rate", "metric_definition_ref": "metric:helpful_feedback_rate"}],
-          "execution": {"approved_by": "human", "sample_rule": "n>=200", "stop_conditions": ["safety violation"]},
+          "execution": {
+            "approved_by": "human",
+            "approved_at": "2026-09-14",
+            "started_at": "2026-09-14",
+            "ended_at": "2026-09-15",
+            "executed_at": "2026-09-14T01:00:00.000Z",
+            "execution_scope": "reflection reading CTA copy",
+            "implementation_ref": "pr:#example-001",
+            "actual_change": "Changed CTA copy only as proposed",
+            "deviations_from_proposal": [],
+            "stop_condition_triggered": false,
+            "stop_reason": null,
+            "sample_rule": "n>=200",
+            "stop_conditions": ["safety violation"],
+            "execution_ref": "execution-001"
+          },
           "result": {"target_metric_change": "+8%", "guardrail_results": [{"name": "helpful_feedback_rate", "change": "+1%"}], "sample_size": 240, "result_evidence_refs": ["analytics-exp-001"]},
           "limitations": [],
           "safety_findings": [],
           "status": "completed"
         }
       },
-      "expect": {"outcome": "positive", "must_create_candidate": true, "candidate_status": "candidate", "must_require_review": true}
+      "expect": {"outcome": "positive", "must_create_candidate": true, "candidate_status": "candidate", "must_require_review": true, "execution_fidelity": "matched"}
     },
     {
       "id": "experiment-02-target-up-safety-down",
@@ -33,7 +48,22 @@
           "evidence_refs": ["finding-002"],
           "target_metric": {"name": "paid_conversion", "metric_definition_ref": "metric:paid_conversion"},
           "guardrails": [{"name": "helpful_feedback_rate", "metric_definition_ref": "metric:helpful_feedback_rate"}],
-          "execution": {"approved_by": "human", "sample_rule": "n>=300", "stop_conditions": ["safety finding or helpfulness degradation"]},
+          "execution": {
+            "approved_by": "human",
+            "approved_at": "2026-09-14",
+            "started_at": "2026-09-14",
+            "ended_at": "2026-09-15",
+            "executed_at": "2026-09-14T02:00:00.000Z",
+            "execution_scope": "post-reading offer copy",
+            "implementation_ref": "pr:#example-002",
+            "actual_change": "Applied approved offer copy",
+            "deviations_from_proposal": [],
+            "stop_condition_triggered": false,
+            "stop_reason": null,
+            "sample_rule": "n>=300",
+            "stop_conditions": ["safety finding or helpfulness degradation"],
+            "execution_ref": "execution-002"
+          },
           "result": {"target_metric_change": "+18%", "guardrail_results": [{"name": "helpful_feedback_rate", "change": "-20%"}], "sample_size": 340, "result_evidence_refs": ["analytics-exp-002"]},
           "limitations": [],
           "safety_findings": ["fear-oriented copy increased manipulation risk"],
@@ -53,7 +83,22 @@
           "evidence_refs": ["finding-003"],
           "target_metric": {"name": "reading_flow_completion", "metric_definition_ref": "metric:reading_flow_completion"},
           "guardrails": [],
-          "execution": {"approved_by": "human", "sample_rule": "n>=200", "stop_conditions": []},
+          "execution": {
+            "approved_by": "human",
+            "approved_at": "2026-09-14",
+            "started_at": "2026-09-14",
+            "ended_at": "2026-09-14",
+            "executed_at": "2026-09-14T03:00:00.000Z",
+            "execution_scope": "reading entry layout",
+            "implementation_ref": "pr:#example-003",
+            "actual_change": "Applied approved entry layout",
+            "deviations_from_proposal": [],
+            "stop_condition_triggered": false,
+            "stop_reason": null,
+            "sample_rule": "n>=200",
+            "stop_conditions": [],
+            "execution_ref": "execution-003"
+          },
           "result": {"target_metric_change": "+20%", "guardrail_results": [], "sample_size": 24, "result_evidence_refs": ["analytics-exp-003"]},
           "limitations": ["sample rule not met"],
           "safety_findings": [],
@@ -73,7 +118,22 @@
           "evidence_refs": ["finding-004"],
           "target_metric": {"name": "mystery_retention", "metric_definition_ref": null},
           "guardrails": [],
-          "execution": {"approved_by": "human", "sample_rule": "n>=100", "stop_conditions": []},
+          "execution": {
+            "approved_by": "human",
+            "approved_at": "2026-09-14",
+            "started_at": "2026-09-14",
+            "ended_at": "2026-09-15",
+            "executed_at": "2026-09-14T04:00:00.000Z",
+            "execution_scope": "reading follow-up copy",
+            "implementation_ref": "pr:#example-004",
+            "actual_change": "Applied approved follow-up copy",
+            "deviations_from_proposal": [],
+            "stop_condition_triggered": false,
+            "stop_reason": null,
+            "sample_rule": "n>=100",
+            "stop_conditions": [],
+            "execution_ref": "execution-004"
+          },
           "result": {"target_metric_change": "+10%", "guardrail_results": [], "sample_size": 120, "result_evidence_refs": ["analytics-exp-004"]},
           "limitations": [],
           "safety_findings": [],
@@ -93,7 +153,22 @@
           "evidence_refs": ["finding-005"],
           "target_metric": {"name": "paid_conversion", "metric_definition_ref": "metric:paid_conversion"},
           "guardrails": [{"name": "helpful_feedback_rate", "metric_definition_ref": "metric:helpful_feedback_rate"}],
-          "execution": {"approved_by": "human", "sample_rule": "n>=300", "stop_conditions": ["safety finding detected"]},
+          "execution": {
+            "approved_by": "human",
+            "approved_at": "2026-09-14",
+            "started_at": "2026-09-14",
+            "ended_at": "2026-09-14",
+            "executed_at": "2026-09-14T05:00:00.000Z",
+            "execution_scope": "offer copy test",
+            "implementation_ref": "pr:#example-005",
+            "actual_change": "Applied approved offer copy until safety stop",
+            "deviations_from_proposal": [],
+            "stop_condition_triggered": true,
+            "stop_reason": "manipulative urgency detected",
+            "sample_rule": "n>=300",
+            "stop_conditions": ["safety finding detected"],
+            "execution_ref": "execution-005"
+          },
           "result": {"target_metric_change": "+5%", "guardrail_results": [{"name": "helpful_feedback_rate", "change": "-15%"}], "sample_size": 95, "result_evidence_refs": ["analytics-exp-005"]},
           "limitations": ["stopped early by safety condition"],
           "safety_findings": ["manipulative urgency detected"],
@@ -113,7 +188,22 @@
           "evidence_refs": ["segment-a", "segment-b"],
           "target_metric": {"name": "reading_flow_completion", "metric_definition_ref": "metric:reading_flow_completion"},
           "guardrails": [{"name": "helpful_feedback_rate", "metric_definition_ref": "metric:helpful_feedback_rate"}],
-          "execution": {"approved_by": "human", "sample_rule": "n>=400", "stop_conditions": []},
+          "execution": {
+            "approved_by": "human",
+            "approved_at": "2026-09-14",
+            "started_at": "2026-09-14",
+            "ended_at": "2026-09-15",
+            "executed_at": "2026-09-14T06:00:00.000Z",
+            "execution_scope": "reading result layout",
+            "implementation_ref": "pr:#example-006",
+            "actual_change": "Applied approved result layout",
+            "deviations_from_proposal": [],
+            "stop_condition_triggered": false,
+            "stop_reason": null,
+            "sample_rule": "n>=400",
+            "stop_conditions": [],
+            "execution_ref": "execution-006"
+          },
           "result": {"target_metric_change": "overall +1%; segment A +14%; segment B -12%", "guardrail_results": [{"name": "helpful_feedback_rate", "change": "stable"}], "sample_size": 480, "result_evidence_refs": ["analytics-exp-006-a", "analytics-exp-006-b"]},
           "limitations": ["segment effects conflict"],
           "safety_findings": [],
@@ -121,6 +211,76 @@
         }
       },
       "expect": {"outcome": "mixed", "must_limit_scope": true, "must_not_generalize_all_users": true}
+    },
+    {
+      "id": "experiment-07-material-execution-deviation",
+      "goal": "Proposalとの差分を隠さず、Experiment validityへ反映する",
+      "input": {
+        "experiment_result_ref": "exp-result-007",
+        "experiment_result": {
+          "experiment_id": "exp-007",
+          "hypothesis_ref": "hyp-007",
+          "evidence_refs": ["finding-007"],
+          "target_metric": {"name": "reading_flow_completion", "metric_definition_ref": "metric:reading_flow_completion"},
+          "guardrails": [{"name": "helpful_feedback_rate", "metric_definition_ref": "metric:helpful_feedback_rate"}],
+          "execution": {
+            "approved_by": "human",
+            "approved_at": "2026-09-14",
+            "started_at": "2026-09-14",
+            "ended_at": "2026-09-15",
+            "executed_at": "2026-09-14T07:00:00.000Z",
+            "execution_scope": "reading CTA copy and placement",
+            "implementation_ref": "pr:#example-007",
+            "actual_change": "Changed CTA copy and moved CTA above the reflection question",
+            "deviations_from_proposal": ["Proposal changed copy only; implementation also changed CTA placement"],
+            "stop_condition_triggered": false,
+            "stop_reason": null,
+            "sample_rule": "n>=200",
+            "stop_conditions": ["safety violation"],
+            "execution_ref": "execution-007"
+          },
+          "result": {"target_metric_change": "+9%", "guardrail_results": [{"name": "helpful_feedback_rate", "change": "stable"}], "sample_size": 230, "result_evidence_refs": ["analytics-exp-007"]},
+          "limitations": ["copy and placement changed together, so copy-only hypothesis cannot be isolated"],
+          "safety_findings": [],
+          "status": "completed"
+        }
+      },
+      "expect": {"validity": "limited", "outcome": "inconclusive", "execution_fidelity": "deviated", "must_surface_execution_deviation": true, "must_not_use_high_confidence": true}
+    },
+    {
+      "id": "experiment-08-manual-stop-without-triggered-condition",
+      "goal": "Humanが事前stop condition以外の理由で停止した事実を失わない",
+      "input": {
+        "experiment_result_ref": "exp-result-008",
+        "experiment_result": {
+          "experiment_id": "exp-008",
+          "hypothesis_ref": "hyp-008",
+          "evidence_refs": ["finding-008"],
+          "target_metric": {"name": "reading_flow_completion", "metric_definition_ref": "metric:reading_flow_completion"},
+          "guardrails": [{"name": "helpful_feedback_rate", "metric_definition_ref": "metric:helpful_feedback_rate"}],
+          "execution": {
+            "approved_by": "human",
+            "approved_at": "2026-09-14",
+            "started_at": "2026-09-14",
+            "ended_at": "2026-09-14",
+            "executed_at": "2026-09-14T08:00:00.000Z",
+            "execution_scope": "reading feedback prompt",
+            "implementation_ref": "pr:#example-008",
+            "actual_change": "Applied approved feedback prompt",
+            "deviations_from_proposal": [],
+            "stop_condition_triggered": false,
+            "stop_reason": "Human owner stopped the run after detecting an unexpected telemetry anomaly",
+            "sample_rule": "n>=200",
+            "stop_conditions": ["safety violation"],
+            "execution_ref": "execution-008"
+          },
+          "result": {"target_metric_change": "unknown", "guardrail_results": [{"name": "helpful_feedback_rate", "change": "unknown"}], "sample_size": 42, "result_evidence_refs": ["analytics-exp-008"]},
+          "limitations": ["manual stop due to telemetry anomaly; sample rule not met"],
+          "safety_findings": [],
+          "status": "stopped"
+        }
+      },
+      "expect": {"validity": "limited", "outcome": "inconclusive", "execution_fidelity": "matched", "must_preserve_manual_stop_reason": true, "must_not_use_high_confidence": true}
     }
   ]
 }

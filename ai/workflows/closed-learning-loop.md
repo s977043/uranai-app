@@ -19,7 +19,7 @@ Human Approval
   ↓
 Manual / external execution
   ↓
-Experiment Result Record
+Experiment Result Record + Execution Receipt
   ↓
 evaluate-experiment
   ↓
@@ -43,6 +43,8 @@ Growth Agent等がExperiment Proposalを作る。
 ### Human Executor
 
 Experiment開始・停止・外部公開・配信等の明示操作を行う。
+
+実行後はProposalをそのまま完了記録として扱わず、実際に行った変更をExecution Receiptとして残す。
 
 ### Experiment Evaluator / Candidate Maker
 
@@ -79,6 +81,37 @@ metric:<stable-id>
 ```
 
 Registryに存在しない、または`active`でないMetricを通常のExperiment判定に使わない。
+
+## Execution fidelity contract
+
+Experiment Result Recordの`execution`は、Proposalではなく**実際に実施した変更のReceipt**として扱う。
+
+最低限:
+
+```yaml
+execution:
+  approved_by: human
+  executed_at: ISO-8601
+  execution_scope: string
+  implementation_ref: string
+  actual_change: string
+  deviations_from_proposal:
+    - string
+  stop_condition_triggered: boolean
+  stop_reason: string | null
+  execution_ref: string
+```
+
+Rules:
+
+- Proposalの内容を実行事実としてコピーしない
+- `implementation_ref`で実行内容を追跡可能にする
+- `actual_change`と`deviations_from_proposal`を分離する
+- 差分無しでも`deviations_from_proposal: []`を明示する
+- material deviationはEvaluatorが`validity` / scope / limitationsへ反映する
+- Evaluator / ReviewerはReceiptを書き換えない
+- stop condition発火時は`stop_reason`を必須にする
+- Raw PII / consultation text / secretsをReceiptへ保存しない
 
 ## State transitions
 
@@ -120,6 +153,17 @@ AIは`human_approved` / `accepted_learning`へ自動遷移しない。
 
 Target metricが改善しても、Safety / Trust / Helpfulness等のguardrailが悪化した場合は成功として昇格させない。
 
+### Execution fidelity before outcome
+
+Metric結果を見る前に、Proposalと実施内容が同一Experimentとして評価可能か確認する。
+
+- 差分無し / 追跡可能 → `execution_fidelity: matched`
+- 差分ありだが影響範囲を限定可能 → `execution_fidelity: deviated` + 原則`validity: limited`
+- 実施内容不明 → `execution_fidelity: unknown` + Evidence追加要求
+- 差分がcomparison条件やExperiment identityを破壊 → `validity: invalid`
+
+Business metricが改善していてもExecution fidelity問題を上書きしない。
+
 ### Invalid experiment
 
 以下はLearning根拠として利用しない。
@@ -130,7 +174,8 @@ Target metricが改善しても、Safety / Trust / Helpfulness等のguardrailが
 - comparison崩壊
 - sample rule重大違反
 - data lossで比較不能
-- execution scopeがProposalと異なる
+- execution scopeがProposalと重大に異なる
+- implementation ref / actual changeを確認できず実施事実を再現できない
 
 ### Mixed result
 
@@ -193,6 +238,7 @@ Next evidence
 
 - Evidence ref不足
 - Metric definition ref不足 / Registry未登録
+- Execution Receipt不足 / implementation ref不明
 - Raw PII混入
 - Safety violation未解決
 - Experiment invalid
@@ -203,6 +249,8 @@ Next evidence
 
 ## Anti-patterns
 
+- Proposalをそのまま「実行した変更」と見なす
+- Execution deviationを隠してMetric改善だけ採用する
 - Experiment EvaluatorがCandidate生成→自己レビュー→自己承認→Knowledge更新
 - Conversion改善だけで成功判定
 - 失敗Experimentを捨てて成功だけ保存
