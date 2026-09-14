@@ -5,10 +5,11 @@
 ## 位置づけ
 
 - 開発作業のルール正本: [`AGENTS.md`](../../AGENTS.md)
+- プロダクト開発の基本形: [`docs/product-development.md`](../product-development.md)
 - プロダクトの世界観・ブランド正本: [`docs/concept-board.md`](../concept-board.md)
 - AI-Native事業運用の設計正本: 本ディレクトリ
 
-互いに競合した場合は、実装手順は `AGENTS.md`、ユーザー体験・表現方針は `concept-board.md` を優先し、AI-Native設計を修正します。
+互いに競合した場合は、実装手順は `AGENTS.md`、ユーザー体験・表現方針は `concept-board.md`、プロダクト開発プロセスは `product-development.md` を優先し、AI-Native設計を修正します。
 
 ## North Star
 
@@ -41,6 +42,8 @@ Experiment
 
 AI-Native化の価値は各作業の自動化ではなく、**この学習ループを短く、検証可能にすること**にあります。
 
+プロダクト開発側では、この事業学習ループを [`product-development.md`](../product-development.md) の `Experience Hypothesis → Vertical Slice → Lovability Review → User Observation → Polish Loop → MLP Release → Retention Validation` に接続します。AI-Native運用で得たEvidenceを次のExperience Hypothesisへ戻し、単なる機能追加ではなくLovabilityとRetentionの改善へ使います。
+
 ## 設計原則
 
 1. **Deterministic facts / AI interpretation**
@@ -62,6 +65,7 @@ AI-Native化の価値は各作業の自動化ではなく、**この学習ルー
 
 ## Core documents
 
+- [Product Development — MLP First](../product-development.md)
 - [North Star](./north-star.md)
 - [Operating Model](./operating-model.md)
 - [Execution Plan](./execution-plan.md)

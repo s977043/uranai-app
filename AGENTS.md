@@ -58,3 +58,11 @@ AIエージェントは本ファイルを最初に読み、手順と禁止事項
 - `ai/agents/*` / `ai/skills/*` / `ai/workflows/*` / `ai/evals/*` の変更では、Evidence要件・Human Gate・Safety Policy・Regression方針を維持する
 - 生の相談内容、不要なPII、秘密情報をKnowledgeやGitへ保存しない
 - Agentが自分の仮説・Insightを自己承認して `Accepted Learning` へ昇格させない
+
+## 11. Product Development — MLP First
+- ユーザー向けプロダクト開発は [`docs/product-development.md`](./docs/product-development.md) を正本とする
+- MVPをユーザー向けリリース基準にせず、`Experience Hypothesis → Vertical Slice → Lovability Review → User Observation → Polish Loop → MLP Release → Retention Validation` を標準フローとする
+- 短く扱う場合は **`Vertical Slice → MLP → Retention`** を基本形とする
+- 技術Spike / PoCは成立性確認に使ってよいが、そのままProduct Releaseへ昇格させない
+- AIは調査・案出し・実装・テスト・制作・分析の探索量を広げ、人間はProduct Intent / Core Experience / Lovability / 倫理 / Go-No-Goを最終判断する
+- ユーザー向け機能は「実装完了」だけでDoneとせず、LovabilityとRetentionを検証できる状態まで含めて判断する
