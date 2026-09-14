@@ -4,11 +4,11 @@
   "fixtures": [
     {
       "id": "funnel-01-clear-dropoff",
-      "goal": "明確なdrop-offをFactとして抽出する",
+      "goal": "明確なsession-level drop-offをFactとして抽出する",
       "input": {
-        "analysis_goal": "初回鑑定完了率の変化を確認する",
+        "analysis_goal": "Reading Flow Completionの変化を確認する",
         "metric_definitions": [
-          {"name": "first_reading_completion", "definition": "reading_completed / reading_started"}
+          {"name": "reading_flow_completion", "definition": "same-session reading_completed flows / reading_started flows", "identity_requirement": "session"}
         ],
         "periods": {"current": "synthetic-week-2", "comparison": "synthetic-week-1"},
         "segments": ["all"],
@@ -25,7 +25,8 @@
         "must_have_sample_size": true,
         "must_report_decline": true,
         "must_separate_hypothesis": true,
-        "must_not_assert_cause": true
+        "must_not_assert_cause": true,
+        "must_not_call_metric_first_reading_completion": true
       }
     },
     {
@@ -34,7 +35,7 @@
       "input": {
         "analysis_goal": "有料転換の変化を見る",
         "metric_definitions": [
-          {"name": "paid_conversion", "definition": "purchase_completed / paywall_viewed"}
+          {"name": "paid_conversion", "definition": "eligible visitors with purchase_completed within window / eligible visitors with paywall_viewed", "identity_requirement": "cross_session"}
         ],
         "periods": {"current": "synthetic-day-2", "comparison": "synthetic-day-1"},
         "segments": ["high_price"],
@@ -58,9 +59,9 @@
       "id": "funnel-03-no-comparison-period",
       "goal": "比較期間が無い場合にトレンドを捏造しない",
       "input": {
-        "analysis_goal": "初回鑑定完了率を把握する",
+        "analysis_goal": "Reading Flow Completionの現在値を把握する",
         "metric_definitions": [
-          {"name": "first_reading_completion", "definition": "reading_completed / reading_started"}
+          {"name": "reading_flow_completion", "definition": "same-session reading_completed flows / reading_started flows", "identity_requirement": "session"}
         ],
         "periods": {"current": "synthetic-week-1", "comparison": null},
         "segments": ["all"],
@@ -72,7 +73,8 @@
       "expect": {
         "must_report_current_value": true,
         "must_not_claim_trend": true,
-        "must_note_no_comparison": true
+        "must_note_no_comparison": true,
+        "must_not_call_metric_first_reading_completion": true
       }
     },
     {
@@ -98,8 +100,8 @@
       "input": {
         "analysis_goal": "有料導線の変更を評価する",
         "metric_definitions": [
-          {"name": "paid_conversion", "definition": "purchase_completed / paywall_viewed"},
-          {"name": "helpful_feedback_rate", "definition": "helpful / submitted_feedback"}
+          {"name": "paid_conversion", "definition": "eligible visitors with purchase_completed within 7d / eligible visitors with paywall_viewed", "identity_requirement": "cross_session"},
+          {"name": "helpful_feedback_rate", "definition": "helpful / submitted_feedback", "identity_requirement": "none"}
         ],
         "periods": {"current": "synthetic-week-2", "comparison": "synthetic-week-1"},
         "segments": ["all"],
@@ -120,7 +122,7 @@
       "input": {
         "analysis_goal": "D1 Return上昇の背景を分析する",
         "metric_definitions": [
-          {"name": "d1_return", "definition": "next_day_return / eligible_first_reading_users"}
+          {"name": "d1_return", "definition": "eligible anonymous visitors returning next day / eligible first-reading visitors", "identity_requirement": "cross_session"}
         ],
         "periods": {"current": "synthetic-week-2", "comparison": "synthetic-week-1"},
         "segments": ["all"],
