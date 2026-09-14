@@ -1,77 +1,34 @@
 # Closed Learning Loop — Multi-perspective Review Record
 
-Tracking: #26
+Tracking: #26 / PR #29
 
 Iteration 4を Product / MLP、Agent Architecture、Safety、Data / Analytics、Privacy、QA / Eval、Delivery の7視点でレビューした記録。
 
 ## Conclusion
 
-**Approved with changes. Findings resolved before PR completion.**
+**Approved with changes. All findings resolved.**
 
-Closed Loopの方向性は妥当。ただし、Proposal → Execution → Evaluation → Learningの境界を厳密にすると4点のContract gapが見つかったため修正した。
+Proposal → Execution → Evaluation → Learningの境界を厳密にレビューし、4点のContract gapを修正した。
 
-## 1. Product / MLP
+## 1. Product / MLP — Resolved
 
-### Finding
+Experiment数自体を成果にせず、Accepted LearningをExperience Hypothesis / Vertical Slice / Lovability Review / Polish Loop / Retention Validationへ戻す。negative / inconclusiveも次の判断材料として保持する。
 
-Experiment数・成功率・学習件数自体が成果になると、MLPのLovability / Retentionより実験量を最適化する危険がある。
+## 2. Agent Architecture — Resolved
 
-### Fix
+- `maker` / `evaluator`を明示し、`evaluator != maker`をSkill / fixture / validatorで必須化
+- `prepare-learning-candidate`をEvaluator Outputの`facts[].evidence_refs`へ整合
+- AIはLearning Candidateまで。Accepted Learningへ自己昇格しない
 
-- Accepted LearningをKnowledge保存だけで終わらせず、Experience Hypothesis / Vertical Slice / Lovability Review / Polish Loop / Retention Validationへ接続
-- negative / inconclusiveも次の判断材料として保持
-- Experiment数をNorth Starにしない
+## 3. Safety — Resolved
 
-Status: Resolved.
-
-## 2. Agent Architecture
-
-### Finding A — Evaluator independence
-
-`evaluate-experiment`にはMaker/Evaluator分離のルールがあったが、Input ContractでEvaluator identityを追跡できなかった。
-
-### Fix
-
-- `maker` / `evaluator`を明示
-- `evaluator != maker`をSkill / fixture / validatorで必須化
-- outputにも`reviewer_is_independent: true`を持たせる
-
-### Finding B — Learning Candidate input mismatch
-
-`prepare-learning-candidate`がトップレベル`evaluation.evidence_refs`を要求していたが、Evaluator Outputは`facts[].evidence_refs`だった。
-
-### Fix
-
-- Candidate SkillをEvaluator Outputに合わせる
-- Evidenceは`facts[].evidence_refs`からのみ集約
-- 存在しないEvidence refを生成しない
-
-Status: Resolved.
-
-## 3. Safety
-
-### Finding
-
-一部Experiment fixtureでguardrailが空だった。AssistのGrowth Contractはguardrail必須なので、承認済みExperimentとして矛盾していた。
-
-### Fix
-
-- 全Evaluation fixtureに1つ以上のguardrailを要求
-- validatorで`observation.guardrails.length > 0`を必須化
+- 全承認済みExperiment fixtureに1つ以上のguardrailを要求
 - target改善 + guardrail悪化では`adopt`禁止
-- Safety stopは`stopped`、target改善していてもadopt不可
+- Safety stopは`stopped`。target改善していてもadopt不可
 
-Status: Resolved.
+## 4. Data / Analytics — Resolved
 
-## 4. Data / Analytics
-
-### Finding A — Execution Receipt fidelity
-
-Experiment Contractには`execution_scope / implementation_ref / executed_at`があるのに、Evaluation Skill側では欠落していた。これでは予定と実際の変更差を十分追跡できない。
-
-### Fix
-
-Evaluation Skill / fixtures / validatorへ以下を必須化:
+Execution Receiptに以下を必須化:
 
 - executed_at
 - execution_scope
@@ -80,34 +37,13 @@ Evaluation Skill / fixtures / validatorへ以下を必須化:
 - deviations_from_proposal
 - stop condition / reason
 
-### Finding B — Causal overclaim
+Metric Contract / baseline / sample / window不足では`inconclusive`。confounderがある場合は`causal_claim_allowed=false`を維持する。
 
-Before/after改善だけで因果を主張する危険。
+## 5. Privacy — Resolved for current scope
 
-### Fix
+Execution Receipt / EvidenceへRaw相談・PII・secretsを入れない。fixtureはSyntheticのみ。実データ接続時のretention / access control / deletionは後続レビュー対象。
 
-- `causal_claim_allowed`を明示
-- confounder / deviation fixtureを追加
-- Metric Contract / baseline / sample / window不足では`inconclusive`
-
-Status: Resolved.
-
-## 5. Privacy
-
-### Confirmation
-
-- Execution ReceiptへRaw相談 / PII / secretsを入れない
-- fixtureはSyntheticのみ
-- Evidenceは参照ID中心
-- 実データAnalytics接続はScope out
-
-実データ導入時のretention / access control / deletionは後続レビュー対象。
-
-Status: Resolved for current scope.
-
-## 6. QA / Eval
-
-### Coverage
+## 6. QA / Eval — Resolved
 
 Experiment fixture 7ケース:
 
@@ -119,33 +55,13 @@ Experiment fixture 7ケース:
 6. Safety stop
 7. confounder / correlation != causation
 
-Validatorで追加確認:
+ValidatorでHuman approval、evaluator independence、Execution Receipt、Evidence、Metric refs、guardrail必須、negative/stopped保持、causal boundaryを固定した。
 
-- Human approval
-- evaluator != maker
-- Execution Receipt completeness
-- Observation Evidence
-- Metric Contract refs
-- guardrail必須
-- negative result保持
-- stopped result
-- causal boundary
+Model output assertion runnerはHarness確定後に追加する。
 
-Model output assertion runnerはまだ未実装。Harness確定後に追加する。
+## 7. Delivery — Resolved
 
-Status: Resolved for Iteration 4.
-
-## 7. Delivery
-
-### Confirmation
-
-- 外部SDK / DB / production action追加なし
-- Markdown Contract / Skill / Workflow / Synthetic fixture / validatorのみ
-- 本番Experiment実行はHuman-only
-- PR単位でrevert可能
-- Orchestratorを追加しない
-
-Status: Resolved.
+外部SDK / DB / production action追加なし。Markdown Contract / Skill / Workflow / Synthetic fixture / validatorのみ。本番Experiment実行はHuman-onlyで、PR単位でrevert可能。
 
 ## Residual risks
 
@@ -171,7 +87,7 @@ Status: Resolved.
 - [x] Learning Candidate self-promotion prohibited
 - [x] Privacy scope
 - [x] Regression fixture / validator
-- [ ] Latest CI Green
-- [ ] Final PR diff review
+- [x] Latest CI Green: npm ci / lint / typecheck / test / AI eval contracts / build
+- [x] Final PR diff review: 11 files, runtime source / DB / dependency changesなし
 
-CIと最終差分レビューがGreenならIteration 4はマージ可能。
+**Iteration 4はmerge可能。**
