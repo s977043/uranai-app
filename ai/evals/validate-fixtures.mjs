@@ -132,21 +132,43 @@ const specs = [
     validateFixture(fixture) {
       assert(fixture.input?.experiment_id, `${fixture.id}: experiment_id required`);
       assert(fixture.input?.proposal_ref, `${fixture.id}: proposal_ref required`);
-      assert(fixture.input?.human_decision?.decision === "approve", `${fixture.id}: approved human decision required`);
-      assert(fixture.input?.execution_receipt?.executed_by, `${fixture.id}: execution receipt required`);
-      assert(typeof fixture.input?.observation?.window === "string" && fixture.input.observation.window.length > 0, `${fixture.id}: observation window required`);
+      assert(typeof fixture.input?.maker === "string" && fixture.input.maker.length > 0, `${fixture.id}: maker required`);
+      assert(typeof fixture.input?.evaluator === "string" && fixture.input.evaluator.length > 0, `${fixture.id}: evaluator required`);
+      assert(fixture.input.evaluator !== fixture.input.maker, `${fixture.id}: evaluator must be independent from maker`);
+
+      const humanDecision = fixture.input?.human_decision;
+      assert(humanDecision?.decision === "approve", `${fixture.id}: approved human decision required`);
+      assert(typeof humanDecision.decided_by === "string" && humanDecision.decided_by.length > 0, `${fixture.id}: decided_by required`);
+      assert(typeof humanDecision.decided_at === "string" && humanDecision.decided_at.length > 0, `${fixture.id}: decided_at required`);
+      assert(typeof humanDecision.rationale === "string" && humanDecision.rationale.length > 0, `${fixture.id}: decision rationale required`);
+
+      const receipt = fixture.input?.execution_receipt;
+      assert(typeof receipt?.executed_by === "string" && receipt.executed_by.length > 0, `${fixture.id}: execution receipt required`);
+      assert(typeof receipt.executed_at === "string" && receipt.executed_at.length > 0, `${fixture.id}: executed_at required`);
+      assert(typeof receipt.execution_scope === "string" && receipt.execution_scope.length > 0, `${fixture.id}: execution_scope required`);
+      assert(typeof receipt.implementation_ref === "string" && receipt.implementation_ref.length > 0, `${fixture.id}: implementation_ref required`);
+      assert(typeof receipt.actual_change === "string" && receipt.actual_change.length > 0, `${fixture.id}: actual_change required`);
+      assert(Array.isArray(receipt.deviations_from_proposal), `${fixture.id}: deviations_from_proposal required`);
+      assert(typeof receipt.stop_condition_triggered === "boolean", `${fixture.id}: stop_condition_triggered required`);
+
+      const observation = fixture.input?.observation;
+      assert(typeof observation?.window === "string" && observation.window.length > 0, `${fixture.id}: observation window required`);
+      assert(Array.isArray(observation?.evidence_refs) && observation.evidence_refs.length > 0, `${fixture.id}: observation evidence refs required`);
       assert(fixture.expect && typeof fixture.expect === "object", `${fixture.id}: expect required`);
 
-      const targetMetric = fixture.input.observation.target_metric;
+      const targetMetric = observation.target_metric;
       assert(typeof targetMetric?.name === "string" && targetMetric.name.length > 0, `${fixture.id}: target metric required`);
       if (fixture.id !== "experiment-05-missing-baseline-definition") {
         assert(typeof targetMetric.metric_definition_ref === "string" && targetMetric.metric_definition_ref.length > 0, `${fixture.id}: target metric definition ref required`);
       }
-      for (const guardrail of fixture.input.observation.guardrails ?? []) {
+      for (const guardrail of observation.guardrails ?? []) {
         assert(typeof guardrail.name === "string" && guardrail.name.length > 0, `${fixture.id}: guardrail metric name required`);
         assert(typeof guardrail.metric_definition_ref === "string" && guardrail.metric_definition_ref.length > 0, `${fixture.id}: guardrail metric definition ref required`);
       }
 
+      if (fixture.id === "experiment-01-target-up-guardrails-stable") {
+        assert(fixture.expect.must_require_independent_evaluator === true, `${fixture.id}: evaluator independence expectation required`);
+      }
       if (fixture.id === "experiment-02-target-up-guardrail-down") {
         assert(fixture.expect.must_not_recommend_adopt === true, `${fixture.id}: guardrail regression must block adopt`);
         assert(fixture.expect.must_report_guardrail_worsened === true, `${fixture.id}: guardrail worsening must be reported`);
@@ -166,12 +188,13 @@ const specs = [
         assert(fixture.expect.learning_candidate_allowed === false, `${fixture.id}: effect learning candidate must not be allowed`);
       }
       if (fixture.id === "experiment-06-safety-stop") {
-        assert(fixture.input.execution_receipt.stop_condition_triggered === true, `${fixture.id}: stop condition must be triggered`);
+        assert(receipt.stop_condition_triggered === true, `${fixture.id}: stop condition must be triggered`);
+        assert(typeof receipt.stop_reason === "string" && receipt.stop_reason.length > 0, `${fixture.id}: stop reason required`);
         assert(fixture.expect.result === "stopped", `${fixture.id}: safety stop must result in stopped`);
         assert(fixture.expect.must_not_recommend_adopt === true, `${fixture.id}: stopped experiment must not adopt`);
       }
       if (fixture.id === "experiment-07-correlation-not-causation") {
-        assert(Array.isArray(fixture.input.execution_receipt.deviations_from_proposal) && fixture.input.execution_receipt.deviations_from_proposal.length > 0, `${fixture.id}: confounder/deviation required`);
+        assert(receipt.deviations_from_proposal.length > 0, `${fixture.id}: confounder/deviation required`);
         assert(fixture.expect.causal_claim_allowed === false, `${fixture.id}: causal claim must be disallowed`);
       }
     },
