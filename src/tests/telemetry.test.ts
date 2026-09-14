@@ -176,7 +176,7 @@ describe("Reading Flow Completion", () => {
     ]);
 
     expect(result).toEqual({
-      status: "observable",
+      status: "computed",
       numerator: 1,
       denominator: 2,
       rate: 0.5,
@@ -197,8 +197,8 @@ describe("Reading Flow Completion", () => {
       completed(FLOW_ID_2, "2026-09-15T10:01:00.000Z", SESSION_ID_2),
     ]);
 
-    expect(result.status).toBe("observable");
-    if (result.status === "observable") {
+    expect(result.status).toBe("computed");
+    if (result.status === "computed") {
       expect(result.numerator).toBe(0);
       expect(result.denominator).toBe(2);
       expect(result.data_quality.out_of_order_events).toBe(1);
@@ -206,9 +206,9 @@ describe("Reading Flow Completion", () => {
     }
   });
 
-  it("returns not_observable instead of 0% when no start evidence exists", () => {
+  it("returns not_computable instead of 0% when no start evidence exists", () => {
     expect(calculateReadingFlowCompletion([])).toEqual({
-      status: "not_observable",
+      status: "not_computable",
       reason: "missing_required_evidence",
       sample_size: 0,
     });
@@ -224,7 +224,7 @@ describe("Helpful Feedback Rate", () => {
     ]);
 
     expect(result).toEqual({
-      status: "observable",
+      status: "computed",
       numerator: 1,
       denominator: 2,
       rate: 0.5,
@@ -237,9 +237,9 @@ describe("Helpful Feedback Rate", () => {
     });
   });
 
-  it("returns not_observable when feedback evidence is absent", () => {
+  it("returns not_computable when feedback evidence is absent", () => {
     expect(calculateHelpfulFeedbackRate([started(FLOW_ID)])).toEqual({
-      status: "not_observable",
+      status: "not_computable",
       reason: "zero_denominator",
       sample_size: 0,
     });
