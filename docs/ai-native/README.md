@@ -66,6 +66,8 @@ AI-Native化の価値は各作業の自動化ではなく、**EvidenceからLear
    - Accepted Learningを蓄積するだけで終わらせず、次のExperience Hypothesis / MLP Polishへ戻す。
 7. **Defined does not mean observable**
    - Metric定義がactiveでも、実イベント・Evidence sourceが無ければ実測可能とは扱わない。
+8. **Computed does not mean observable**
+   - Synthetic/local Evidenceを集約できても、実Product surfaceとoperational Evidence sourceが無ければ本番Metricを`observable`へ昇格しない。
 
 ## Core documents
 
@@ -79,6 +81,8 @@ AI-Native化の価値は各作業の自動化ではなく、**EvidenceからLear
 - [Closed Loop Review](./closed-loop-review-record.md)
 - [Closed Loop Operational Pilot](./closed-loop-pilot.md)
 - [Operational Pilot Review](./closed-loop-pilot-review-record.md)
+- [Pilot Telemetry Foundation](./telemetry-foundation.md)
+- [Pilot Telemetry Review](./telemetry-foundation-review-record.md)
 - [Safety Policy](./safety-policy.md)
 - [Metrics & Evals](./metrics-and-evals.md)
 
@@ -191,7 +195,7 @@ Controlled Autonomyへ進む前に、Closed Loopの**運用可能性**を検証�
 - Real Pilot readiness: [`closed-loop-pilot-readiness.json`](../../ai/workflows/examples/closed-loop-pilot-readiness.json)
 - CI validator: [`validate-pilot-rehearsal.mjs`](../../ai/evals/validate-pilot-rehearsal.mjs)
 
-Current conclusion:
+Conclusion:
 
 ```text
 Synthetic Contract E2E rehearsal  → possible / CI validated
@@ -200,12 +204,34 @@ Manual Real Pilot                  → blocked
 Controlled Autonomy                → not entered
 ```
 
-Real Pilot blockers:
+## Pilot Telemetry Foundation — Iteration 4.6
 
-- #31: privacy-safe telemetry / Evidence source
-- #15: production or shared test surface decision
+Tracking: #31  
+Product instrumentation: #33
 
-Synthetic成功をReal Product Learningとして扱わない。
+- Design: [`telemetry-foundation.md`](./telemetry-foundation.md)
+- Review: [`telemetry-foundation-review-record.md`](./telemetry-foundation-review-record.md)
+
+Foundationで実装するもの:
+
+- `reading_started` / `reading_completed` / `reading_feedback_submitted` Contract
+- random UUID v4 session ID
+- random UUID v4 `reading_flow_id`
+- strict property allowlist / PII boundary
+- Telemetry Sink port + InMemory sink
+- Reading Flow Completion / Helpful Feedback Rate集約
+- Metric Observability promotion assessment
+
+重要な境界:
+
+- `reading_flow_id`は1回のReadingのcorrelation keyでありuser identityではない
+- `anonymous_visitor_id`は#31では`null`固定
+- persistence / external Analytics Vendorは導入しない
+- local/syntheticで`computed`でもRegistryは`observable`へ昇格しない
+
+最新mainにはReading Product Flow自体が無いため、#31完了時も対象Metricは意図的に`uninstrumented`を維持する。
+
+次に#33でMLP FirstのReading Vertical Sliceを作り、Product FlowへTelemetryを接続する。
 
 ## Iteration status
 
@@ -215,9 +241,11 @@ Synthetic成功をReal Product Learningとして扱わない。
 - MLP First: 完了
 - Iteration 3 Assist: 完了
 - Iteration 4 Closed Learning Loop: PR #28 / Issue #27 — 完了
-- Iteration 4.5 Operational Pilot: Issue #30 / PR #32 — final validation中
-- Pilot telemetry foundation: Issue #31 — open
-- Iteration 5 Controlled Autonomy: **blocked until Real Pilot evidence exists**
+- Iteration 4.5 Operational Readiness: Issue #30 / PR #32 — 完了
+- Iteration 4.6 Pilot Telemetry Foundation: Issue #31 — 実装・レビュー中
+- Reading Vertical Slice + instrumentation: Issue #33 — open
+- Shared / production test surface: Issue #15 — open
+- Iteration 5 Controlled Autonomy: **blocked until Manual Real Pilot evidence exists**
 
 ## Human Gateを維持するもの
 

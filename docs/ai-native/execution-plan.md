@@ -1,6 +1,6 @@
 # AI-Native Execution Plan
 
-Tracking: #18, #20, #23, #27, #30, #31
+Tracking: #18, #20, #23, #27, #30, #31, #33
 
 ## Objective
 
@@ -16,9 +16,10 @@ Tracking: #18, #20, #23, #27, #30, #31
 - MLP First: PR #24 — 完了
 - Iteration 3 Assist: PR #25 / Issue #23 — 完了
 - Iteration 4 Closed Learning Loop: PR #28 / Issue #27 — 完了
-- Iteration 4.5 Operational Pilot: Issue #30 / PR #32 — 実装・7視点レビュー完了、final validation中
-- Pilot telemetry foundation: Issue #31 — Real PilotのBlocking dependency
-- Deployment / shared test surface: Issue #15 — 判断待ち
+- Iteration 4.5 Operational Readiness: Issue #30 / PR #32 — 完了
+- Iteration 4.6 Pilot Telemetry Foundation: Issue #31 / PR #34 — 実装・7視点レビュー・CI完了、merge ready
+- Reading Vertical Slice + Product instrumentation: Issue #33 — #31後
+- Deployment / shared test surface: Issue #15 — 実ユーザー観察前に判断
 - PR #16 数秘術ドメインは別系統
 
 # Iteration 1 — Foundation ✅
@@ -98,7 +99,7 @@ Completed:
 - [x] PR #28 squash merge (`dcf5622`)
 - [x] Issue #27 close
 
-# Iteration 4.5 — Closed Loop Operational Pilot 🚧 final validation
+# Iteration 4.5 — Closed Loop Operational Readiness ✅
 
 Tracking: #30 / PR #32  
 Telemetry unblocker: #31  
@@ -167,11 +168,6 @@ Blocking:
 3. operational Evidence source ref未設定
 4. production/shared test surfaceは#15で判断待ち
 
-Unblocker:
-
-- #31: privacy-safe session telemetry
-- #15: deployment / test surface
-
 ## Phase C — Manual Real Pilot 🔒 not started
 
 - [ ] target Metricが`observable`
@@ -182,8 +178,6 @@ Unblocker:
 - [ ] 低リスク・可逆Experimentを1サイクル実施
 - [ ] Result → Evaluation → Candidate → Review → Human Decision
 - [ ] Accepted Learning → MLP Polish / Next Hypothesisへ返却
-
-**#31 / #15の条件成立まで開始しない。**
 
 ## Multi-perspective review
 
@@ -196,25 +190,147 @@ Reviewで解消したBlocker:
 - Readiness validatorの現状態ハードコード
 - Synthetic Contract E2E / runtime E2Eの表現混同
 
-Residual riskはReview Recordに記録し、Iteration 5 Entry Evidenceとして残す。
-
 ## Iteration 4.5 Definition of Done
-
-Issue #30はOperational Readiness評価のIterationとして完了可能。
 
 - [x] Synthetic positive + safety failure pathをMachine-readable Contract化
 - [x] Pilot Runbook / Template
 - [x] Real Pilot readinessを評価可能
 - [x] Blocking dependencyをIssue分離
 - [x] Controlled Autonomy候補 / Human-only候補を明示
-- [x] Reviewed technical head CI Green
-- [x] タスク完了前の7視点レビュー
-- [x] Review blocker反映
-- [ ] Review recordを含むfinal head CI Green
-- [ ] Final diff / unresolved thread 0
-- [ ] PR merge / Issue #30 close
+- [x] Final CI Green
+- [x] 7視点レビュー / blocker反映
+- [x] PR #32 squash merge (`cb6ecef`)
+- [x] Issue #30 close
 
-Real Pilotそのものは#31 / #15解消後に実施し、**Iteration 5のEntry Evidence**として扱う。
+# Iteration 4.6 — Pilot Telemetry Foundation 🚧 merge ready
+
+Tracking: #31 / PR #34  
+Product instrumentation: #33  
+Shared / production surface: #15  
+Design: [`telemetry-foundation.md`](./telemetry-foundation.md)  
+Review: [`telemetry-foundation-review-record.md`](./telemetry-foundation-review-record.md)
+
+## Why this iteration exists
+
+#30でManual Real PilotがBlockedになった主因の1つは、Event Taxonomyが論理定義だけで、実装可能なTelemetry Contract / Sink / aggregationが無いこと。
+
+ただし最新mainにはReading Product Flow自体もまだ存在しない。
+
+よって、**Telemetry FoundationとProduct instrumentationを分離**する。
+
+```text
+Telemetry Foundation (#31)
+  ↓
+Reading Vertical Slice + Instrumentation (#33)
+  ↓
+Operational Evidence Source / Shared Test Surface
+  ↓
+Manual Real Pilot
+```
+
+## Plan review / changes
+
+1. **FoundationだけでMetricをobservableへしない**
+   - Product Flow未接続ならRegistryは`uninstrumented`を維持。
+2. **Vendor SDKを先に入れない**
+   - Domain Contract + Sink portを先に安定化。
+3. **Reading Flow correlationを追加**
+   - `reading_flow_id = reading-flow_<random-uuid-v4>`
+   - session内複数readingを正しく数える。
+4. **ComputationとObservabilityを分離**
+   - aggregation: `computed | not_computable`
+   - registry: `uninstrumented | partial | observable`
+5. **Cross-session identityを導入しない**
+   - `anonymous_visitor_id = null`固定。
+6. **Data Qualityを明示**
+   - duplicate / orphan / out-of-order / dimension mismatchを隠さない。
+7. **Canonical timestampを固定**
+   - `Date.toISOString()`形式のみ受理。
+8. **Helpful Feedbackをcompleted flowへ相関**
+   - orphan / cross-session / pre-completion feedbackを正常sampleへ入れない。
+
+## Deliverables
+
+### Domain
+
+- [x] typed Event Contract
+- [x] strict property allowlist
+- [x] canonical timestamp validation
+- [x] UUID v4 identifier validation
+- [x] Reading Flow correlation
+- [x] Reading Flow Completion aggregation
+- [x] Helpful Feedback Rate aggregation
+- [x] Data Quality signals
+- [x] `not_computable`でもData Quality保持
+- [x] missing Evidence => `not_computable`
+- [x] Observability promotion assessment
+
+### Adapter
+
+- [x] random UUID v4 `anonymous_session_id`
+- [x] random UUID v4 `reading_flow_id`
+- [x] Telemetry Sink port
+- [x] InMemory sink
+- [x] validate-before-write
+
+### Privacy / Safety
+
+- [x] unknown property reject
+- [x] raw consultation / raw prompt / raw responseをallowしない
+- [x] name / email / phone等をallowしない
+- [x] cross-session visitor IDをreject
+- [x] non-v4 UUIDをreject
+- [x] persistence無し
+- [x] external Analytics vendor無し
+
+### Docs / integration
+
+- [x] Event Taxonomyへ`reading_flow_id`追加
+- [x] `telemetry-foundation.md`
+- [x] #33 Reading Vertical Slice dependency分離
+- [x] AI-Native README更新
+- [x] Execution Plan更新
+- [x] Review record
+- [x] PR final-head CI Green
+- [x] 完了前7視点レビュー
+- [x] Review blocker反映
+- [ ] merge / #31 close
+
+## Foundation exit criteria
+
+- [x] Event Contract / PII boundary
+- [x] session / reading-flow random UUID v4
+- [x] Sink port + local/test sink
+- [x] flow-level aggregation
+- [x] missing Evidence semantics
+- [x] Data Quality traceability
+- [x] Observability promotion rule testable
+- [x] RegistryはProduct未接続のため`uninstrumented`維持
+- [x] Final CI Green
+- [x] Product / Architecture / Privacy / Safety / Analytics / QA / Delivery review
+- [x] Blocker解消
+
+# Reading Vertical Slice + Product Instrumentation 🔒 next
+
+Tracking: #33
+
+MLP Firstに従いCore Experienceを端から端まで通す。
+
+```text
+Entry
+  ↓
+Reading Start          → reading_started
+  ↓
+Fortune / Interpretation
+  ↓
+Result                 → reading_completed
+  ↓
+Next Action
+  ↓
+Feedback               → reading_feedback_submitted
+```
+
+Product wiring + operational Evidence source + shared test surface成立後にMetric RegistryのObservabilityを再評価する。
 
 # Iteration 5 — Controlled Autonomy 🔒 blocked
 
@@ -271,7 +387,13 @@ Closed Learning Loop
   ↓
 Operational Readiness
   ↓
-Pilot Telemetry / Real Pilot
+Telemetry Foundation (#31)
+  ↓
+Reading Vertical Slice + Instrumentation (#33)
+  ↓
+Operational Evidence Source / Shared Test Surface
+  ↓
+Manual Real Pilot
   ↓
 Controlled Autonomy
   ↓
@@ -282,6 +404,6 @@ Orchestration
 
 ## Rollback strategy
 
-- Agent / Skill / Eval / Workflow単位でrevert可能
+- Domain / Adapter / Agent / Skill / Eval / Workflow単位でrevert可能
 - 外部サービス接続前は本番副作用なし
 - 自律化単位ごとに停止可能

@@ -1,6 +1,6 @@
 # Event Taxonomy
 
-Tracking: #20
+Tracking: #20, #31
 
 ## Purpose
 
@@ -18,6 +18,7 @@ AI-Native Observe フェーズで使う、**プロダクト行動の論理イベ
 6. Event schemaはversionを持ち、意味変更を黙って行わない。
 7. Safety / AI qualityの内部イベントと、ユーザー行動イベントを区別する。
 8. セッション横断識別が必要なKPIは、Privacy条件を満たす場合だけ計算する。
+9. Reading単位のMetricは`reading_flow_id`で相関し、session IDだけからflow数を推定しない。
 
 ## Common envelope
 
@@ -54,6 +55,8 @@ properties: object
 
 `anonymous_visitor_id` を安全に保持できない場合、cross-session KPIは `N/A` とし、session単位の指標だけを利用する。
 
+Iteration #31ではsession-level telemetryに限定し、`anonymous_visitor_id` は `null` 固定とする。
+
 ### Forbidden by default
 
 - name
@@ -65,6 +68,24 @@ properties: object
 - payment card data
 - raw AI prompt / raw model response
 - deterministic hash of PII as visitor identifier
+
+## Reading flow correlation
+
+`reading_started` / `reading_completed` / `reading_feedback_submitted` は、1回の鑑定フローを識別する `reading_flow_id` を持つ。
+
+```yaml
+reading_flow_id: reading-flow_<random-uuid>
+```
+
+Rules:
+
+- Reading Flow開始時にランダム生成する
+- 同一Flowのstarted / completed / feedbackで同じ値を使う
+- sessionを跨いで再利用しない
+- user ID / email / phone /相談本文等から導出しない
+- cross-session user identityとして利用しない
+
+これはユーザー識別のためではなく、**同一session内で複数Readingが起きてもflow単位の分母・分子を壊さないためのcorrelation key**である。
 
 ## Product events
 
@@ -90,6 +111,7 @@ entry_point: direct | shared_link | campaign | unknown
 Allowed properties:
 
 ```yaml
+reading_flow_id: reading-flow_<random-uuid>
 reading_type: tarot | numerology | maya | other
 entry_context: daily | relationship | work | self_reflection | other
 ```
@@ -105,6 +127,7 @@ entry_context: daily | relationship | work | self_reflection | other
 Allowed properties:
 
 ```yaml
+reading_flow_id: reading-flow_<random-uuid>
 reading_type: tarot | numerology | maya | other
 duration_bucket: lt_30s | 30s_2m | gt_2m | unknown
 ```
@@ -120,6 +143,7 @@ duration_bucket: lt_30s | 30s_2m | gt_2m | unknown
 Allowed properties:
 
 ```yaml
+reading_flow_id: reading-flow_<random-uuid>
 helpfulness: helpful | neutral | not_helpful
 feedback_reason_category: clear | reassuring | actionable | inaccurate | too_generic | unsafe_feeling | other | none
 ```
@@ -241,4 +265,8 @@ Eventを変更する際は以下を記録する。
 
 ## Scope note
 
-この文書は論理taxonomyです。SDK選定、DB schema、送信処理、同意管理、identifier保持/削除の実装は別Iterationで扱います。
+この文書は論理taxonomyです。
+
+Issue #31では `reading_started` / `reading_completed` / `reading_feedback_submitted` のTypeScript Contract、session / reading-flow identifier、local/test sink、集約を実装する。
+
+実Product Flowからのemit、外部Analytics SDK、同意管理、cross-session identifier保持/削除は別Iterationで扱う。
