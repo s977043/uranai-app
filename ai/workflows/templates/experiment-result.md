@@ -65,6 +65,25 @@ metric:paid_conversion
 
 Registryに存在しない、または`active`でないMetric refを通常Experimentの評価に使わない。正式定義がまだ無いMetricは先にMetric Contractを定義する。
 
+## Execution status vs evaluation validity
+
+`status` はExperiment実行の状態であり、Evaluatorが判定する`validity`とは別。
+
+```text
+Experiment Result status:
+completed | stopped | invalid
+
+Evaluation validity:
+valid | limited | invalid
+```
+
+例:
+
+- HumanがExperimentを終了したが事前sample rule未達 → `status: completed` または実行理由に応じて`stopped`、Evaluatorは `validity: limited` / `outcome: inconclusive`
+- Metric definitionが途中変更され比較不能 → `status: invalid`、Evaluatorも `validity: invalid`
+
+Sample不足そのものを自動的に`status: invalid`へ変換しない。ただしsample rule未達を隠して`positive`判定してはいけない。
+
 ## State machine
 
 ```text
@@ -84,21 +103,22 @@ Iteration 4ではAIが`approved`や`running`へ遷移させない。Experiment�
 - Metric refはMetric Registryのactive entryへ解決できること
 - `execution.approved_by` はHumanであること
 - Resultは集約値とEvidence refを中心にし、Raw相談本文やPIIを保存しない
+- `result_evidence_refs` を必須とし、観測結果を追跡可能にする
 - `sample_rule` と `stop_conditions` は実行前Proposalから引き継ぐ
+- Sample rule未達は `limitations` に必ず残し、Evaluatorがvalidity/confidenceへ反映する
 - Safety violationがあれば `safety_findings` へ必ず記録する
 - `invalid` の原因を `limitations` に残す
 - Experimentの結果と原因推定を同じFactとして記述しない
 
 ## Invalid conditions
 
-例:
+Experiment自体を`invalid`とする代表例:
 
 - Metric definitionが途中で変わった
 - Metric Registryでrefを解決できない
-- Sample ruleを満たしていないのに終了した
-- データ欠損が大きく比較不能
-- Control / comparison条件が崩れた
-- identity requirementを満たせない
-- 実行範囲がProposalと一致しない
+- データ欠損が大きく比較そのものが不能
+- Control / comparison条件が破壊され、結果を解釈できない
+- identity requirementを満たせず対象KPIを計算できない
+- 実行範囲がProposalと重大に異なる
 
-Invalid experimentはLearning Candidateの根拠として昇格させない。
+Sample不足・短期終了は、データが解釈可能ならEvaluatorの`limited / inconclusive`として扱える。Invalid experimentはLearning Candidateの主要根拠として昇格させない。
