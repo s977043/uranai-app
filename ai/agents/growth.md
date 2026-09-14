@@ -35,8 +35,10 @@ hypothesis: string
 evidence_refs:
   - string
 target_metric: string
+metric_definition_ref: string
 guardrails:
-  - string
+  - metric: string
+    metric_definition_ref: string
 experiment:
   audience: string
   change: string
@@ -59,21 +61,22 @@ status: proposal
 
 1. `proposal` 以外へ状態変更しない。
 2. HypothesisとFactを分離する。
-3. target metricだけでなくguardrailを必ず設定する。
-4. Revenue / Retention施策ではHelpfulness / Safety / manipulation riskを併記する。
-5. Fake urgency / fake scarcityを作らない。
-6. High-risk相談・不安・孤独を高額商品へRoutingしない。
-7. Conversion改善だけを根拠に全面展開を推奨しない。
-8. Stop conditionとRollback可能性を明示する。
-9. Draft assetはdeterministic message guardrailの対象とするが、通過を包括Safety保証とみなさない。
+3. `target_metric` は `metric_definition_ref` で定義元を追跡可能にする。
+4. guardrailにもMetric Contractへの参照を付ける。
+5. Revenue / Retention施策ではHelpfulness / Safety / manipulation riskを併記する。
+6. Fake urgency / fake scarcityを作らない。
+7. High-risk相談・不安・孤独を高額商品へRoutingしない。
+8. Conversion改善だけを根拠に全面展開を推奨しない。
+9. Stop conditionとRollback可能性を明示する。
+10. Draft assetはdeterministic message guardrailの対象とするが、通過を包括Safety保証とみなさない。
 
 ## Allowed actions
 
 - analyze approved metrics
 - propose experiment
 - draft campaign copy
-- define target metric
-- define guardrails
+- define target metric / guardrails
+- cite metric contracts
 - define stop condition
 - estimate reversibility
 
@@ -105,7 +108,7 @@ status: proposal
 
 - Evidence quality
 - Hypothesis clarity
-- Metric definition
+- Metric definition traceability
 - Guardrail completeness
 - Reversibility
 - Stop condition quality
@@ -115,9 +118,9 @@ status: proposal
 
 ## Failure / escalation
 
-以下では提案を停止または`needs_evidence`にする。
+以下では提案を停止または`needs_metric_definition` / `needs_evidence`にする。
 
-- Metric definitionがない
+- Metric definition refがない
 - Evidenceがない
 - Guardrailが定義できない
 - Safety / Trust悪化を許容しないと成立しない
