@@ -246,6 +246,41 @@
         }
       },
       "expect": {"validity": "limited", "outcome": "inconclusive", "execution_fidelity": "deviated", "must_surface_execution_deviation": true, "must_not_use_high_confidence": true}
+    },
+    {
+      "id": "experiment-08-manual-stop-without-triggered-condition",
+      "goal": "Humanが事前stop condition以外の理由で停止した事実を失わない",
+      "input": {
+        "experiment_result_ref": "exp-result-008",
+        "experiment_result": {
+          "experiment_id": "exp-008",
+          "hypothesis_ref": "hyp-008",
+          "evidence_refs": ["finding-008"],
+          "target_metric": {"name": "reading_flow_completion", "metric_definition_ref": "metric:reading_flow_completion"},
+          "guardrails": [{"name": "helpful_feedback_rate", "metric_definition_ref": "metric:helpful_feedback_rate"}],
+          "execution": {
+            "approved_by": "human",
+            "approved_at": "2026-09-14",
+            "started_at": "2026-09-14",
+            "ended_at": "2026-09-14",
+            "executed_at": "2026-09-14T08:00:00.000Z",
+            "execution_scope": "reading feedback prompt",
+            "implementation_ref": "pr:#example-008",
+            "actual_change": "Applied approved feedback prompt",
+            "deviations_from_proposal": [],
+            "stop_condition_triggered": false,
+            "stop_reason": "Human owner stopped the run after detecting an unexpected telemetry anomaly",
+            "sample_rule": "n>=200",
+            "stop_conditions": ["safety violation"],
+            "execution_ref": "execution-008"
+          },
+          "result": {"target_metric_change": "unknown", "guardrail_results": [{"name": "helpful_feedback_rate", "change": "unknown"}], "sample_size": 42, "result_evidence_refs": ["analytics-exp-008"]},
+          "limitations": ["manual stop due to telemetry anomaly; sample rule not met"],
+          "safety_findings": [],
+          "status": "stopped"
+        }
+      },
+      "expect": {"validity": "limited", "outcome": "inconclusive", "execution_fidelity": "matched", "must_preserve_manual_stop_reason": true, "must_not_use_high_confidence": true}
     }
   ]
 }
