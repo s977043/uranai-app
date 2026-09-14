@@ -1,148 +1,169 @@
 # AI-Native Execution Plan
 
-Tracking: #18
+Tracking: #18, #20
 
 ## Objective
 
-`uranai-app` に、AI-Nativeな事業運用を段階的に導入する。初期段階では自動化率ではなく、**責務境界・Evidence・Safety・Eval・Learning Loop**を先に成立させる。
+`uranai-app` に、AI-Nativeな事業運用を段階的に導入する。自動化率ではなく、**責務境界・Evidence・Safety・Eval・Learning Loop**を先に成立させる。
 
 ## Current state
 
 - Next.js / TypeScript / Vitest / CI は整備済み
 - `AGENTS.md` にAI-TDDとドメイン境界がある
 - `docs/concept-board.md` にブランド・NG表現がある
+- PR #19 の AI-Native Foundation はレビュー・CI Green後にマージ済み
 - PR #16 で数秘術ドメイン実装が進行中
 - PR #17 で文言ガードレールが進行中
-- PR #19 でAI-Native Foundationを実装・レビュー中
-
-既存アプリコードとの競合を避けるため、Iteration 1は `docs/` と `ai/` を中心にする。
+- Iteration 2 Observe を Issue #20 で実施中
 
 ---
 
-# Iteration 1 — Foundation
+# Iteration 1 — Foundation ✅
 
 ## Goal
 
 Agentを増やす前に、AI-Native運用の「契約」を作る。
 
-## Deliverables
+## Completed
 
-### 1. North Star / boundaries
-
-- [x] North Star
-- [x] Non-goals
+- [x] North Star / Non-goals
 - [x] Deterministic / AI / Human責務分離
 - [x] Autonomy levels
-
-### 2. Safety
-
-- [x] Hard block
-- [x] Human Gate対象
-- [x] Data safety
-- [x] Stop conditions
-- [x] PR #17との統合方針
-
-### 3. Metrics / Evals
-
-- [x] Product / AI operation metrics
-- [x] Guardrail metrics
-- [x] Eval dimensions
-- [x] Evidence traceability
-- [x] Regression policy
-- [x] Promotion criteria
-
-### 4. Agents
-
-- [x] Analyst Agent
-- [x] VoC Analyst Agent
-
-このIterationでは以下を実装しない。
-
-- Growth Agent
-- Content Agent
-- CRM Agent
-- Product Agent
-- Reading Quality Agent
-- Safety JudgeのLLM実装
-- Orchestrator
-
-### 5. Skills
-
-- [x] analyze-voc
-- [x] analyze-funnel
-
-### 6. Learning workflow
-
-- [x] Weekly Learning Loop
-- [x] Accepted Learning Gate
-- [x] Decision Queue
-
-### 7. Repository integration
-
-- [x] docs index更新
-- [x] Pull Request作成（#19）
-- [x] 差分レビュー
-- [x] CI / build確認
-- [x] Issue #18の進捗更新
-
-## Validation result
-
-PR #19 のGitHub Actionsで以下を確認済み。
-
-- [x] `npm ci`
-- [x] lint
-- [x] typecheck
-- [x] test
-- [x] build
-- [x] PR #16 / #17 changed-file overlap = 0
-- [x] 実装後レビューでblockerなし
-
-## Exit criteria
-
-Iteration 1を完了とみなす条件:
-
-1. [x] `AGENTS.md` / `concept-board.md` と矛盾しない
-2. [x] Analyst / VoC AgentのI/Oと禁止操作が明確
-3. [x] Fact / Hypothesis / Accepted Learningが別状態
-4. [x] Evidence参照が必須
-5. [x] Raw VoC / PIIのGit保存が禁止
-6. [x] SafetyがGrowth/Revenueより上位制約
-7. [x] 外部公開・配信・価格変更はHuman Gate
-8. [x] Skill/Prompt/Model変更時のRegression方針がある
-9. [x] PR #16 / #17と競合しない
-10. [x] 既存の `npm run verify` / `npm run build` を壊さない
-
-**Iteration 1の実装・レビュー条件は満たした。PR #19のマージでFoundationを確定する。**
+- [x] Safety / Human Gate / Data safety / Stop conditions
+- [x] Metrics / Evals / Evidence traceability / Regression policy
+- [x] Analyst Agent / VoC Analyst Agent
+- [x] analyze-voc / analyze-funnel
+- [x] Weekly Learning Loop / Accepted Learning Gate / Decision Queue
+- [x] `AGENTS.md` からAI-Native正本への導線
+- [x] 複数視点レビュー
+- [x] CI Green
+- [x] PR #19 merge
 
 ---
 
 # Iteration 2 — Observe
 
+Tracking: #20
+
 ## Goal
 
-実データを直接自動実行へ接続せず、分析品質を確認する。
+実データを直接Agentへ接続する前に、**何を観測し、どう計算し、どう評価するか**を再現可能なContractとして固定する。
 
-## Work
+## Plan review / update
 
-- Event taxonomyを定義
-- Funnel metric definitionsを固定
-- 匿名化VoC fixtureを用意
-- `analyze-voc` eval fixtureを作る
-- `analyze-funnel` eval fixtureを作る
-- Weekly Learning Reportテンプレートを実運用
+当初は「Weekly Learning Reportを実運用」まで想定していたが、本番Analytics/Event収集基盤が未導入なため順序を変更した。
+
+### Updated sequence
+
+1. 論理Event taxonomy
+2. Funnel metric definitions
+3. Synthetic regression fixtures
+4. Fixture contractのmachine validation
+5. Human review rubric
+6. Weekly Learning Report template + synthetic example
+7. 実データ接続は別Iteration
+
+この順序により、計測SDKやDB実装都合でKPI定義が歪むことを避ける。
+
+## Deliverables
+
+### Analytics contract
+
+- [x] `event-taxonomy.md`
+- [x] `funnel-metrics.md`
+
+### Regression / Eval
+
+- [x] `ai/evals/README.md`
+- [x] VoC fixture 6ケース
+- [x] Funnel fixture 6ケース
+- [x] Human review rubric
+- [x] fixture contract validator
+- [x] `npm run eval:contracts`
+- [x] CIへAI eval contract validationを追加
+
+### Weekly learning
+
+- [x] Weekly Learning Report template
+- [x] Synthetic example
+
+### Repository integration
+
+- [x] AI-Native README更新
+- [x] Execution Plan更新
+- [ ] PR作成
+- [ ] CI確認
+- [ ] 実装差分レビュー
+- [ ] タスク完了前の複数視点レビュー
+- [ ] Review指摘反映
+- [ ] Issue #20更新
+
+## Event taxonomy principles
+
+- 行動事実をEventとして記録し、価値判断をevent nameへ埋め込まない
+- PII / consultation raw textをanalytics payloadへ入れない
+- Product eventとAI/Safety internal eventを分ける
+- schema versionを持つ
+- over-collectionを避ける
+
+## Metric principles
+
+- numerator / denominator / window / exclusions / guardrailsを定義
+- sample size必須
+- 利用増加 = ユーザー価値増加とみなさない
+- Revenue / RetentionはHelpfulness / Safetyと同時評価
+- 分母を定義できない率は無理にKPI化しない
+
+## Fixture coverage
+
+### VoC
+
+- [x] supported pattern
+- [x] single source
+- [x] conflicting evidence
+- [x] PII redaction
+- [x] high-risk request
+- [x] segment difference
+
+### Funnel
+
+- [x] clear drop-off
+- [x] small sample
+- [x] no comparison period
+- [x] missing metric definition
+- [x] conversion up / helpfulness down
+- [x] correlation != causation
 
 ## Exit criteria
 
-- Evidence traceability: 100%
-- Fact / hypothesis混同の重大エラー: 0
-- PII leakage: 0
-- Human reviewで継続利用可能と判断
+- [x] Event名・意味・allowed/forbidden payloadが明文化
+- [x] KPIのnumerator / denominator / window / guardrailが定義
+- [x] 2 Skill向けfixtureが6ケースずつ存在
+- [x] Machine / Human eval境界が定義
+- [x] PII / Safety failure fixtureが存在
+- [x] Weekly Report template / synthetic exampleが存在
+- [x] Fixture構造をCIでmachine validation可能
+- [ ] Foundation原則との整合を複数視点レビューで再確認
+- [ ] CI Green
+- [ ] Blocker指摘0、または指摘反映済み
 
-数値閾値はfixtureを回した実測後に固定する。最初から根拠のない精度目標を置かない。
+## Scope out
+
+- Analytics SDK
+- 実ユーザーデータ
+- DB migration
+- CRM / SNS連携
+- Growth / Content / CRM Agent
+- Orchestrator
+- 自動Knowledge昇格
 
 ---
 
 # Iteration 3 — Assist
+
+## Entry criteria
+
+Iteration 2のEvent / Metric / Eval contractがレビュー済みであること。
 
 ## Goal
 
@@ -174,10 +195,6 @@ Reading領域はPR #17のDeterministic Guardrailを統合してから進める�
 
 # Iteration 4 — Closed workflow
 
-## Goal
-
-分析→仮説→実験→評価→学習を閉ループ化する。
-
 ```text
 VoC / Behavior
   ↓
@@ -196,13 +213,11 @@ Evaluation
 Accepted Learning
 ```
 
-Product / CRMへの接続はこの段階で検討する。
-
 ---
 
 # Iteration 5 — Controlled autonomy
 
-## Candidate autonomous tasks
+Candidate:
 
 - 定期集計
 - レポート生成
@@ -211,7 +226,7 @@ Product / CRMへの接続はこの段階で検討する。
 - Knowledge候補生成
 - 異常検知
 
-## Keep Human Gate
+Keep Human Gate:
 
 - 本番投稿
 - LINE / メール / Push
@@ -221,24 +236,20 @@ Product / CRMへの接続はこの段階で検討する。
 - High-stakes reading
 - Safety Policy変更
 
-Human Gateを外す場合は個別にRisk / Eval / Rollbackをレビューする。
-
 ---
 
 # Iteration 6 — Orchestration
 
-## Entry criteria
+Entry criteria:
 
-以下を満たしてからOrchestratorを導入する。
+- 主要Agent Contract安定
+- Skill Eval存在
+- Decision Queue実運用
+- 自律レベル定義済み
+- 監査ログ
+- Stop condition検証済み
 
-- 主要AgentのContractが安定
-- 各SkillにEvalが存在
-- Decision Queueが実運用されている
-- 自律レベルがAgent単位で定義済み
-- 監査ログが取れる
-- Stop conditionが機能
-
-Orchestratorの責務は「全部やる」ではなく、Signal→Priority→適切なAgent/SkillへのRoutingに限定する。
+Orchestratorは Signal → Priority → Agent/Skill Routing に限定する。
 
 ---
 
@@ -246,19 +257,15 @@ Orchestratorの責務は「全部やる」ではなく、Signal→Priority→適
 
 ```text
 Foundation
-  ├─ Safety
-  ├─ Metrics/Evals
-  ├─ Agent Contracts
-  └─ Skill Contracts
-       ↓
+  ↓
 Observe
-       ↓
+  ↓
 Assist
-       ↓
+  ↓
 Closed Workflow
-       ↓
+  ↓
 Controlled Autonomy
-       ↓
+  ↓
 Orchestration
 ```
 
@@ -266,8 +273,6 @@ Orchestration
 
 # Rollback strategy
 
-Iteration 1はアプリ実行コードを変更せず、`docs/` / `ai/` の追加を中心とする。
-
-- 問題時はPR全体をrevert可能
-- 既存の占いロジック・UI・DBへ副作用を持たせない
-- 後続IterationもAgent/Skill単位で無効化可能な設計を維持する
+- Agent/Skill/Analytics contractを独立してrevert可能に保つ
+- 外部サービス接続前は本番副作用を持たせない
+- 後続Iterationでも自律化単位ごとに停止可能にする
