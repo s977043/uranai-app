@@ -12,6 +12,9 @@ export type CalendarDate = {
   readonly day: number;
 };
 
+/** 将来ルールを変更する場合に結果の再現性を維持するためのversion。 */
+export const LIFE_PATH_RULE_VERSION = 1 as const;
+
 /**
  * このアプリのライフパス計算で、途中段階でも還元せず保持する値。
  * 流派一般の真理ではなく、versioned deterministic ruleとして扱う。
@@ -98,7 +101,7 @@ const sumDigits = (value: number): number => {
 
 /**
  * 生年月日のyear/month/dayに含まれる10進数字を合計し、1桁まで還元する。
- * このアプリのruleとして、途中段階で11 / 22 / 33が現れた場合はそこで停止する。
+ * rule v1では、途中段階で11 / 22 / 33が現れた場合はそこで停止する。
  */
 export const calculateLifePathNumber = (date: CalendarDate): number => {
   assertValidCalendarDate(date);
