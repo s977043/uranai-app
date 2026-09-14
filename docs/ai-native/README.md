@@ -79,6 +79,7 @@ AI-Native化の価値は各作業の自動化ではなく、**EvidenceからLear
 - [Foundation Review](./review-record.md)
 - [Observe Review](./observe-review-record.md)
 - [Assist Review](./assist-review-record.md)
+- [Closed Loop Review](./closed-loop-review-record.md)
 - [Safety Policy](./safety-policy.md)
 - [Metrics & Evals](./metrics-and-evals.md)
 
@@ -88,8 +89,11 @@ AI-Native化の価値は各作業の自動化ではなく、**EvidenceからLear
 
 - [Event Taxonomy](./event-taxonomy.md)
 - [Funnel Metrics](./funnel-metrics.md)
+- [`Metric Registry`](../../ai/contracts/metric-registry.json) — Agent/Skillが参照するstable Metric IDの正本
 - [`ai/evals/`](../../ai/evals/README.md)
 - [`weekly-learning-report.md`](../../ai/workflows/templates/weekly-learning-report.md)
+
+Metric参照にはMarkdown見出しURLではなく `metric:<stable-id>` を使い、CIでRegistryへの解決可能性を検証します。
 
 ## Assist contracts — Iteration 3
 
@@ -133,6 +137,7 @@ Humanが承認・実行したExperimentを、Accepted Learningへ安全に変換
 
 - [`Experiment Result Record`](../../ai/workflows/templates/experiment-result.md)
 - [`Learning Candidate`](../../ai/workflows/templates/learning-candidate.md)
+- [`Metric Registry`](../../ai/contracts/metric-registry.json)
 
 ### Skills / Reviewer
 
@@ -151,9 +156,9 @@ Human Approval / Manual Execution
   ↓
 Experiment Result
   ↓
-Evaluator
+Evaluator / Candidate Maker
   ↓
-Learning Candidate
+Learning Candidate + provenance
   ↓
 Independent Learning Reviewer
   ↓
@@ -167,7 +172,9 @@ Experience Hypothesis / MLP Polish
 重要な境界:
 
 - AIはExperimentを自動開始しない
-- EvaluatorとLearning Reviewerを分離する
+- `metric_definition_ref` はactiveなMetric Registry IDへ解決できること
+- Learning Candidateに`candidate_maker_id`とsource evaluation provenanceを残す
+- `reviewer_id != candidate_maker_id`
 - Safety/Trust悪化をBusiness metric改善で上書きしない
 - invalid ExperimentからLearningを昇格しない
 - Learning Reviewerは推薦まで
@@ -181,7 +188,7 @@ Experience Hypothesis / MLP Polish
 - Deterministic Message Guardrail: PR #22 — 完了
 - MLP First: PR #24 — 完了
 - Iteration 3 Assist: Issue #23 / PR #25 — 完了
-- Iteration 4 Closed Learning Loop: Issue #27 — 実装中
+- Iteration 4 Closed Learning Loop: Issue #27 / PR #28 — レビュー・検証中
 
 Iteration 4でも自動化しないもの:
 
