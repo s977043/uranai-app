@@ -15,34 +15,21 @@ Tracking: #18, #20, #23, #26
 - Deterministic Message Guardrail: PR #22 — 完了
 - MLP First: PR #24 — 完了
 - Assist: PR #25 / Issue #23 — 完了
-- Closed Learning Loop: Issue #26 — 実装中
+- Closed Learning Loop: PR #29 / Issue #26 — 実装・7視点レビュー・CI完了、merge ready
 - PR #16 数秘術ドメインは別系統で進行中
 
 # Iteration 1 — Foundation ✅
-
 North Star、責務分離、Safety、Evidence、Analyst / VoC Analyst、Learning Gateを確立。
 
 # Iteration 2 — Observe ✅
-
 Event / Metric / identity / regression fixture / Weekly Learning Reportの契約を確立。
 
 # Iteration 3 — Assist ✅
+Draft Maker / Reviewer / Human Gateを確立。`reviewer != maker`、Metric Contract追跡、Draft-onlyを固定。
 
-Draft Maker / Reviewer / Human Gateを確立。
+# Iteration 4 — Closed Learning Loop ✅ merge ready
 
-- Content Agent — Draft Maker
-- Growth Agent — Experiment / Draft Maker
-- Reading Quality Agent — Reviewer only
-- `reviewer != maker`
-- Growth metric / guardrailは`metric_definition_ref`で追跡
-- Content 5 / Growth 5 / Reading Quality 6 regression fixtures
-- PR #25 merge / Issue #23 close
-
-Scope out継続: auto publish / CRM send / price / charge / reading generator / Orchestrator。
-
-# Iteration 4 — Closed Learning Loop 🚧
-
-Tracking: #26
+Tracking: #26 / PR #29
 
 ## Goal
 
@@ -70,64 +57,47 @@ Next Experience Hypothesis / MLP Polish
 
 ## Plan review / changes
 
-当初のClosed Workflowから次を明確化した。
-
-1. **Execution Receipt**を追加し、予定と実際の変更を分離
-2. EvaluatorはProposal Makerと別主体 (`evaluator != maker`)
+1. Execution Receiptで予定と実際の変更を分離
+2. `evaluator != maker` をSkill / fixture / validatorで強制
 3. target / guardrailはMetric Contract ref必須
 4. target改善 + guardrail悪化ではadopt禁止
-5. negative / inconclusive / stoppedもLearning Evidenceとして保持
-6. AIはLearning Candidateまで。Accepted Learning自己昇格禁止
-7. 実行結果をMLPのExperience Hypothesis / Polish / Retentionへ戻す
-8. Production actionはHuman-onlyを維持
+5. negative / inconclusive / stoppedもEvidenceとして保持
+6. `prepare-learning-candidate`をEvaluator OutputのEvidence Contractへ整合
+7. AIはLearning Candidateまで。Accepted Learning自己昇格禁止
+8. Accepted LearningをMLPのExperience Hypothesis / Polish / Retentionへ戻す
+9. Production actionはHuman-only
 
 ## Deliverables
 
-### Contract
 - [x] `experiment-contract.md`
-
-### Skills
 - [x] `evaluate-experiment`
 - [x] `prepare-learning-candidate`
-
-### Workflow
 - [x] `closed-learning-loop.md`
-
-### Regression / Eval
 - [x] Experiment fixture 7 cases
-- [x] positive / negative / inconclusive / stopped
-- [x] target up + guardrail down
-- [x] causal overclaim / confounder
-- [x] evaluator independence / Execution Receipt contract
+- [x] positive / negative / inconclusive / stopped coverage
+- [x] guardrail regression / Safety stop / causal overclaim fixture
+- [x] evaluator independence / Execution Receipt validation
 - [x] fixture validator拡張
 - [x] Human review rubric拡張
-
-### Repository integration / validation
-- [x] Eval framework更新
+- [x] AI-Native README更新
 - [x] Execution Plan更新
-- [ ] AI-Native README更新
-- [ ] Closed Loop review record
-- [ ] Issue #26進捗更新
-- [ ] PR作成
-- [ ] CI Green
-- [ ] 最終差分レビュー
-- [ ] 7視点レビュー
-- [ ] Review blocker反映
-- [ ] merge / Issue close
+- [x] Closed Loop review record
+- [x] Issue #26進捗更新
+- [x] PR #29作成
+- [x] CI Green
+- [x] 最終差分レビュー
+- [x] 7視点レビュー
+- [x] Review blocker反映
+- [ ] PR #29 merge / Issue #26 close
 
-## Exit criteria
+## CI result
 
-- [x] Proposal → Human Approval → Receipt → Evaluation → CandidateのContract
-- [x] Human execution / acceptance境界
-- [x] evaluator != maker
-- [x] Metric Contract ref必須
-- [x] Guardrail悪化時adopt禁止
-- [x] Negative / inconclusive / stoppedを保持
-- [x] AI自己昇格禁止
-- [x] fixture validator拡張
-- [ ] CI Green
-- [ ] 7視点レビュー済み
-- [ ] Blocker 0、または全反映済み
+- [x] npm ci
+- [x] lint
+- [x] typecheck
+- [x] test
+- [x] AI eval contracts
+- [x] build
 
 ## Scope out
 
@@ -142,6 +112,13 @@ Next Experience Hypothesis / MLP Polish
 Candidate: 定期集計 / レポート / 分類 / Regression eval / Knowledge候補 / 異常検知。
 
 Human Gate維持: 本番投稿 / CRM送信 / 価格・課金 / 高額商品方針 / High-stakes reading / Safety Policy変更。
+
+Entry条件:
+
+- Closed Learning Loopが実運用可能
+- audit trailが一貫して追跡可能
+- output assertion runnerまたは同等の回帰検証がある
+- rollback / stop conditionを操作単位で定義可能
 
 # Iteration 6 — Orchestration
 
