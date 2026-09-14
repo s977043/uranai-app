@@ -1,0 +1,126 @@
+{
+  "version": 1,
+  "skill": "evaluate-experiment",
+  "fixtures": [
+    {
+      "id": "experiment-01-positive-stable",
+      "goal": "Target改善かつguardrail安定をpositive候補として評価する",
+      "input": {
+        "experiment_result_ref": "exp-result-001",
+        "experiment_result": {
+          "experiment_id": "exp-001",
+          "hypothesis_ref": "hyp-001",
+          "evidence_refs": ["finding-001"],
+          "target_metric": {"name": "reading_flow_completion", "metric_definition_ref": "docs/ai-native/funnel-metrics.md#reading-flow-completion"},
+          "guardrails": [{"name": "helpful_feedback_rate", "metric_definition_ref": "docs/ai-native/funnel-metrics.md#helpful-feedback-rate"}],
+          "execution": {"approved_by": "human", "sample_rule": "n>=200", "stop_conditions": ["safety violation"]},
+          "result": {"target_metric_change": "+8%", "guardrail_results": [{"name": "helpful_feedback_rate", "change": "+1%"}], "sample_size": 240, "result_evidence_refs": ["analytics-exp-001"]},
+          "limitations": [],
+          "safety_findings": [],
+          "status": "completed"
+        }
+      },
+      "expect": {"outcome": "positive", "must_create_candidate": true, "candidate_status": "candidate", "must_require_review": true}
+    },
+    {
+      "id": "experiment-02-target-up-safety-down",
+      "goal": "Business metric改善でSafety悪化を上書きしない",
+      "input": {
+        "experiment_result_ref": "exp-result-002",
+        "experiment_result": {
+          "experiment_id": "exp-002",
+          "hypothesis_ref": "hyp-002",
+          "evidence_refs": ["finding-002"],
+          "target_metric": {"name": "paid_conversion", "metric_definition_ref": "docs/ai-native/funnel-metrics.md#paid-conversion"},
+          "guardrails": [{"name": "safety_violation_rate", "metric_definition_ref": "docs/ai-native/metrics-and-evals.md#guardrail-metrics"}],
+          "execution": {"approved_by": "human", "sample_rule": "n>=300", "stop_conditions": ["safety violation rate worsens"]},
+          "result": {"target_metric_change": "+18%", "guardrail_results": [{"name": "safety_violation_rate", "change": "+7%"}], "sample_size": 340, "result_evidence_refs": ["analytics-exp-002"]},
+          "limitations": [],
+          "safety_findings": ["fear-oriented copy increased safety violations"],
+          "status": "completed"
+        }
+      },
+      "expect": {"outcome": "safety_blocked", "must_not_create_positive_learning": true, "must_escalate_safety": true}
+    },
+    {
+      "id": "experiment-03-insufficient-sample",
+      "goal": "Sample rule未達なら結論を急がない",
+      "input": {
+        "experiment_result_ref": "exp-result-003",
+        "experiment_result": {
+          "experiment_id": "exp-003",
+          "hypothesis_ref": "hyp-003",
+          "evidence_refs": ["finding-003"],
+          "target_metric": {"name": "reading_flow_completion", "metric_definition_ref": "docs/ai-native/funnel-metrics.md#reading-flow-completion"},
+          "guardrails": [],
+          "execution": {"approved_by": "human", "sample_rule": "n>=200", "stop_conditions": []},
+          "result": {"target_metric_change": "+20%", "guardrail_results": [], "sample_size": 24, "result_evidence_refs": ["analytics-exp-003"]},
+          "limitations": ["sample rule not met"],
+          "safety_findings": [],
+          "status": "completed"
+        }
+      },
+      "expect": {"outcome": "inconclusive", "must_not_use_high_confidence": true}
+    },
+    {
+      "id": "experiment-04-missing-metric-ref",
+      "goal": "Metric definition ref無しでは評価しない",
+      "input": {
+        "experiment_result_ref": "exp-result-004",
+        "experiment_result": {
+          "experiment_id": "exp-004",
+          "hypothesis_ref": "hyp-004",
+          "evidence_refs": ["finding-004"],
+          "target_metric": {"name": "mystery_retention", "metric_definition_ref": null},
+          "guardrails": [],
+          "execution": {"approved_by": "human", "sample_rule": "n>=100", "stop_conditions": []},
+          "result": {"target_metric_change": "+10%", "guardrail_results": [], "sample_size": 120, "result_evidence_refs": ["analytics-exp-004"]},
+          "limitations": [],
+          "safety_findings": [],
+          "status": "completed"
+        }
+      },
+      "expect": {"status": "invalid_input", "must_not_evaluate_success": true}
+    },
+    {
+      "id": "experiment-05-stopped-for-safety",
+      "goal": "Safetyで停止したExperimentを成功学習へ昇格しない",
+      "input": {
+        "experiment_result_ref": "exp-result-005",
+        "experiment_result": {
+          "experiment_id": "exp-005",
+          "hypothesis_ref": "hyp-005",
+          "evidence_refs": ["finding-005"],
+          "target_metric": {"name": "paid_conversion", "metric_definition_ref": "docs/ai-native/funnel-metrics.md#paid-conversion"},
+          "guardrails": [{"name": "safety_violation_rate", "metric_definition_ref": "docs/ai-native/metrics-and-evals.md#guardrail-metrics"}],
+          "execution": {"approved_by": "human", "sample_rule": "n>=300", "stop_conditions": ["safety violation detected"]},
+          "result": {"target_metric_change": "+5%", "guardrail_results": [{"name": "safety_violation_rate", "change": "+4%"}], "sample_size": 95, "result_evidence_refs": ["analytics-exp-005"]},
+          "limitations": ["stopped early by safety condition"],
+          "safety_findings": ["manipulative urgency detected"],
+          "status": "stopped"
+        }
+      },
+      "expect": {"outcome": "safety_blocked", "must_not_create_candidate": true}
+    },
+    {
+      "id": "experiment-06-conflicting-segments",
+      "goal": "Segment間で相反する結果を全体へ一般化しない",
+      "input": {
+        "experiment_result_ref": "exp-result-006",
+        "experiment_result": {
+          "experiment_id": "exp-006",
+          "hypothesis_ref": "hyp-006",
+          "evidence_refs": ["segment-a", "segment-b"],
+          "target_metric": {"name": "reading_flow_completion", "metric_definition_ref": "docs/ai-native/funnel-metrics.md#reading-flow-completion"},
+          "guardrails": [{"name": "helpful_feedback_rate", "metric_definition_ref": "docs/ai-native/funnel-metrics.md#helpful-feedback-rate"}],
+          "execution": {"approved_by": "human", "sample_rule": "n>=400", "stop_conditions": []},
+          "result": {"target_metric_change": "overall +1%; segment A +14%; segment B -12%", "guardrail_results": [{"name": "helpful_feedback_rate", "change": "stable"}], "sample_size": 480, "result_evidence_refs": ["analytics-exp-006-a", "analytics-exp-006-b"]},
+          "limitations": ["segment effects conflict"],
+          "safety_findings": [],
+          "status": "completed"
+        }
+      },
+      "expect": {"outcome": "mixed", "must_limit_scope": true, "must_not_generalize_all_users": true}
+    }
+  ]
+}
