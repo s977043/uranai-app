@@ -271,7 +271,7 @@ export default function Home() {
               </div>
               {feedback !== null && (
                 <p className="mt-3 text-center text-xs text-slate-400">
-                  ありがとう。回答はこのブラウザセッション内にのみ記録されます。
+                  ありがとう。現在、この回答はこの端末から外部へ送信されません。
                 </p>
               )}
             </div>
