@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "workflow": "closed-loop-operational-pilot",
+  "cases": [
+    {
+      "id": "synthetic-positive-001",
+      "mode": "synthetic",
+      "owner": "human",
+      "risk": "low",
+      "status": "completed",
+      "experiment_proposal_ref": "synthetic:proposal:001",
+      "hypothesis_ref": "synthetic:hypothesis:001",
+      "target_metric_ref": "metric:reading_flow_completion",
+      "guardrail_metric_refs": ["metric:helpful_feedback_rate"],
+      "evidence_source_refs": ["synthetic:evidence:baseline:001"],
+      "sample_or_duration_rule": "n>=200",
+      "stop_conditions": ["safety concern"],
+      "rollback": "restore previous CTA copy",
+      "start_decision": "approve",
+      "start_decided_by": "human",
+      "execution_status": "completed",
+      "experiment_result_ref": "synthetic:result:001",
+      "result": {
+        "sample_size": 240,
+        "target_metric_change": "+8%",
+        "guardrail_change": "+1%",
+        "safety_findings": [],
+        "result_evidence_refs": ["synthetic:analytics:001"]
+      },
+      "evaluation": {
+        "evaluation_ref": "synthetic:evaluation:001",
+        "validity": "valid",
+        "outcome": "positive",
+        "guardrail_status": "stable",
+        "safety_status": "clear"
+      },
+      "learning_candidate": {
+        "candidate_ref": "synthetic:candidate:001",
+        "candidate_maker_id": "experiment-evaluator",
+        "source_evaluation_refs": ["synthetic:evaluation:001"],
+        "statement": "Synthetic条件ではCTA明確化とReading Flow Completion改善が同時に観測された",
+        "scope": "synthetic rehearsal only",
+        "confidence": "low",
+        "status": "candidate"
+      },
+      "learning_review": {
+        "review_ref": "synthetic:review:001",
+        "reviewer_id": "learning-reviewer",
+        "recommendation": "accept_candidate",
+        "human_gate_required": true
+      },
+      "human_learning_decision": {
+        "decision": "reject",
+        "reason": "Synthetic rehearsalはProduct LearningとしてAccepted Learningへ昇格しない",
+        "accepted_learning_ref": null,
+        "next_experience_hypothesis_ref": null,
+        "mlp_polish_ref": null
+      }
+    },
+    {
+      "id": "synthetic-safety-001",
+      "mode": "synthetic",
+      "owner": "human",
+      "risk": "low",
+      "status": "stopped",
+      "experiment_proposal_ref": "synthetic:proposal:002",
+      "hypothesis_ref": "synthetic:hypothesis:002",
+      "target_metric_ref": "metric:paid_conversion",
+      "guardrail_metric_refs": ["metric:helpful_feedback_rate"],
+      "evidence_source_refs": ["synthetic:evidence:baseline:002"],
+      "sample_or_duration_rule": "n>=300",
+      "stop_conditions": ["manipulation risk detected"],
+      "rollback": "restore neutral CTA copy",
+      "start_decision": "approve",
+      "start_decided_by": "human",
+      "execution_status": "stopped",
+      "experiment_result_ref": "synthetic:result:002",
+      "result": {
+        "sample_size": 95,
+        "target_metric_change": "+5%",
+        "guardrail_change": "-15%",
+        "safety_findings": ["manipulative urgency detected"],
+        "result_evidence_refs": ["synthetic:analytics:002"]
+      },
+      "evaluation": {
+        "evaluation_ref": "synthetic:evaluation:002",
+        "validity": "limited",
+        "outcome": "safety_blocked",
+        "guardrail_status": "degraded",
+        "safety_status": "violation"
+      },
+      "learning_candidate": null,
+      "learning_review": null,
+      "human_learning_decision": {
+        "decision": "not_applicable",
+        "reason": "Safety-blocked resultはProduct Learningへ昇格しない",
+        "accepted_learning_ref": null,
+        "next_experience_hypothesis_ref": null,
+        "mlp_polish_ref": null
+      }
+    }
+  ]
+}

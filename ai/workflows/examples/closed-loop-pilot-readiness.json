@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "pilot_id": "manual-real-pilot-readiness-001",
+  "mode": "manual_real",
+  "owner": "human",
+  "risk": "low",
+  "status": "blocked",
+  "readiness_status": "blocked",
+  "experiment_proposal_ref": "pending:real-pilot-proposal",
+  "hypothesis_ref": "pending:real-pilot-hypothesis",
+  "target_metric_ref": "metric:reading_flow_completion",
+  "guardrail_metric_refs": ["metric:helpful_feedback_rate"],
+  "metric_observability": {
+    "target": "uninstrumented",
+    "guardrails": [
+      {
+        "ref": "metric:helpful_feedback_rate",
+        "status": "uninstrumented"
+      }
+    ]
+  },
+  "evidence_source_refs": [],
+  "evidence_source_operational": false,
+  "deployment_or_test_surface_ref": null,
+  "execution_surface_available": false,
+  "sample_or_duration_rule": "define after telemetry is operational",
+  "stop_conditions": ["safety concern", "metric evidence missing or invalid"],
+  "rollback": "restore pre-pilot experience; no automated rollout",
+  "privacy_notes": [
+    "session-level telemetry only for first pilot",
+    "no raw consultation text or PII",
+    "cross-session identity remains out of scope"
+  ],
+  "safety_notes": [
+    "low-risk reversible experiment only",
+    "no pricing, charge, high-stakes reading, fear or vulnerability targeting"
+  ],
+  "blocking_dependencies": [
+    "issue:#31 privacy-safe session telemetry and evidence source",
+    "issue:#15 production/shared test surface decision"
+  ],
+  "start_decision": "need_evidence",
+  "start_decided_by": "human",
+  "execution_ref": null,
+  "experiment_result_ref": null,
+  "evaluation_ref": null,
+  "learning_candidate_ref": null,
+  "learning_review_ref": null,
+  "accepted_learning_ref": null
+}

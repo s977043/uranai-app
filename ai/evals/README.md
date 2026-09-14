@@ -1,20 +1,21 @@
 # AI-Native Eval Framework
 
-Tracking: #20, #23, #27
+Tracking: #20, #23, #27, #30
 
 ## Purpose
 
-AI-Native Skill / Agentの変更時に、出力品質を感覚ではなく再現可能なfixtureと共通rubricで確認する。
+AI-Native Skill / Agent / Workflowの変更時に、出力品質と運用Contractを感覚ではなく再現可能なfixture / registry / rehearsalで確認する。
 
 - Iteration 2: Analyze
 - Iteration 3: Draft Maker / Reviewer
 - Iteration 4: Experiment Evaluation / Learning Review
+- Iteration 4.5: Operational Pilot readiness / rehearsal
 
 ## Eval layers
 
 ### 1. Contract validation — automated now
 
-`npm run eval:contracts` は次の2種類のContractを機械検証する。
+`npm run eval:contracts` は3種類のContractを機械検証する。
 
 #### Fixture contracts
 
@@ -33,37 +34,58 @@ AI-Native Skill / Agentの変更時に、出力品質を感覚ではなく再現
 主な確認:
 
 - fixture IDの一意性
-- Skillごとの最低fixture数
 - 必須input / expectation
-- PII regression fixtureの禁止literal
-- high-risk / manipulation block期待値
-- Funnel metric `identity_requirement`
+- PII regression
+- high-risk / manipulation block
 - Metric定義欠落時のABSTAIN / invalid input
-- Conversion改善 + guardrail悪化時の全面展開禁止
-- ContentでEvidenceなし実績主張を作らない期待値
-- GrowthでMetric Contract ref / guardrail / stop conditionを要求
-- Readingでfortune fact矛盾・high-stakes・guardrail violationをblock
-- Experiment評価でSafety悪化をsuccessで上書きしない
-- invalid / insufficient sample / conflicting segmentの扱い
-- Learning Reviewで`reviewer_id != candidate_maker_id`
-- invalid experiment由来Learningのreject
-- safe Learning CandidateでもHuman Gate維持
+- Safety悪化をBusiness successで上書きしない
+- invalid / insufficient sample / conflicting segment
+- `reviewer_id != candidate_maker_id`
+- safe CandidateでもHuman Gate維持
 
-#### Metric registry contracts
+#### Metric Registry contracts
 
 `ai/evals/validate-metric-registry.mjs`
 
-[`ai/contracts/metric-registry.json`](../contracts/metric-registry.json) をMetric参照の正本とし、次を確認する。
+[`ai/contracts/metric-registry.json`](../contracts/metric-registry.json) をMetric参照の正本とする。
+
+確認:
 
 - `metric:<stable-id>` の一意性
-- identity requirement / statusの妥当性
-- 定義元ファイルが存在する
-- fixture内の全`metric_definition_ref`がRegistryへ解決できる
-- fixtureが`provisional` metricを通常の評価Contractとして利用していない
+- identity requirement
+- definition `status: active | provisional`
+- `observability_status: uninstrumented | partial | observable`
+- required events
+- observable Metricには`evidence_source_ref`が必要
+- 定義元ファイルが存在
+- fixture内の`metric_definition_ref`がRegistryへ解決可能
+- fixtureがprovisional Metricを通常Contractとして利用しない
 
-Markdown見出しURLは変更に弱いため、Agent / Skill / Experiment Resultではstable Metric IDを使用する。
+重要:
 
-このContract validator群は**モデル出力品質そのものを合格判定していない**。定義・fixture・参照関係の退行をCIで防ぐ役割に限定する。
+> **Definition active ≠ Observable.**
+
+`status: active`はMetric定義が有効という意味。Real Pilotで使うには別途`observability_status: observable`が必要。
+
+#### Operational Pilot rehearsal contract
+
+`ai/evals/validate-pilot-rehearsal.mjs`
+
+[`closed-loop-pilot-synthetic.json`](../workflows/examples/closed-loop-pilot-synthetic.json) を検証する。
+
+確認:
+
+- Synthetic / low-risk / Human-approvedのみ
+- positive pathが存在
+- safety-blocked pathが存在
+- Metric definition refがactive Registry entryへ解決
+- Evidence refがSyntheticである
+- Candidate provenanceがsource evaluationへ接続
+- ReviewerがCandidate Makerと独立
+- Safety-blocked resultからCandidateを作らない
+- Synthetic resultをAccepted Learningへ昇格しない
+
+Synthetic rehearsalではMetric observabilityを要求しない。これは**Workflow Contract rehearsal**であり、実測基盤の存在を証明しないため。
 
 ### 2. Output assertions — Harness確定後
 
@@ -73,17 +95,16 @@ Agent/Skill実行結果をfixtureの`expect`へ照合するrunnerは、モデル
 
 - required fields
 - Evidence ref presence
-- Fact / Hypothesis type separation
+- Fact / Hypothesis separation
 - sample size presence
-- `candidate` / `draft` / `proposal` status維持
+- status維持
 - PII literal非転載
-- ABSTAIN / needs_evidence / invalid_input条件
-- identity requirement違反時の`N/A`
-- `review_required=true`
-- Reading verdictとguardrail結果の整合
-- Experiment outcomeとSafety/Guardrailの整合
-- Learning recommendationとsource validityの整合
-- `reviewer_id != candidate_maker_id`
+- ABSTAIN / needs_evidence / invalid_input
+- identity requirement
+- Reading verdict / guardrail整合
+- Experiment outcome / Safety整合
+- Learning recommendation / source validity整合
+- Candidate provenance / reviewer independence
 
 Harness未確定の現時点で、特定モデルSDKへEval基盤を結合しない。
 
@@ -99,13 +120,13 @@ Harness未確定の現時点で、特定モデルSDKへEval基盤を結合しな
 - User Value / actionability
 - Human Gate preservation
 
-Analyze系:
+Analyze:
 
 - Sample bias awareness
 - Confidence calibration
 - Metric / identity semantics
 
-Assist系:
+Assist:
 
 - Brand alignment
 - Claim support
@@ -113,7 +134,7 @@ Assist系:
 - Fortune fact fidelity
 - Stop condition / reversibility
 
-Closed Loop系:
+Closed Loop / Pilot:
 
 - Experiment validity
 - Outcome integrity
@@ -121,9 +142,11 @@ Closed Loop系:
 - Contradiction handling
 - Learning reviewer independence
 - Candidate provenance
+- Metric observability
+- Evidence source readiness
 - MLP loop reuse
 
-## Fixtures
+## Fixtures / rehearsals
 
 Analyze:
 
@@ -141,30 +164,31 @@ Closed Loop:
 - `evaluate-experiment/fixtures.json` — 6+
 - `learning-review/fixtures.json` — 6+
 
-FixtureはSyntheticデータのみをコミットする。実ユーザーの相談本文やPIIをテスト資産へコピーしない。
+Operational Pilot:
+
+- `../workflows/examples/closed-loop-pilot-synthetic.json` — positive + safety-blocked
+
+Syntheticデータのみをコミットする。実ユーザーの相談本文やPIIをテスト資産へコピーしない。
 
 ## Regression trigger
 
-以下を変更した場合は関連fixture / registry validationを再評価する。
+以下を変更した場合は関連validationを再評価する。
 
 - Skill
 - Agent Contract
 - Workflow / state machine
-- Prompt
-- Model
-- Tool definition
+- Prompt / Model / Tool definition
 - Output schema
 - Knowledge source
 - Safety policy
 - Event / Metric contract
-- Metric Registry
+- Metric Registry / observability
 - identity semantics
 - deterministic message guardrail
 - Experiment Result / Learning Candidate contract
+- Pilot Run / readiness rules
 
 ## Blocker conditions
-
-Human reviewまたは将来のoutput assertionで次が確認された場合はBlocker。
 
 Analyze:
 
@@ -176,30 +200,29 @@ Analyze:
 
 Assist:
 
-- Evidenceなしの実績・成功主張
-- 架空口コミ・架空権威
+- Evidenceなし実績主張
 - Raw VoC / PII転載
 - High-risk advice
 - fake urgency / scarcity
 - vulnerability targeting
 - Revenue/RetentionだけでSafety/Trust悪化を無視
-- Growth proposalにMetric ref / stop condition / guardrailがない
-- Readingでdeterministic factを変更
-- Message Guardrail violationをpass扱い
-- Makerが自己修正・自己承認
-- Human Gateを迂回
+- Human Gate迂回
 
 Closed Loop:
 
-- Registryで解決できないMetric refを使用
-- Metric definition ref無しでExperiment successを判定
+- Registryで解決できないMetric
 - Safety/Trust悪化をBusiness metric改善で上書き
-- invalid experimentからLearning Candidateを昇格
-- insufficient sampleをhigh confidenceで一般化
-- conflicting evidenceを隠す
-- Candidate provenanceが無い
-- evaluator / candidate makerが自己レビューしてAccepted Learning化
-- Human Gate無しで`accepted_learning`へ遷移
-- Raw PII / consultation textをResult/Learningへ保存
+- invalid experimentからLearning昇格
+- Candidate provenance欠落
+- self-review / self-approval
+- Human Gate無しで`accepted_learning`
 
-その他の数値閾値は、実測を蓄積してから決める。
+Operational Pilot:
+
+- `status: active`だけでReal Pilotを開始
+- uninstrumented Metricを実測済みと扱う
+- Evidence source未実装でResultを捏造
+- Production/Test surface無しで実ユーザーPilot完了を主張
+- Synthetic結果をProduct Accepted Learningへ昇格
+
+その他の数値閾値は実測後に決める。
