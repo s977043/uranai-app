@@ -58,12 +58,14 @@ Issue #31でTypeScript Contractを持つイベント:
 
 ```yaml
 event_version: 1
-occurred_at: ISO-8601
+occurred_at: Date.toISOString() canonical UTC string
 anonymous_session_id: session_<random-uuid>
 anonymous_visitor_id: null
 properties:
   reading_flow_id: reading-flow_<random-uuid>
 ```
+
+`occurred_at`は単に`Date.parse`可能な文字列ではなく、`Date.toISOString()`で再現できるcanonical表現のみを受け付ける。
 
 ### Reading Flow correlation
 
@@ -113,6 +115,7 @@ reading_startedの一意reading_flow_id数
 - completion onlyはorphanとして記録
 - completionがstartより前ならout-of-orderとして記録
 - sessionが異なるcompletionは分子へ入れない
+- started / completedで`reading_type`が異なるflowはdimension mismatchとして分子へ入れない
 - start分母が無い場合は0%にせず`not_computable`
 
 ### Helpful Feedback Rate
@@ -207,9 +210,10 @@ Product Metricの`evidence_source_ref`には設定しない。
 
 Data quality anomalyは隠さず:
 
-- duplicate_events
-- orphan_events
-- out_of_order_events
+- `duplicate_events`
+- `orphan_events`
+- `out_of_order_events`
+- `dimension_mismatch_events`
 
 として返す。
 
