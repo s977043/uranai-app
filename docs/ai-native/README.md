@@ -53,22 +53,19 @@ AI-Native化の価値は各作業の自動化ではなく、**EvidenceからLear
 1. **Deterministic facts / AI interpretation**
    - カード抽選、正逆、数秘等の占術上の事実は決定論的ロジックで扱う。
    - AIは解釈、言語化、分析、提案を担当する。
-
 2. **Execution / Judgment separation**
    - AIは調査、分類、分析、下書き、テスト、レポートを担当する。
    - 人間はPurpose、Strategy、世界観、倫理、高リスク判断、Go/No-Goを担当する。
-
 3. **Maker / Checker separation**
    - 生成したAgent自身に最終評価・承認をさせない。
-
 4. **Evidence-first learning**
    - 観測や仮説をそのままKnowledge化しない。
-
 5. **Controlled autonomy**
    - 自律化は低リスクで可逆な操作から段階的に広げる。
-
 6. **Learning must return to product**
    - Accepted Learningを蓄積するだけで終わらせず、次のExperience Hypothesis / MLP Polishへ戻す。
+7. **Defined does not mean observable**
+   - Metric定義がactiveでも、実イベント・Evidence sourceが無ければ実測可能とは扱わない。
 
 ## Core documents
 
@@ -80,40 +77,47 @@ AI-Native化の価値は各作業の自動化ではなく、**EvidenceからLear
 - [Observe Review](./observe-review-record.md)
 - [Assist Review](./assist-review-record.md)
 - [Closed Loop Review](./closed-loop-review-record.md)
+- [Closed Loop Operational Pilot](./closed-loop-pilot.md)
 - [Safety Policy](./safety-policy.md)
 - [Metrics & Evals](./metrics-and-evals.md)
 
 ## Observe contracts — Iteration 2
 
-実データ接続より前に分析の入力・評価境界を固定しています。
-
 - [Event Taxonomy](./event-taxonomy.md)
 - [Funnel Metrics](./funnel-metrics.md)
-- [`Metric Registry`](../../ai/contracts/metric-registry.json) — Agent/Skillが参照するstable Metric IDの正本
+- [`Metric Registry`](../../ai/contracts/metric-registry.json)
 - [`ai/evals/`](../../ai/evals/README.md)
 - [`weekly-learning-report.md`](../../ai/workflows/templates/weekly-learning-report.md)
 
-Metric参照にはMarkdown見出しURLではなく `metric:<stable-id>` を使い、CIでRegistryへの解決可能性を検証します。
+Metric参照には `metric:<stable-id>` を使う。
+
+Metric Registryでは次を分離する。
+
+```yaml
+status: active | provisional
+observability_status: uninstrumented | partial | observable
+```
+
+- `status` = Metric定義の状態
+- `observability_status` = 実データでEvidence取得できる状態
+
+Real Pilotで使うMetricは両方を確認する。
 
 ## Assist contracts — Iteration 3
 
-ユーザー向けExecutionは、まず**Draft-only**で扱います。
+Agents:
 
-### Agents
-
-- [`Content Agent`](../../ai/agents/content.md) — Content Draft Maker
-- [`Growth Agent`](../../ai/agents/growth.md) — Experiment / Draft Maker
+- [`Content Agent`](../../ai/agents/content.md)
+- [`Growth Agent`](../../ai/agents/growth.md)
 - [`Reading Quality Agent`](../../ai/agents/reading-quality.md) — Reviewer only
 
-### Skills
+Skills:
 
 - [`draft-content`](../../ai/skills/draft-content/SKILL.md)
 - [`design-growth-experiment`](../../ai/skills/design-growth-experiment/SKILL.md)
 - [`review-reading-quality`](../../ai/skills/review-reading-quality/SKILL.md)
 
-### Workflow
-
-- [`Draft → Review → Human Gate`](../../ai/workflows/draft-review-publish.md)
+Standard flow:
 
 ```text
 Maker
@@ -127,25 +131,21 @@ Independent Review
 Human Gate
 ```
 
-Message Guardrailは既知NG表現を検出する**一層**であり、包括Safety保証ではありません。
-
 ## Closed Learning Loop — Iteration 4
 
-Humanが承認・実行したExperimentを、Accepted Learningへ安全に変換し、MLP改善へ戻します。
-
-### Contracts
+Contracts:
 
 - [`Experiment Result Record`](../../ai/workflows/templates/experiment-result.md)
 - [`Learning Candidate`](../../ai/workflows/templates/learning-candidate.md)
 - [`Metric Registry`](../../ai/contracts/metric-registry.json)
 
-### Skills / Reviewer
+Skills / Reviewer:
 
 - [`evaluate-experiment`](../../ai/skills/evaluate-experiment/SKILL.md)
 - [`review-learning-candidate`](../../ai/skills/review-learning-candidate/SKILL.md)
 - [`Learning Reviewer Agent`](../../ai/agents/learning-reviewer.md)
 
-### Workflow
+Workflow:
 
 - [`Closed Learning Loop`](../../ai/workflows/closed-learning-loop.md)
 
@@ -172,33 +172,58 @@ Experience Hypothesis / MLP Polish
 重要な境界:
 
 - AIはExperimentを自動開始しない
-- `metric_definition_ref` はactiveなMetric Registry IDへ解決できること
-- Learning Candidateに`candidate_maker_id`とsource evaluation provenanceを残す
+- Candidateにprovenanceを残す
 - `reviewer_id != candidate_maker_id`
 - Safety/Trust悪化をBusiness metric改善で上書きしない
-- invalid ExperimentからLearningを昇格しない
-- Learning Reviewerは推薦まで
 - Accepted Learning確定はHumanのみ
 - Raw PII / consultation textをResult/Learningへ保存しない
 
+## Operational Pilot — Iteration 4.5
+
+Controlled Autonomyへ進む前に、Closed Loopの**運用可能性**を検証する。
+
+- Runbook: [`closed-loop-pilot.md`](./closed-loop-pilot.md)
+- Pilot template: [`pilot-run.md`](../../ai/workflows/templates/pilot-run.md)
+- Synthetic narrative: [`closed-loop-pilot-synthetic.md`](../../ai/workflows/examples/closed-loop-pilot-synthetic.md)
+- Machine-readable rehearsal: [`closed-loop-pilot-synthetic.json`](../../ai/workflows/examples/closed-loop-pilot-synthetic.json)
+- CI validator: [`validate-pilot-rehearsal.mjs`](../../ai/evals/validate-pilot-rehearsal.mjs)
+
+Current conclusion:
+
+```text
+Synthetic workflow rehearsal  → possible / CI validated
+Manual Real Pilot             → blocked
+Controlled Autonomy           → not entered
+```
+
+Real Pilot blockers:
+
+- #31: privacy-safe telemetry / Evidence source
+- #15: production or shared test surface decision
+
+Synthetic成功をReal Product Learningとして扱わない。
+
 ## Iteration status
 
-- Iteration 1 Foundation: Issue #18 / PR #19 — 完了
-- Iteration 2 Observe: Issue #20 / PR #21 — 完了
-- Deterministic Message Guardrail: PR #22 — 完了
-- MLP First: PR #24 — 完了
-- Iteration 3 Assist: Issue #23 / PR #25 — 完了
-- Iteration 4 Closed Learning Loop: Issue #27 / PR #28 — レビュー・検証中
+- Iteration 1 Foundation: 完了
+- Iteration 2 Observe: 完了
+- Deterministic Message Guardrail: 完了
+- MLP First: 完了
+- Iteration 3 Assist: 完了
+- Iteration 4 Closed Learning Loop: PR #28 / Issue #27 — 完了
+- Iteration 4.5 Operational Pilot: Issue #30 — Readiness評価中
+- Pilot telemetry foundation: Issue #31 — open
+- Iteration 5 Controlled Autonomy: **blocked until Real Pilot evidence exists**
 
-Iteration 4でも自動化しないもの:
+## Human Gateを維持するもの
 
-- SNS / CRMの自動実行
+- Experiment start / stop
+- SNS / CRM外部実行
 - 価格変更 / 課金操作
-- Experimentの自動開始
-- Accepted LearningのAI単独確定
-- 実Analytics SDK / 実ユーザーデータ接続
-- Human Gate解除
-- Orchestrator
+- High-stakes content / reading
+- Accepted Learning
+- Safety Policy変更
+- Orchestrator導入判断
 
 ## 関連
 
