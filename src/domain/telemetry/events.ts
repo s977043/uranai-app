@@ -63,9 +63,9 @@ export type TelemetryValidationResult =
   | { ok: false; errors: string[] };
 
 const SESSION_ID_PATTERN =
-  /^session_[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  /^session_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const READING_FLOW_ID_PATTERN =
-  /^reading-flow_[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  /^reading-flow_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const readingTypes = new Set<ReadingType>([
   "tarot",
@@ -157,7 +157,7 @@ function validateCommonEnvelope(
     errors.push("occurred_at must be canonical ISO-8601 from Date.toISOString()");
   }
   if (!isSessionId(input.anonymous_session_id)) {
-    errors.push("anonymous_session_id must be a random session UUID");
+    errors.push("anonymous_session_id must be a random UUID v4 session identifier");
   }
   if (input.anonymous_visitor_id !== null) {
     errors.push("anonymous_visitor_id must remain null in session-only telemetry");
@@ -173,7 +173,9 @@ function validateReadingStarted(
   if (!hasExactlyKeys(properties, ["reading_flow_id", "reading_type", "entry_context"])) {
     errors.push("reading_started properties contain missing or unknown fields");
   }
-  if (!isReadingFlowId(properties.reading_flow_id)) errors.push("reading_flow_id is invalid");
+  if (!isReadingFlowId(properties.reading_flow_id)) {
+    errors.push("reading_flow_id must be a random UUID v4 reading-flow identifier");
+  }
   if (!readingTypes.has(properties.reading_type as ReadingType)) errors.push("reading_type is invalid");
   if (!entryContexts.has(properties.entry_context as EntryContext)) errors.push("entry_context is invalid");
   return errors.length === 0;
@@ -186,7 +188,9 @@ function validateReadingCompleted(
   if (!hasExactlyKeys(properties, ["reading_flow_id", "reading_type", "duration_bucket"])) {
     errors.push("reading_completed properties contain missing or unknown fields");
   }
-  if (!isReadingFlowId(properties.reading_flow_id)) errors.push("reading_flow_id is invalid");
+  if (!isReadingFlowId(properties.reading_flow_id)) {
+    errors.push("reading_flow_id must be a random UUID v4 reading-flow identifier");
+  }
   if (!readingTypes.has(properties.reading_type as ReadingType)) errors.push("reading_type is invalid");
   if (!durationBuckets.has(properties.duration_bucket as DurationBucket)) {
     errors.push("duration_bucket is invalid");
@@ -207,7 +211,9 @@ function validateReadingFeedback(
   ) {
     errors.push("reading_feedback_submitted properties contain missing or unknown fields");
   }
-  if (!isReadingFlowId(properties.reading_flow_id)) errors.push("reading_flow_id is invalid");
+  if (!isReadingFlowId(properties.reading_flow_id)) {
+    errors.push("reading_flow_id must be a random UUID v4 reading-flow identifier");
+  }
   if (!helpfulnessValues.has(properties.helpfulness as Helpfulness)) {
     errors.push("helpfulness is invalid");
   }
