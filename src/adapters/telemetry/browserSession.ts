@@ -1,4 +1,7 @@
-import { createAnonymousSessionId } from "@/adapters/telemetry/identifiers";
+import {
+  createAnonymousSessionId,
+  isAnonymousSessionId,
+} from "@/adapters/telemetry/identifiers";
 import type { TelemetrySink } from "@/adapters/telemetry/sink";
 import {
   validateTelemetryEvent,
@@ -20,9 +23,12 @@ export function getOrCreateAnonymousSessionId(
   createId: () => string = createAnonymousSessionId,
 ): string {
   const existing = storage.getItem(SESSION_ID_KEY);
-  if (existing !== null) return existing;
+  if (existing !== null && isAnonymousSessionId(existing)) return existing;
 
   const created = createId();
+  if (!isAnonymousSessionId(created)) {
+    throw new Error("anonymous telemetry session id must be UUID v4 based");
+  }
   storage.setItem(SESSION_ID_KEY, created);
   return created;
 }
