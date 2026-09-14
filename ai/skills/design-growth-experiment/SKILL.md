@@ -7,8 +7,8 @@ Evidenceに基づき、User Value / Learning Value / Safetyを守るGrowth Exper
 ## Preconditions
 
 - hypothesisがEvidenceへ接続可能
-- target metricの定義が存在
-- guardrail metricを設定可能
+- target metricの定義元を `metric_definition_ref` で追跡可能
+- guardrail metricの定義元を追跡可能
 - rollback / stop conditionを定義可能
 
 満たさない場合は`needs_evidence`または`needs_metric_definition`を返す。
@@ -21,8 +21,10 @@ hypothesis: string
 evidence_refs:
   - string
 target_metric: string
+metric_definition_ref: string | null
 guardrail_candidates:
-  - string
+  - metric: string
+    metric_definition_ref: string | null
 audience: string
 constraints:
   - string
@@ -31,7 +33,7 @@ constraints:
 ## Process
 
 1. Fact / Hypothesisを分離
-2. target metricの定義を確認
+2. target metric / guardrailの定義元を確認
 3. User Valueとの接続を確認
 4. guardrailを選定
 5. Experiment / comparisonを定義
@@ -49,8 +51,10 @@ hypothesis: string
 evidence_refs:
   - string
 target_metric: string
+metric_definition_ref: string
 guardrails:
-  - string
+  - metric: string
+    metric_definition_ref: string
 experiment:
   audience: string
   change: string
@@ -72,15 +76,15 @@ review_required: true
 - Helpfulness / Safety / manipulation riskをguardrail候補に含める
 - high-risk文脈をmonetizationへ接続しない
 - fake urgency / scarcity禁止
-- metric definition不明なら推測しない
+- metric definition ref不明なら推測しない
 - stop condition無しでExperimentを提案しない
 - Human approval前に本番開始しない
 
 ## Review checklist
 
 - [ ] Evidence refあり
-- [ ] target metric定義あり
-- [ ] guardrailあり
+- [ ] target metric definition refあり
+- [ ] guardrail definition refあり
 - [ ] stop conditionあり
 - [ ] reversibilityあり
 - [ ] manipulation risk確認済み
@@ -88,7 +92,7 @@ review_required: true
 
 ## Stop conditions
 
-- Metric定義なし
+- Metric定義refなし
 - Evidenceなし
 - Safety / Trust悪化が前提
 - 本番campaign/price変更の直接実行を要求された
