@@ -154,6 +154,7 @@ const specs = [
       const observation = fixture.input?.observation;
       assert(typeof observation?.window === "string" && observation.window.length > 0, `${fixture.id}: observation window required`);
       assert(Array.isArray(observation?.evidence_refs) && observation.evidence_refs.length > 0, `${fixture.id}: observation evidence refs required`);
+      assert(Array.isArray(observation?.guardrails) && observation.guardrails.length > 0, `${fixture.id}: approved experiment must retain at least one guardrail`);
       assert(fixture.expect && typeof fixture.expect === "object", `${fixture.id}: expect required`);
 
       const targetMetric = observation.target_metric;
@@ -161,7 +162,7 @@ const specs = [
       if (fixture.id !== "experiment-05-missing-baseline-definition") {
         assert(typeof targetMetric.metric_definition_ref === "string" && targetMetric.metric_definition_ref.length > 0, `${fixture.id}: target metric definition ref required`);
       }
-      for (const guardrail of observation.guardrails ?? []) {
+      for (const guardrail of observation.guardrails) {
         assert(typeof guardrail.name === "string" && guardrail.name.length > 0, `${fixture.id}: guardrail metric name required`);
         assert(typeof guardrail.metric_definition_ref === "string" && guardrail.metric_definition_ref.length > 0, `${fixture.id}: guardrail metric definition ref required`);
       }
