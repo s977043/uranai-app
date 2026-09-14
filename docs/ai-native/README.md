@@ -4,64 +4,39 @@
 
 ## 位置づけ
 
-- 開発作業のルール正本: [`AGENTS.md`](../../AGENTS.md)
-- プロダクト開発の基本形: [`docs/product-development.md`](../product-development.md)
-- プロダクトの世界観・ブランド正本: [`docs/concept-board.md`](../concept-board.md)
-- AI-Native事業運用の設計正本: 本ディレクトリ
+- 開発ルール: [`AGENTS.md`](../../AGENTS.md)
+- プロダクト開発: [`docs/product-development.md`](../product-development.md)
+- Product / Brand: [`docs/concept-board.md`](../concept-board.md)
+- AI-Native事業運用: 本ディレクトリ
 
-互いに競合した場合は、実装手順は `AGENTS.md`、ユーザー体験・表現方針は `concept-board.md`、プロダクト開発プロセスは `product-development.md` を優先し、AI-Native設計を修正します。
+競合時は、実装手順は`AGENTS.md`、ユーザー体験は`concept-board.md`、プロダクト開発プロセスは`product-development.md`を優先します。
 
 ## North Star
 
-> AIが日常的なExecutionを自律的に進め、人間は世界観・ユーザー価値・倫理・重要判断に集中する占い事業OSを作る。
+> AIが日常的なExecutionを進め、人間は世界観・ユーザー価値・倫理・重要判断に集中する占い事業OSを作る。
 
-「AIをたくさん動かす」「人間をゼロにする」こと自体は目的ではありません。
+AI稼働率や人間ゼロを目的にしません。
 
-## 基本ループ
+## Learning loop
 
 ```text
-Acquire
-  ↓
-Experience
-  ↓
-Reading
-  ↓
-Retain
-  ↓
-Monetize
-  ↓
-VoC / Behavior
-  ↓
-Analyze
-  ↓
-Hypothesis
-  ↓
-Experiment
-  └────────→ Product / Growth / Reading
+Acquire → Experience → Reading → Retain → Monetize
+                         ↓
+                    VoC / Behavior
+                         ↓
+Analyze → Hypothesis → Experiment → Evaluation → Learning
+                         └──────────────→ Product / Growth / Reading
 ```
 
-AI-Native化の価値は各作業の自動化ではなく、**この学習ループを短く、検証可能にすること**にあります。
+学習は [`product-development.md`](../product-development.md) の `Experience Hypothesis → Vertical Slice → Lovability Review → User Observation → Polish Loop → MLP Release → Retention Validation` へ戻します。
 
-プロダクト開発側では、この事業学習ループを [`product-development.md`](../product-development.md) の `Experience Hypothesis → Vertical Slice → Lovability Review → User Observation → Polish Loop → MLP Release → Retention Validation` に接続します。AI-Native運用で得たEvidenceを次のExperience Hypothesisへ戻し、単なる機能追加ではなくLovabilityとRetentionの改善へ使います。
+## Design principles
 
-## 設計原則
-
-1. **Deterministic facts / AI interpretation**
-   - カード抽選、正逆、数秘等の占術上の事実は決定論的ロジックで扱う。
-   - AIは解釈、言語化、分析、提案を担当する。
-
-2. **Execution / Judgment separation**
-   - AIは調査、分類、分析、下書き、テスト、レポートを担当する。
-   - 人間はPurpose、Strategy、世界観、倫理、高リスク判断、Go/No-Goを担当する。
-
-3. **Maker / Checker separation**
-   - 生成したAgent自身に最終評価・承認をさせない。
-
-4. **Evidence-first learning**
-   - 観測や仮説をそのままKnowledge化しない。
-
-5. **Controlled autonomy**
-   - 自律化は低リスクで可逆な操作から段階的に広げる。
+1. **Deterministic facts / AI interpretation** — 占術上のFactはコード、AIは解釈・分析・提案。
+2. **Execution / Judgment separation** — AIはExecution、人間は重要判断。
+3. **Maker / Checker separation** — 自己生成・自己承認をしない。
+4. **Evidence-first learning** — 仮説をKnowledgeへ直書きしない。
+5. **Controlled autonomy** — 低リスク・可逆領域から段階的に広げる。
 
 ## Core documents
 
@@ -69,72 +44,91 @@ AI-Native化の価値は各作業の自動化ではなく、**この学習ルー
 - [North Star](./north-star.md)
 - [Operating Model](./operating-model.md)
 - [Execution Plan](./execution-plan.md)
-- [Foundation Review](./review-record.md)
-- [Observe Review](./observe-review-record.md)
 - [Safety Policy](./safety-policy.md)
 - [Metrics & Evals](./metrics-and-evals.md)
+- [Experiment / Learning Contract](./experiment-contract.md)
+- [`ai/evals/`](../../ai/evals/README.md)
 
-## Observe contracts — Iteration 2
-
-実データ接続より前に分析の入力・評価境界を固定しています。
+## Iteration 2 — Observe
 
 - [Event Taxonomy](./event-taxonomy.md)
 - [Funnel Metrics](./funnel-metrics.md)
-- [`ai/evals/`](../../ai/evals/README.md) — regression fixture / review rubric / validator
-- [`weekly-learning-report.md`](../../ai/workflows/templates/weekly-learning-report.md) — 週次Learningの標準テンプレート
+- [`Weekly Learning Report`](../../ai/workflows/templates/weekly-learning-report.md)
 
-## Assist contracts — Iteration 3
+分析の入力・Metric・identity・Eval境界を固定しました。
 
-ユーザー向けExecutionは、まず**Draft-only**で扱います。
+## Iteration 3 — Assist
 
-### Agents
+Agents:
 
-- [`Content Agent`](../../ai/agents/content.md) — Content Draft Maker
+- [`Content Agent`](../../ai/agents/content.md) — Draft Maker
 - [`Growth Agent`](../../ai/agents/growth.md) — Experiment / Draft Maker
 - [`Reading Quality Agent`](../../ai/agents/reading-quality.md) — Reviewer only
 
-### Skills
+Skills:
 
 - [`draft-content`](../../ai/skills/draft-content/SKILL.md)
 - [`design-growth-experiment`](../../ai/skills/design-growth-experiment/SKILL.md)
 - [`review-reading-quality`](../../ai/skills/review-reading-quality/SKILL.md)
 
-### Workflow
+Workflow:
 
 - [`Draft → Review → Human Gate`](../../ai/workflows/draft-review-publish.md)
 
-標準境界:
+`reviewer != maker`を必須とし、外部Publish/Send/Price changeはHuman Gateを維持します。
+
+## Iteration 4 — Closed Learning Loop
+
+Humanが承認・実行したExperimentを、AIがEvidence付きで評価しLearning Candidateまで閉じます。
 
 ```text
-Maker
+Growth Proposal
   ↓
-Draft / Proposal
+Human Approval / Manual Execution
   ↓
-Deterministic Message Guardrail
+Execution Receipt
   ↓
-Independent Review
+Observation / Evidence
   ↓
-Human Gate
+Analyst Evaluation
+  ↓
+Learning Candidate
+  ↓
+Human / Independent Acceptance Gate
+  ↓
+Accepted Learning
+  ↓
+Next Experience Hypothesis / MLP Polish
 ```
 
-Message Guardrailは既知NG表現を検出する**一層**であり、包括Safety保証ではありません。Contextual ReviewとHuman Gateを置き換えません。
+Contracts / Skills / Workflow:
 
-Iteration 3で自動化しないもの:
+- [Experiment / Learning Contract](./experiment-contract.md)
+- [`evaluate-experiment`](../../ai/skills/evaluate-experiment/SKILL.md)
+- [`prepare-learning-candidate`](../../ai/skills/prepare-learning-candidate/SKILL.md)
+- [`Closed Learning Loop`](../../ai/workflows/closed-learning-loop.md)
 
-- SNS公開 / scheduling
-- LINE / メール / Push送信
-- 価格変更 / 課金操作
-- 鑑定生成Agent
-- Human Gate解除
-- Orchestrator
+重要な境界:
+
+- Experiment実行はIteration 4ではHuman-only
+- EvaluatorはProposal Makerと別主体
+- target / guardrailはMetric Contractへ追跡可能
+- negative / inconclusive / stoppedもEvidenceとして保持
+- AIはLearning Candidateまで。Accepted Learningへの自己昇格禁止
+- Accepted LearningはMLPの次のExperience Hypothesis / Polish / Retentionへ戻す
+
+## Safety
+
+Deterministic Message Guardrailは既知NG表現を検出する**一層**であり、包括Safety保証ではありません。Contextual ReviewとHuman Gateを置き換えません。
 
 ## Iteration status
 
-- Iteration 1 Foundation: Issue #18 / PR #19 — 完了
-- Iteration 2 Observe: Issue #20 / PR #21 — 完了
-- Deterministic Message Guardrail: PR #22 — 完了（旧PR #17を置換）
+- Foundation: Issue #18 / PR #19 — 完了
+- Observe: Issue #20 / PR #21 — 完了
+- Message Guardrail: PR #22 — 完了
 - MLP First: PR #24 — 完了
-- Iteration 3 Assist: Issue #23 — 実装・評価中
+- Assist: Issue #23 / PR #25 — 完了
+- Closed Learning Loop: Issue #26 — 実装・評価中
 
 ## 関連
 
