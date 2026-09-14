@@ -9,6 +9,7 @@ Learning Candidateを独立レビューし、Accepted Learningへの昇格可否
 ## Preconditions
 
 - candidate statusである
+- Candidate自身に`candidate_maker_id` / `source_evaluation_refs`が記録されている
 - Evidence refsが存在
 - Experiment由来ならExperiment validityが確認可能
 - reviewerはLearning Candidateを作った主体と別である
@@ -19,28 +20,35 @@ Learning Candidateを独立レビューし、Accepted Learningへの昇格可否
 
 ```yaml
 candidate_ref: string
-candidate: object
+candidate:
+  candidate_maker_id: string
+  source_evaluation_refs:
+    - string
+  status: candidate
+  # ...other Learning Candidate fields
 source_evaluations:
-  - string
+  - object
 reviewer_id: string
-candidate_maker_id: string
 ```
 
-`candidate_maker_id` はExperiment proposalの作成者ではなく、**このLearning Candidateを生成したEvaluator / Maker**を指す。
+`candidate.candidate_maker_id` はExperiment proposalの作成者ではなく、**このLearning Candidateを生成したEvaluator / Maker**を指す。
+
+Candidate本体をprovenanceの唯一の正本とし、Reviewer入力側に別のmaker IDを重複保持しない。
 
 ## Process
 
-1. `reviewer_id != candidate_maker_id` を確認
-2. Evidence traceabilityを確認
-3. Experiment validityを確認
-4. Metric fidelityを確認
-5. Guardrail / Safety結果を確認
-6. Contradicting evidenceを確認
-7. ScopeがEvidenceを超えていないか確認
-8. Confidence calibrationを確認
-9. Revisit conditionを確認
-10. 次のExperience Hypothesis / MLP Polishへの利用可能性を確認
-11. Human recommendationを作る
+1. `reviewer_id != candidate.candidate_maker_id` を確認
+2. `candidate.source_evaluation_refs` と `source_evaluations` の追跡可能性を確認
+3. Evidence traceabilityを確認
+4. Experiment validityを確認
+5. Metric fidelityを確認
+6. Guardrail / Safety結果を確認
+7. Contradicting evidenceを確認
+8. ScopeがEvidenceを超えていないか確認
+9. Confidence calibrationを確認
+10. Revisit conditionを確認
+11. 次のExperience Hypothesis / MLP Polishへの利用可能性を確認
+12. Human recommendationを作る
 
 ## Output contract
 
@@ -51,7 +59,7 @@ candidate_maker_id: string
 recommendation: accept_candidate | reject_candidate | need_more_evidence | invalid_review_input
 findings:
   - severity: blocker | warning | note
-    category: evidence | validity | metric | safety | scope | confidence | contradiction | privacy | other
+    category: evidence | validity | metric | safety | scope | confidence | contradiction | privacy | provenance | other
     message: string
 required_changes:
   - string
@@ -62,9 +70,13 @@ recommended_next_use:
 human_gate_required: true
 ```
 
+Outputの`candidate_maker_id`はCandidate provenanceをそのまま転記し、別値を生成しない。
+
 ## Blockers
 
-- reviewer_id == candidate_maker_id
+- reviewer_id == candidate.candidate_maker_id
+- Candidate provenance不足
+- source evaluationを追跡できない
 - Evidence ref無し
 - invalid Experimentを主要根拠にしている
 - Safety/Trust悪化を成功学習化している
@@ -78,6 +90,7 @@ human_gate_required: true
 
 - mark_as_accepted_learning
 - write_knowledge_directly
+- rewrite_candidate_provenance
 - hide_contradicting_evidence
 - approve_own_candidate
 - weaken_safety_policy
