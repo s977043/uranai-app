@@ -24,13 +24,19 @@ guardrails:
   - string
 source_events:
   - string
+identity_requirement: session | cross_session | none
 ```
+
+`cross_session` 指標は、Privacy review済みの `anonymous_visitor_id` が利用可能な場合だけ計算する。利用できない場合は推測せず `N/A` とする。
 
 ## 1. First Reading Completion
 
 ### Purpose
 
 初回利用者が鑑定開始から結果表示まで到達できているかを見る。
+
+Identity requirement:
+- session
 
 ### Definition
 
@@ -53,7 +59,7 @@ Segments:
 
 Guardrails:
 - `reading_feedback_submitted.helpfulness`
-- `ai_output_rejected` rate
+- `ai_output_rejected` signal
 
 注意:
 Completion改善だけで結果品質が良くなったとはみなさない。
@@ -64,38 +70,55 @@ Completion改善だけで結果品質が良くなったとはみなさない。
 
 初回鑑定後、翌日に再訪する価値が生まれているかを見る。
 
+Identity requirement:
+- cross_session
+
 ### Definition
 
 ```text
-初回 reading_completed の翌暦日に session_returned を持つanonymous user cohort数
--------------------------------------------------------------------------------
-初回 reading_completed を持つeligible anonymous user cohort数
+初回 reading_completed の翌暦日に session_returned を持つeligible anonymous visitor数
+---------------------------------------------------------------------------------
+初回 reading_completed を持つeligible anonymous visitor数
 ```
 
 Window:
 - Asia/Tokyoの暦日基準で翌日
 
+Preconditions:
+- Privacy条件を満たす `anonymous_visitor_id` が存在
+- identifier保持/rotation/削除方針がレビュー済み
+
 Exclusions:
-- identifier保持に同意/利用条件を満たさない対象
+- cross-session識別条件を満たさない対象
 - テストsession
 
 Guardrails:
 - Helpful Feedback Rate
-- Safety rejection rate
+- Safety rejection signal
 - 過度な再鑑定誘導施策の有無
 
+識別条件を満たさない場合:
+- `N/A`
+- session_idから擬似的に推定しない
+
 ## 3. D7 Return
+
+Identity requirement:
+- cross_session
 
 ### Definition
 
 ```text
-初回 reading_completed 後7日以内に session_returned を持つanonymous user cohort数
-----------------------------------------------------------------------------
-初回 reading_completed を持つeligible anonymous user cohort数
+初回 reading_completed 後7日以内に session_returned を持つeligible anonymous visitor数
+----------------------------------------------------------------------------------
+初回 reading_completed を持つeligible anonymous visitor数
 ```
 
 Window:
 - day 1〜day 7
+
+Preconditions / exclusions:
+- D1 Returnと同じ
 
 D1と重複可能。レポートでは定義を併記する。
 
@@ -105,12 +128,16 @@ D1と重複可能。レポートでは定義を併記する。
 
 継続的に占い体験を利用しているかを見る。ただし利用回数の最大化を目的にしない。
 
+Identity requirement:
+- cross_session（複数sessionをまとめる場合）
+- 同一session内だけを対象にする別指標へ勝手に置き換えない
+
 ### Definition
 
 ```text
-観測期間内に2回以上 reading_completed を持つeligible anonymous user数
----------------------------------------------------------------------
-観測期間内に1回以上 reading_completed を持つeligible anonymous user数
+観測期間内に2回以上 reading_completed を持つeligible anonymous visitor数
+------------------------------------------------------------------------
+観測期間内に1回以上 reading_completed を持つeligible anonymous visitor数
 ```
 
 Default window:
@@ -118,7 +145,7 @@ Default window:
 
 Guardrails:
 - Helpful Feedback Rate
-- Safety violation / rejection
+- Safety violation / rejection signal
 - `another_reading` CTA比率
 - manipulation risk review
 
@@ -130,6 +157,9 @@ Repeat上昇 + helpfulness低下の場合は「改善」と判定しない。
 ### Purpose
 
 鑑定がユーザー自身にとって役立ったと感じられているかの直接Signalを取る。
+
+Identity requirement:
+- none（feedback event単位）
 
 ### Definition
 
@@ -153,16 +183,26 @@ Limitations:
 
 無料体験から有料価値へ移行しているかを見る。
 
+Identity requirement:
+- cross_session（7日window）
+
 ### Definition
 
 ```text
-観測window内に purchase_completed を持つeligible anonymous user数
-------------------------------------------------------------------
-paywall_viewed を1回以上持つeligible anonymous user数
+paywall初回表示後7日以内に purchase_completed を持つeligible anonymous visitor数
+-----------------------------------------------------------------------------
+paywall_viewed を1回以上持つeligible anonymous visitor数
 ```
 
 Default window:
 - paywall初回表示から7日
+
+Preconditions:
+- Privacy条件を満たすcross-session identity
+
+Cross-session identityを使わない場合:
+- session内conversionを別KPIとして明示定義する
+- 7日Paid Conversionと混同しない
 
 Segments:
 - offer_id
@@ -172,7 +212,7 @@ Segments:
 Guardrails:
 - Helpful Feedback Rate
 - refund / complaint signal（実装後）
-- Safety violation / rejection
+- Safety violation / rejection signal
 - high-risk contextへの販売誘導が無いこと
 
 Interpretation rule:
@@ -197,13 +237,17 @@ AI出力や施策でSafety Gateに抵触する比率を監視する。
 
 ```text
 reading_started
-  ↓ First Reading Completion
+  ↓ First Reading Completion (session)
 reading_completed
-  ↓ Helpful Feedback / Return
+  ↓ Helpful Feedback
+reading_feedback_submitted
+
+cross-session identity available:
+reading_completed
+  ↓ D1/D7 Return / Repeat Reading
 session_returned
-  ↓ Repeat Reading
-reading_completed (2+)
-  ↓ optional monetization
+
+optional monetization branch:
 paywall_viewed
   ↓ Paid Conversion
 purchase_completed
@@ -213,13 +257,14 @@ purchase_completed
 
 ## Analysis rules
 
-1. 分母ゼロのKPIを0%として報告しない。`not_applicable` とする。
-2. sample sizeを必ず出す。
-3. 前期間比較ではwindow・definition・segmentを揃える。
-4. Metric definition変更前後を同じ系列として比較しない。
-5. conversion上昇を因果と解釈しない。
-6. 利用増加とユーザー価値増加を同一視しない。
-7. Revenue KPIはSafety / Trust guardrailと併記する。
+1. 分母ゼロのKPIを0%として報告しない。`N/A` とする。
+2. identity requirementを満たさないKPIを推定しない。
+3. sample sizeを必ず出す。
+4. 前期間比較ではwindow・definition・segmentを揃える。
+5. Metric definition変更前後を同じ系列として比較しない。
+6. conversion上昇を因果と解釈しない。
+7. 利用増加とユーザー価値増加を同一視しない。
+8. Revenue KPIはSafety / Trust guardrailと併記する。
 
 ## Future additions
 
