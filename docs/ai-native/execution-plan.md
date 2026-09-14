@@ -1,6 +1,6 @@
 # AI-Native Execution Plan
 
-Tracking: #18, #20, #23, #27, #30, #31
+Tracking: #18, #20, #23, #27, #30, #31, #33
 
 ## Objective
 
@@ -16,10 +16,11 @@ Tracking: #18, #20, #23, #27, #30, #31
 - MLP First: PR #24 — 完了
 - Iteration 3 Assist: PR #25 / Issue #23 — 完了
 - Iteration 4 Closed Learning Loop: PR #28 / Issue #27 — 完了
-- Iteration 4.5 Operational Pilot: Issue #30 / PR #32 — 実装・7視点レビュー完了、final validation中
-- Pilot telemetry foundation: Issue #31 — Real PilotのBlocking dependency
-- Deployment / shared test surface: Issue #15 — 判断待ち
-- PR #16 数秘術ドメインは別系統
+- Iteration 4.5 Operational Readiness: PR #32 / Issue #30 — 完了
+- Iteration 4.6 Pilot Telemetry Foundation: Issue #31 — 実装中
+- Reading Vertical Slice + instrumentation: Issue #33 — #31後
+- Deployment / shared test surface: Issue #15 — 実ユーザー観察前に判断
+- Iteration 5 Controlled Autonomy — Real Pilot Evidence待ち
 
 # Iteration 1 — Foundation ✅
 
@@ -48,15 +49,12 @@ Intentional scope out: Analytics SDK / DB migration / real user data ingestion /
 
 Tracking: #23 / PR #25
 
-- [x] Content Agent — Draft Maker
-- [x] Growth Agent — Experiment / Draft Maker
-- [x] Reading Quality Agent — Reviewer only
-- [x] `draft-content` / `design-growth-experiment` / `review-reading-quality`
+- [x] Content / Growth Draft Maker
+- [x] Reading Quality Reviewer
 - [x] Draft → Guardrail → Independent Review → Human Gate
-- [x] `reviewer != maker`
-- [x] Content/Growth/Reading regression fixtures
-- [x] Growth `metric_definition_ref`
-- [x] 7視点レビュー / CI / merge / Issue close
+- [x] reviewer != maker
+- [x] regression fixtures / Metric Contract
+- [x] 7視点レビュー / CI / merge
 
 # Iteration 4 — Closed Learning Loop ✅
 
@@ -67,11 +65,9 @@ Experiment Proposal
   ↓
 Human Approval / Manual Execution
   ↓
-Experiment Result Record
+Experiment Result
   ↓
-Evaluator / Candidate Maker
-  ↓
-Learning Candidate + provenance
+Evaluator / Learning Candidate
   ↓
 Independent Learning Reviewer
   ↓
@@ -82,156 +78,215 @@ Accepted Learning
 Next Experience Hypothesis / MLP Polish
 ```
 
-Completed:
+Established:
 
-- [x] Experiment Result / Learning Candidate Contract
-- [x] `evaluate-experiment`
-- [x] Learning Reviewer Agent / Skill
-- [x] execution status / evaluation validity分離
-- [x] stable `metric:<id>` Registry
-- [x] Candidate `candidate_maker_id` / `source_evaluation_refs`
-- [x] Safety / Guardrail integrity
-- [x] 12+ Closed Loop fixtures
-- [x] Metric Registry / fixture validators
-- [x] 7視点レビュー / blocker修正
-- [x] Final CI Green
-- [x] PR #28 squash merge (`dcf5622`)
-- [x] Issue #27 close
+- Experiment Result / Learning Candidate Contract
+- stable Metric Registry
+- Candidate provenance
+- Safety / Guardrail integrity
+- execution status / evaluation validity分離
+- Human-only Accepted Learning
+- Closed Loop regression / validators
 
-# Iteration 4.5 — Closed Loop Operational Pilot 🚧 final validation
+# Iteration 4.5 — Operational Readiness ✅
 
-Tracking: #30 / PR #32  
-Telemetry unblocker: #31  
-Deployment/test surface: #15  
+Tracking: #30 / PR #32
+
+Confirmed:
+
+- Synthetic Contract E2EはCI検証可能
+- runtime E2E / live Analytics / Real Pilotは未検証
+- Metric definitionとobservabilityを分離
+- Readinessを`ready | blocked`で機械判定
+- Manual Real PilotはTelemetry / Evidence / surface不足のためBlocked
+- Controlled Autonomyへ進まない
+
 Review: [`closed-loop-pilot-review-record.md`](./closed-loop-pilot-review-record.md)
 
-## Why this iteration exists
+# Iteration 4.6 — Pilot Telemetry Foundation 🚧
 
-Iteration 5 Controlled AutonomyのEntry条件は、Closed Loopが**実運用で安定**していること。
+Tracking: #31  
+Product integration: #33  
+Shared test surface: #15
 
-Iteration 4で証明したのはContract / Eval / Human Gateの設計整合性であり、実Evidence取得・Metric observability・Human待ち時間・Evidence準備コスト・実行/rollback摩擦・MLP return pathは未検証。したがってControlled Autonomyへ直行しない。
+## Goal
+
+Manual Real Pilotに必要なTelemetryを、外部Vendorへ先に結合せず、**privacy-safe / session-level / testable**なContractとして実装する。
 
 ## Plan review / changes
 
-1. **Metric definitionとobservabilityを分離**
-   - `status: active | provisional` = 定義状態
-   - `observability_status: uninstrumented | partial | observable` = 実測能力
-   - Real Pilotは両方を要求。
-2. **SyntheticをContract E2EとしてCI検証**
-   - machine-readable JSON + validatorを正本化。
-   - Agent/Skill runtime E2Eとは明確に分離。
-3. **Blockedを正しいReadiness結果として扱う**
-   - Evidence/source/surface不足を隠して擬似Real Pilotを作らない。
-4. **Readinessは現在状態をハードコードせずルールから導出**
-   - Metric observability / Evidence source / execution surface / controls / blockersで`ready|blocked`を判定。
-5. **最初のTelemetryはsession-levelに限定**
-   - Cross-session identityを先に導入しない。
-6. **Automation範囲を増やさない**
-   - PilotではhandoffとEvidence品質を観測する。
+実装前レビューで当初計画を変更した。
 
-## Phase A — Synthetic Contract E2E rehearsal ✅
+### 1. Telemetry FoundationとProduct Instrumentationを分離
 
-- [x] Positive path
-- [x] Safety-blocked path
-- [x] Human start decision
-- [x] Result Evidence ref
-- [x] Candidate provenance
-- [x] Reviewer independence
-- [x] Synthetic learning promotion禁止
-- [x] `closed-loop-pilot-synthetic.json`
-- [x] `validate-pilot-rehearsal.mjs`
-- [x] `npm run eval:contracts`へ統合
+最新mainはNext.js初期画面で、Reading Flow自体がまだ無い。
 
-未検証: Agent/Skill runtime E2E、live Analytics、実ユーザー挙動。
+したがって:
 
-## Phase B — Manual Real Pilot readiness ✅ evaluated
+```text
+Telemetry Foundation   #31
+  ↓
+Reading Vertical Slice + instrumentation   #33
+  ↓
+Operational Evidence source / shared surface
+  ↓
+Manual Real Pilot
+```
 
-- [x] Pilot Run Template
-- [x] readiness / blocker contract
-- [x] Metric definition / observability分離
-- [x] Evidence source必須化
-- [x] execution surface必須化
-- [x] Human owner / stop / rollback必須化
-- [x] Privacy / Safety条件
-- [x] Current blocking dependencyを特定
-- [x] Readiness判定をCIでルール導出
+FoundationだけでMetric Registryを`observable`へ変更しない。
 
-### Current result
+### 2. Vendor SDKを先に導入しない
 
-**BLOCKED — expected and valid readiness result.**
+GA4 / PostHog等へ直接結合せず、Domain Contract + Sink portを先に安定させる。
 
-Blocking:
+### 3. Reading Flow correlationを追加
 
-1. Product Analytics event sender / ingestion未実装
-2. Pilot対象Metricは`observability_status: uninstrumented`
-3. operational Evidence source ref未設定
-4. production/shared test surfaceは#15で判断待ち
+`Reading Flow Completion`はflow数を数えるため、session IDだけでは同一session内の複数readingを区別できない。
 
-Unblocker:
+`reading_started` / `reading_completed` / `reading_feedback_submitted` に:
 
-- #31: privacy-safe session telemetry
-- #15: deployment / test surface
+```text
+reading_flow_id = reading-flow_<random-uuid>
+```
 
-## Phase C — Manual Real Pilot 🔒 not started
+を追加する。
 
-- [ ] target Metricが`observable`
-- [ ] guardrail Metricが1つ以上`observable`
-- [ ] Evidence source operational
-- [ ] execution surface available
-- [ ] Human start / stop owner確定
-- [ ] 低リスク・可逆Experimentを1サイクル実施
-- [ ] Result → Evaluation → Candidate → Review → Human Decision
-- [ ] Accepted Learning → MLP Polish / Next Hypothesisへ返却
+これはuser identityではなく、1回のReading Flowだけに使うcorrelation key。
 
-**#31 / #15の条件成立まで開始しない。**
+### 4. ComputationとObservabilityを分離
 
-## Multi-perspective review
+```yaml
+aggregation_status: computed | not_computable
+registry_observability: uninstrumented | partial | observable
+```
 
-Product / Agent Architecture / Safety / Data & Privacy / Experimentation / QA & Eval / Delivery の7視点でレビュー済み。
+Synthetic / local eventを計算できても、本番Metricがobservableとは扱わない。
 
-Reviewで解消したBlocker:
+### 5. Cross-session identityを導入しない
 
-- Metric definitionとObservabilityの混同
-- Pilot template / readiness schema不整合
-- Readiness validatorの現状態ハードコード
-- Synthetic Contract E2E / runtime E2Eの表現混同
+#31では`anonymous_visitor_id = null`固定。
 
-Residual riskはReview Recordに記録し、Iteration 5 Entry Evidenceとして残す。
+## Deliverables
 
-## Iteration 4.5 Definition of Done
+### Domain
 
-Issue #30はOperational Readiness評価のIterationとして完了可能。
+- [x] typed event contract
+- [x] strict property allowlist / schema validation
+- [x] Reading Flow correlation contract
+- [x] Reading Flow Completion aggregation
+- [x] Helpful Feedback aggregation
+- [x] duplicate / orphan / out-of-order quality signal
+- [x] missing Evidence => `not_computable`
+- [x] Metric observability assessment
 
-- [x] Synthetic positive + safety failure pathをMachine-readable Contract化
-- [x] Pilot Runbook / Template
-- [x] Real Pilot readinessを評価可能
-- [x] Blocking dependencyをIssue分離
-- [x] Controlled Autonomy候補 / Human-only候補を明示
-- [x] Reviewed technical head CI Green
-- [x] タスク完了前の7視点レビュー
-- [x] Review blocker反映
-- [ ] Review recordを含むfinal head CI Green
-- [ ] Final diff / unresolved thread 0
-- [ ] PR merge / Issue #30 close
+### Adapter
 
-Real Pilotそのものは#31 / #15解消後に実施し、**Iteration 5のEntry Evidence**として扱う。
+- [x] random `anonymous_session_id`
+- [x] random `reading_flow_id`
+- [x] Telemetry Sink port
+- [x] In-memory Sink for test/local rehearsal
+
+### Privacy / Safety
+
+- [x] Raw consultationをpropertyへ追加不可
+- [x] name / email / phone等の未知propertyをreject
+- [x] raw prompt / raw responseをreject
+- [x] cross-session visitor IDをreject
+- [x] external vendor / persistence無し
+
+### Docs / integration
+
+- [x] Event Taxonomyへ`reading_flow_id`追加
+- [x] [`telemetry-foundation.md`](./telemetry-foundation.md)
+- [x] Reading Vertical Slice dependency #33を分離
+- [ ] AI-Native README更新
+- [ ] Review record
+- [ ] PR / CI
+- [ ] 完了前7視点レビュー
+- [ ] Review blocker反映
+- [ ] merge / #31 close
+
+## Foundation exit criteria
+
+- [x] Event Contract / PII boundary
+- [x] session / reading flow random ID
+- [x] Sink port + in-memory Evidence source
+- [x] Flow-level aggregation
+- [x] missing Evidence semantics
+- [x] observable promotion ruleがテスト可能
+- [x] RegistryはProduct未接続のため`uninstrumented`を維持
+- [ ] CI Green
+- [ ] Product / Architecture / Privacy / Safety / Analytics / QA / Deliveryレビュー
+- [ ] Blocker解消
+
+## Scope out
+
+- Reading UI / Core Experience
+- production Analytics vendor
+- persistent Evidence store
+- cross-session identity
+- D1 / D7 / Repeat Reading
+- Retention tracking
+- pricing / charge
+- external automation
+
+# Reading Vertical Slice + Product Instrumentation 🔒 next
+
+Tracking: #33
+
+MLP Firstに従い、Core Experienceを端から端まで通す。
+
+```text
+Entry
+  ↓
+Reading Start
+  ↓
+Fortune Fact / Interpretation
+  ↓
+Result
+  ↓
+Actionable Next Step
+  ↓
+Feedback
+```
+
+Telemetry:
+
+- `reading_started`
+- `reading_completed`
+- `reading_feedback_submitted`
+
+# Manual Real Pilot 🔒
+
+Entry criteria:
+
+- #31 Telemetry Foundation complete
+- #33 Product instrumentation complete
+- target Metric `observable`
+- guardrail Metric >= 1 `observable`
+- Evidence source operational
+- shared / production test surface available
+- low-risk reversible Experiment
+- Human start / stop owner
+
+Manual Real Pilotを1サイクル通すまではIteration 5へ進まない。
 
 # Iteration 5 — Controlled Autonomy 🔒 blocked
 
 Entry gate:
 
-- Manual Real Pilotを1サイクル完了
+- Manual Real Pilot完了
 - Evidence / Metric / provenance欠損なし
 - Safety / Privacy incident 0
 - Human bottleneck観測済み
-- Accepted Learning → MLP return pathを実運用で確認
+- Accepted Learning → MLP return path実運用確認
 - 自律化候補を7視点レビューで限定
 
-現時点の**candidate only**:
+Candidate only:
 
 - Contract validation
 - Metric ref resolution
-- fixture / regression execution
+- regression execution
 - report formatting
 - Evidence ref existence check
 - 将来の定期集計
@@ -249,12 +304,12 @@ Human Gate維持:
 
 Entry criteria:
 
-- 主要Agent Contract安定
+- major Agent Contract stable
 - Skill Eval存在
-- Closed Learning Loop実運用
-- Controlled Autonomy範囲の実測検証
+- Real Closed Learning Loop運用
+- Controlled Autonomy実測検証
 - Decision Queue実運用
-- 監査ログ / Stop condition / rollback検証済み
+- Audit / Stop / rollback検証
 
 Orchestratorは `Signal → Priority → Agent/Skill Routing` に限定する。
 
@@ -271,7 +326,13 @@ Closed Learning Loop
   ↓
 Operational Readiness
   ↓
-Pilot Telemetry / Real Pilot
+Telemetry Foundation (#31)
+  ↓
+Reading Vertical Slice + Instrumentation (#33)
+  ↓
+Shared Test Surface / Evidence Source
+  ↓
+Manual Real Pilot
   ↓
 Controlled Autonomy
   ↓
@@ -282,6 +343,6 @@ Orchestration
 
 ## Rollback strategy
 
-- Agent / Skill / Eval / Workflow単位でrevert可能
-- 外部サービス接続前は本番副作用なし
+- Domain / Adapter / Agent / Skill / Eval / Workflow単位でrevert可能
+- External service接続前は本番副作用なし
 - 自律化単位ごとに停止可能
