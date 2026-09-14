@@ -1,5 +1,18 @@
 import type { ProductTelemetryEvent } from "@/domain/telemetry/events";
 
+type ReadingStartedEvent = Extract<
+  ProductTelemetryEvent,
+  { event_name: "reading_started" }
+>;
+type ReadingCompletedEvent = Extract<
+  ProductTelemetryEvent,
+  { event_name: "reading_completed" }
+>;
+type ReadingFeedbackEvent = Extract<
+  ProductTelemetryEvent,
+  { event_name: "reading_feedback_submitted" }
+>;
+
 type ComputedMetric = {
   status: "computed";
   numerator: number;
@@ -10,6 +23,7 @@ type ComputedMetric = {
     duplicate_events: number;
     orphan_events: number;
     out_of_order_events: number;
+    dimension_mismatch_events: number;
   };
 };
 
@@ -28,14 +42,12 @@ function timestamp(value: string): number {
 export function calculateReadingFlowCompletion(
   events: readonly ProductTelemetryEvent[],
 ): MetricEvidence {
-  const starts = new Map<string, ProductTelemetryEvent & { event_name: "reading_started" }>();
-  const completions = new Map<
-    string,
-    ProductTelemetryEvent & { event_name: "reading_completed" }
-  >();
+  const starts = new Map<string, ReadingStartedEvent>();
+  const completions = new Map<string, ReadingCompletedEvent>();
   let duplicateEvents = 0;
   let orphanEvents = 0;
   let outOfOrderEvents = 0;
+  let dimensionMismatchEvents = 0;
 
   for (const event of events) {
     if (event.event_name === "reading_started") {
@@ -80,6 +92,10 @@ export function calculateReadingFlowCompletion(
       orphanEvents += 1;
       continue;
     }
+    if (completion.properties.reading_type !== start.properties.reading_type) {
+      dimensionMismatchEvents += 1;
+      continue;
+    }
     completed += 1;
   }
 
@@ -93,6 +109,7 @@ export function calculateReadingFlowCompletion(
       duplicate_events: duplicateEvents,
       orphan_events: orphanEvents,
       out_of_order_events: outOfOrderEvents,
+      dimension_mismatch_events: dimensionMismatchEvents,
     },
   };
 }
@@ -100,10 +117,7 @@ export function calculateReadingFlowCompletion(
 export function calculateHelpfulFeedbackRate(
   events: readonly ProductTelemetryEvent[],
 ): MetricEvidence {
-  const feedbackByFlow = new Map<
-    string,
-    ProductTelemetryEvent & { event_name: "reading_feedback_submitted" }
-  >();
+  const feedbackByFlow = new Map<string, ReadingFeedbackEvent>();
   let duplicateEvents = 0;
 
   for (const event of events) {
@@ -138,6 +152,7 @@ export function calculateHelpfulFeedbackRate(
       duplicate_events: duplicateEvents,
       orphan_events: 0,
       out_of_order_events: 0,
+      dimension_mismatch_events: 0,
     },
   };
 }
