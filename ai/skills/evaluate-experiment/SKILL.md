@@ -2,13 +2,14 @@
 
 ## Goal
 
-Humanが実行したExperimentのExecution Receiptと観測結果を、Metric Contract / Guardrail / Evidenceに基づいて評価する。
+Humanが実行したExperimentのExecution Receiptと観測結果を、Metric Contract / Guardrail / Evidenceに基づいて**Makerとは独立して**評価する。
 
 ## Preconditions
 
 - approved proposalがある
 - Human Decisionが`approve`
 - Manual Execution Receiptがある
+- EvaluatorがProposal Makerと別主体
 - target metric / guardrailの`metric_definition_ref`がある
 - Observation window / sample / evidence refsがある
 
@@ -20,20 +21,27 @@ Humanが実行したExperimentのExecution Receiptと観測結果を、Metric Co
 experiment_id: string
 proposal_ref: string
 maker: string
+evaluator: string
 human_decision:
   decision: approve
   decided_by: string
+  decided_at: ISO-8601
+  rationale: string
 execution_receipt:
   executed_by: string
+  executed_at: ISO-8601
+  execution_scope: string
+  implementation_ref: string
   actual_change: string
   deviations_from_proposal: []
   stop_condition_triggered: boolean
+  stop_reason: string | null
 observation:
   window: string
   sample_size: number | null
   target_metric:
     name: string
-    metric_definition_ref: string
+    metric_definition_ref: string | null
     baseline: number | null
     result: number | null
   guardrails:
@@ -47,14 +55,15 @@ observation:
 ## Process
 
 1. Proposal / Human Decision / Receiptの整合確認
-2. Metric Contract ref確認
-3. 実行Deviation確認
-4. target metricの差分をFactとして記録
-5. guardrailの差分を記録
-6. stop condition / Safety incident確認
-7. sample / window / missing dataを確認
-8. causal claim可能性を判定
-9. recommendationとLearning Candidate可否を返す
+2. `evaluator != maker`を確認
+3. Execution Scope / implementation ref / actual change / Deviationを確認
+4. Metric Contract ref確認
+5. target metricの差分をFactとして記録
+6. guardrailの差分を記録
+7. stop condition / Safety incident確認
+8. sample / window / missing dataを確認
+9. causal claim可能性を判定
+10. recommendationとLearning Candidate可否を返す
 
 ## Output contract
 
@@ -72,24 +81,30 @@ causal_claim_allowed: boolean
 limitations: []
 recommendation: adopt | reject | iterate | gather_more_evidence
 learning_candidate_allowed: boolean
-evaluated_by: analyst
+evaluated_by: string
+maker: string
+reviewer_is_independent: true
 ```
 
 ## Rules
 
+- `evaluator == maker`なら評価を完了しない
 - target改善 + guardrail悪化なら`adopt`禁止
 - Safety incident / stop condition triggerは`stopped`を優先
 - baseline / metric definition / sample / window欠落時に推測しない
 - correlationだけでcausal claimを許可しない
 - negative / inconclusiveも保存対象
 - Execution Receiptを書き換えない
-- Proposal MakerとEvaluatorの論理的分離を維持
+- ReceiptのDeviationを隠さない
+- Proposal MakerとEvaluatorの分離を維持
 
 ## Review checklist
 
 - [ ] human approval存在
 - [ ] execution receipt存在
-- [ ] target metric definition refあり
+- [ ] execution_scope / implementation_refあり
+- [ ] evaluator != maker
+- [ ] target metric definition refあり（欠落時はinconclusive）
 - [ ] guardrail definition refあり
 - [ ] sample/window確認
 - [ ] deviation確認
@@ -100,6 +115,7 @@ evaluated_by: analyst
 
 - Human approval無し
 - Execution Receipt無し
-- Metric Contract不明
+- evaluator == maker
+- execution scope / implementation ref無し
 - Evidence ref無し
 - Safety incident情報が矛盾
