@@ -133,9 +133,11 @@ const specs = [
     minFixtures: 6,
     validate(fixture) {
       const result = fixture.input?.experiment_result;
-      assert(typeof fixture.input?.experiment_result_ref === "string", `${fixture.id}: experiment_result_ref required`);
+      assert(typeof fixture.input?.experiment_result_ref === "string" && fixture.input.experiment_result_ref.length > 0, `${fixture.id}: experiment_result_ref required`);
       assert(result && typeof result === "object", `${fixture.id}: experiment_result required`);
+      assert(typeof result.hypothesis_ref === "string" && result.hypothesis_ref.length > 0, `${fixture.id}: hypothesis_ref required`);
       assert(result.execution?.approved_by === "human", `${fixture.id}: execution must be human-approved`);
+      assert(Array.isArray(result.result?.result_evidence_refs) && result.result.result_evidence_refs.length > 0, `${fixture.id}: result_evidence_refs required`);
       requireExpect(fixture);
       if (fixture.id !== "experiment-04-missing-metric-ref") {
         assert(typeof result.target_metric?.metric_definition_ref === "string" && result.target_metric.metric_definition_ref.length > 0, `${fixture.id}: target metric_definition_ref required`);
@@ -177,10 +179,13 @@ const specs = [
     file: path.join(here, "learning-review", "fixtures.json"),
     minFixtures: 6,
     validate(fixture) {
-      assert(typeof fixture.input?.candidate_ref === "string", `${fixture.id}: candidate_ref required`);
-      assert(fixture.input?.candidate?.status === "candidate", `${fixture.id}: input must remain candidate`);
-      assert(typeof fixture.input?.reviewer_id === "string", `${fixture.id}: reviewer_id required`);
-      assert(typeof fixture.input?.candidate_maker_id === "string", `${fixture.id}: candidate_maker_id required`);
+      const candidate = fixture.input?.candidate;
+      assert(typeof fixture.input?.candidate_ref === "string" && fixture.input.candidate_ref.length > 0, `${fixture.id}: candidate_ref required`);
+      assert(candidate?.status === "candidate", `${fixture.id}: input must remain candidate`);
+      assert(Array.isArray(candidate?.evidence_refs) && candidate.evidence_refs.length > 0, `${fixture.id}: candidate evidence_refs required`);
+      assert(Array.isArray(fixture.input?.source_evaluations) && fixture.input.source_evaluations.length > 0, `${fixture.id}: source_evaluations required`);
+      assert(typeof fixture.input?.reviewer_id === "string" && fixture.input.reviewer_id.length > 0, `${fixture.id}: reviewer_id required`);
+      assert(typeof fixture.input?.candidate_maker_id === "string" && fixture.input.candidate_maker_id.length > 0, `${fixture.id}: candidate_maker_id required`);
       assert(fixture.input.reviewer_id !== fixture.input.candidate_maker_id, `${fixture.id}: reviewer must differ from candidate maker`);
       requireExpect(fixture);
       if (fixture.id === "learning-01-strong-narrow") {
