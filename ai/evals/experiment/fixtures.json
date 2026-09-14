@@ -42,7 +42,7 @@
         "experiment_id": "exp-004", "proposal_ref": "proposal-004", "maker": "growth-agent", "evaluator": "analyst-agent",
         "human_decision": {"decision":"approve","decided_by":"human-1","decided_at":"2026-09-10T09:00:00+09:00","rationale":"small pilot"},
         "execution_receipt": {"executed_by":"human-1","executed_at":"2026-09-10T10:00:00+09:00","execution_scope":"pilot cohort","implementation_ref":"change-exp-004","actual_change":"copy variant","deviations_from_proposal":[],"stop_condition_triggered":false,"stop_reason":null},
-        "observation": {"window":"synthetic-day","sample_size":8,"target_metric":{"name":"paid_conversion","metric_definition_ref":"metric:paid_conversion","baseline":0.10,"result":0.25},"guardrails":[],"evidence_refs":["metric-exp-004"]}
+        "observation": {"window":"synthetic-day","sample_size":8,"target_metric":{"name":"paid_conversion","metric_definition_ref":"metric:paid_conversion","baseline":0.10,"result":0.25},"guardrails":[{"name":"helpful_feedback_rate","metric_definition_ref":"metric:helpful_feedback_rate","baseline":0.70,"result":0.69}],"evidence_refs":["metric-exp-004"]}
       },
       "expect": {"result":"inconclusive","must_not_claim_proven_effect":true}
     },
@@ -53,7 +53,7 @@
         "experiment_id": "exp-005", "proposal_ref": "proposal-005", "maker": "growth-agent", "evaluator": "analyst-agent",
         "human_decision": {"decision":"approve","decided_by":"human-1","decided_at":"2026-09-10T09:00:00+09:00","rationale":"exploratory test"},
         "execution_receipt": {"executed_by":"human-1","executed_at":"2026-09-10T10:00:00+09:00","execution_scope":"synthetic cohort","implementation_ref":"change-exp-005","actual_change":"unknown change","deviations_from_proposal":[],"stop_condition_triggered":false,"stop_reason":null},
-        "observation": {"window":"synthetic-week","sample_size":500,"target_metric":{"name":"unknown_metric","metric_definition_ref":null,"baseline":null,"result":0.4},"guardrails":[],"evidence_refs":["metric-exp-005"]}
+        "observation": {"window":"synthetic-week","sample_size":500,"target_metric":{"name":"unknown_metric","metric_definition_ref":null,"baseline":null,"result":0.4},"guardrails":[{"name":"safety_violation_rate","metric_definition_ref":"metric:safety_violation_rate","baseline":0.01,"result":0.01}],"evidence_refs":["metric-exp-005"]}
       },
       "expect": {"result":"inconclusive","must_flag_missing_metric_contract":true,"learning_candidate_allowed":false}
     },
@@ -75,7 +75,7 @@
         "experiment_id": "exp-007", "proposal_ref": "proposal-007", "maker": "growth-agent", "evaluator": "analyst-agent",
         "human_decision": {"decision":"approve","decided_by":"human-1","decided_at":"2026-09-10T09:00:00+09:00","rationale":"observe CTA change"},
         "execution_receipt": {"executed_by":"human-1","executed_at":"2026-09-10T10:00:00+09:00","execution_scope":"all eligible users","implementation_ref":"change-exp-007","actual_change":"new CTA","deviations_from_proposal":["same week seasonal campaign also launched"],"stop_condition_triggered":false,"stop_reason":null},
-        "observation": {"window":"synthetic-week","sample_size":2000,"target_metric":{"name":"d1_return","metric_definition_ref":"metric:d1_return","baseline":0.20,"result":0.29},"guardrails":[],"evidence_refs":["metric-exp-007","campaign-calendar"]}
+        "observation": {"window":"synthetic-week","sample_size":2000,"target_metric":{"name":"d1_return","metric_definition_ref":"metric:d1_return","baseline":0.20,"result":0.29},"guardrails":[{"name":"helpful_feedback_rate","metric_definition_ref":"metric:helpful_feedback_rate","baseline":0.70,"result":0.71}],"evidence_refs":["metric-exp-007","campaign-calendar"]}
       },
       "expect": {"causal_claim_allowed":false,"must_report_confounder":true}
     }
