@@ -15,7 +15,7 @@ Tracking: #18, #20, #23, #27
 - Deterministic message guardrail: PR #22 merge済み
 - MLP First: PR #24 merge済み
 - Assist: PR #25 merge済み / Issue #23 close済み
-- Iteration 4 Closed Learning Loop: Issue #27 / `feature/ai-native-closed-loop` で実装中
+- Iteration 4 Closed Learning Loop: Issue #27 / PR #28 — 実装・7視点レビュー完了、latest CI確認中
 - PR #16 数秘術ドメインは別系統で進行中
 
 # Iteration 1 — Foundation ✅
@@ -60,9 +60,9 @@ Intentional scope out:
 - 自動Price / Charge
 - Human Gate解除
 
-# Iteration 4 — Closed Learning Loop 🚧
+# Iteration 4 — Closed Learning Loop 🚧 final validation
 
-Tracking: #27
+Tracking: #27 / PR #28
 
 ## Goal
 
@@ -83,7 +83,7 @@ Experiment Result Record
   ↓
 Evaluation
   ↓
-Learning Candidate
+Learning Candidate + provenance
   ↓
 Independent Learning Review
   ↓
@@ -99,11 +99,14 @@ Next Experience Hypothesis / MLP Polish
 当初のClosed Workflowから以下を変更した。
 
 1. 自動Experiment実行はしない。外部副作用は引き続きHuman Gate。
-2. Experiment Result Recordを正本化し、metric ref / sample / guardrail / limitationを保持する。
+2. Experiment Result Recordを正本化し、Metric / sample / guardrail / limitationを保持する。
 3. EvaluatorとLearning Reviewerを分離する。
 4. Learning Reviewerは推薦まで。Accepted Learning確定はHumanのみ。
 5. Accepted LearningをKnowledge蓄積で終わらせず、次のExperience Hypothesis / MLP Polishへ戻す。
 6. Model Harness未確定のため、output runnerよりfixture contract / Human rubricを先行する。
+7. Markdown anchorではなくMachine-readable Metric Registryのstable IDを導入する。
+8. Learning Candidateに`candidate_maker_id` / `source_evaluation_refs`を残し、Reviewer独立性を監査可能にする。
+9. Experiment execution statusとevaluation validityを分離する。
 
 ## Entry criteria
 
@@ -120,6 +123,8 @@ Next Experience Hypothesis / MLP Polish
 - [x] `learning-candidate.md`
 - [x] Experiment state machine
 - [x] Learning state machine
+- [x] Candidate provenance contract
+- [x] Stable Metric Registry
 
 ### Skills / Agent
 
@@ -132,34 +137,50 @@ Next Experience Hypothesis / MLP Polish
 - [x] `closed-learning-loop.md`
 - [x] evaluator / learning reviewer / Human decision ownerを分離
 - [x] Accepted Learning → Experience Hypothesis / MLP PolishへのReturn path
+- [x] execution status / evaluation validityを分離
 
 ### Regression / Eval
 
 - [x] Experiment evaluation fixture >= 6
 - [x] Learning review fixture >= 6
 - [x] Fixture validator拡張
+- [x] Metric Registry validator追加
+- [x] Result Evidence / Candidate provenance検証
 - [x] Human review rubric拡張
 - [x] Eval README更新
 
 ### Repository integration / validation
 
-- [ ] AI-Native README更新
+- [x] AI-Native README更新
 - [x] Execution Plan更新
-- [ ] Closed Loop review record
-- [ ] Issue #27進捗更新
-- [ ] PR作成
-- [ ] CI Green
-- [ ] タスク完了前の7視点レビュー
-- [ ] Review blocker反映
+- [x] Closed Loop review record
+- [ ] Issue #27最終進捗更新
+- [x] PR #28作成
+- [ ] Latest CI Green
+- [x] タスク完了前の7視点レビュー
+- [x] Review blocker反映
+- [ ] Final diff / unresolved thread確認
 - [ ] merge / Issue close
+
+## Multi-perspective review findings resolved
+
+1. **Metric参照がMarkdown anchor依存 / 未定義KPI参照**
+   - `ai/contracts/metric-registry.json` と `metric:<stable-id>` を導入
+   - Registry専用validatorでfixture参照をCI検証
+2. **Learning Reviewの`maker_id`が曖昧**
+   - `candidate_maker_id`へ変更しCandidate provenanceを必須化
+3. **Experiment statusと分析validityの混同**
+   - `completed|stopped|invalid` と `valid|limited|invalid` を分離
+   - Sample不足は隠さず`limited / inconclusive`へ反映
 
 ## Safety / Learning rules
 
 - Safety/Trust悪化をBusiness metric改善で上書きしない
+- Registryで解決できないMetricを通常評価に使わない
 - invalid ExperimentからAccepted Learningを作らない
 - insufficient sampleをhigh confidenceで一般化しない
 - conflicting evidenceを隠さない
-- reviewerとmaker/evaluatorを分離
+- `reviewer_id != candidate_maker_id`
 - Human decision無しで`accepted_learning`へ遷移しない
 - Raw PII / consultation textをResult/Learningへ保存しない
 
