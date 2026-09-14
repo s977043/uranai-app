@@ -17,9 +17,9 @@
       "definition_source": "docs/ai-native/funnel-metrics.md#reference-metric-reading-flow-completion",
       "identity_requirement": "session",
       "status": "active",
-      "observability_status": "uninstrumented",
+      "observability_status": "partial",
       "required_events": ["reading_started", "reading_completed"],
-      "evidence_source_ref": null
+      "evidence_source_ref": "browser-session-storage:v1"
     },
     {
       "ref": "metric:d1_return",
@@ -57,9 +57,9 @@
       "definition_source": "docs/ai-native/funnel-metrics.md#5-helpful-feedback-rate",
       "identity_requirement": "none",
       "status": "active",
-      "observability_status": "uninstrumented",
-      "required_events": ["reading_feedback_submitted"],
-      "evidence_source_ref": null
+      "observability_status": "partial",
+      "required_events": ["reading_completed", "reading_feedback_submitted"],
+      "evidence_source_ref": "browser-session-storage:v1"
     },
     {
       "ref": "metric:paid_conversion",
