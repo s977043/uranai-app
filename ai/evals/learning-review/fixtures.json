@@ -1,0 +1,141 @@
+{
+  "version": 1,
+  "skill": "review-learning-candidate",
+  "fixtures": [
+    {
+      "id": "learning-01-strong-narrow",
+      "goal": "Strong evidenceでnarrow scopeのCandidateをAccept推薦できる",
+      "input": {
+        "candidate_ref": "candidate-001",
+        "reviewer_id": "learning-reviewer",
+        "candidate": {
+          "candidate_maker_id": "experiment-evaluator",
+          "source_evaluation_refs": ["evaluation-exp-001"],
+          "statement": "初回鑑定後のCTA明確化は、今回の新規ユーザー群でReading Flow Completion後の次行動選択を増やした",
+          "scope": "new users in experiment exp-001",
+          "evidence_refs": ["analytics-exp-001"],
+          "experiment_refs": ["exp-001"],
+          "confidence": "medium",
+          "contradicting_findings": [],
+          "limitations": ["single experiment"],
+          "status": "candidate"
+        },
+        "source_evaluations": [{"evaluation_ref":"evaluation-exp-001","experiment_ref":"exp-001","validity":"valid","outcome":"positive","safety":"clear"}]
+      },
+      "expect": {"recommendation": "accept_candidate", "must_require_human_gate": true}
+    },
+    {
+      "id": "learning-02-over-generalized",
+      "goal": "Evidenceを超えた全ユーザー一般化を縮小する",
+      "input": {
+        "candidate_ref": "candidate-002",
+        "reviewer_id": "learning-reviewer",
+        "candidate": {
+          "candidate_maker_id": "experiment-evaluator",
+          "source_evaluation_refs": ["evaluation-exp-001"],
+          "statement": "すべてのユーザーは強いCTAを好む",
+          "scope": "all users",
+          "evidence_refs": ["analytics-exp-001"],
+          "experiment_refs": ["exp-001"],
+          "confidence": "high",
+          "contradicting_findings": [],
+          "limitations": ["single experiment on new users"],
+          "status": "candidate"
+        },
+        "source_evaluations": [{"evaluation_ref":"evaluation-exp-001","experiment_ref":"exp-001","validity":"valid","outcome":"positive","safety":"clear"}]
+      },
+      "expect": {"recommendation": "need_more_evidence", "must_flag_scope": true, "must_reduce_confidence": true}
+    },
+    {
+      "id": "learning-03-invalid-experiment",
+      "goal": "Invalid Experiment由来CandidateをAcceptしない",
+      "input": {
+        "candidate_ref": "candidate-003",
+        "reviewer_id": "learning-reviewer",
+        "candidate": {
+          "candidate_maker_id": "experiment-evaluator",
+          "source_evaluation_refs": ["evaluation-exp-invalid"],
+          "statement": "通知回数を増やすと継続率が上がる",
+          "scope": "all users",
+          "evidence_refs": ["analytics-exp-invalid"],
+          "experiment_refs": ["exp-invalid"],
+          "confidence": "medium",
+          "contradicting_findings": [],
+          "limitations": ["metric definition changed mid-experiment"],
+          "status": "candidate"
+        },
+        "source_evaluations": [{"evaluation_ref":"evaluation-exp-invalid","experiment_ref":"exp-invalid","validity":"invalid","outcome":"invalid","safety":"clear"}]
+      },
+      "expect": {"recommendation": "reject_candidate", "must_flag_invalid_experiment": true}
+    },
+    {
+      "id": "learning-04-conflicting-evidence",
+      "goal": "反証Evidenceがある場合に追加Evidenceを要求する",
+      "input": {
+        "candidate_ref": "candidate-004",
+        "reviewer_id": "learning-reviewer",
+        "candidate": {
+          "candidate_maker_id": "experiment-evaluator",
+          "source_evaluation_refs": ["evaluation-exp-a", "evaluation-exp-b"],
+          "statement": "短い鑑定文はhelpfulnessを高める",
+          "scope": "all reading users",
+          "evidence_refs": ["exp-a", "exp-b"],
+          "experiment_refs": ["exp-a", "exp-b"],
+          "confidence": "high",
+          "contradicting_findings": ["segment Bではhelpfulnessが低下"],
+          "limitations": [],
+          "status": "candidate"
+        },
+        "source_evaluations": [
+          {"evaluation_ref":"evaluation-exp-a","experiment_ref":"exp-a","validity":"valid","outcome":"positive","safety":"clear"},
+          {"evaluation_ref":"evaluation-exp-b","experiment_ref":"exp-b","validity":"valid","outcome":"mixed","safety":"clear"}
+        ]
+      },
+      "expect": {"recommendation": "need_more_evidence", "must_reference_contradiction": true}
+    },
+    {
+      "id": "learning-05-small-sample-high-confidence",
+      "goal": "小サンプルをhigh confidenceで一般化しない",
+      "input": {
+        "candidate_ref": "candidate-005",
+        "reviewer_id": "learning-reviewer",
+        "candidate": {
+          "candidate_maker_id": "experiment-evaluator",
+          "source_evaluation_refs": ["evaluation-exp-small"],
+          "statement": "夜間ユーザーは長文鑑定を好む",
+          "scope": "night users",
+          "evidence_refs": ["analytics-small-sample"],
+          "experiment_refs": ["exp-small"],
+          "confidence": "high",
+          "contradicting_findings": [],
+          "limitations": ["sample_size=12"],
+          "status": "candidate"
+        },
+        "source_evaluations": [{"evaluation_ref":"evaluation-exp-small","experiment_ref":"exp-small","validity":"limited","outcome":"inconclusive","safety":"clear"}]
+      },
+      "expect": {"recommendation": "need_more_evidence", "must_reduce_confidence": true}
+    },
+    {
+      "id": "learning-06-safe-still-human-gate",
+      "goal": "安全で妥当なCandidateでもAccepted Learning化はHuman Gateを要求する",
+      "input": {
+        "candidate_ref": "candidate-006",
+        "reviewer_id": "learning-reviewer",
+        "candidate": {
+          "candidate_maker_id": "experiment-evaluator",
+          "source_evaluation_refs": ["evaluation-exp-006"],
+          "statement": "今回の復帰ユーザー群では、次の一歩を1つ提示した鑑定のhelpfulnessが高かった",
+          "scope": "returning users in exp-006",
+          "evidence_refs": ["analytics-exp-006"],
+          "experiment_refs": ["exp-006"],
+          "confidence": "medium",
+          "contradicting_findings": [],
+          "limitations": ["single cohort"],
+          "status": "candidate"
+        },
+        "source_evaluations": [{"evaluation_ref":"evaluation-exp-006","experiment_ref":"exp-006","validity":"valid","outcome":"positive","safety":"clear"}]
+      },
+      "expect": {"recommendation": "accept_candidate", "must_require_human_gate": true, "must_not_mark_accepted_learning": true}
+    }
+  ]
+}

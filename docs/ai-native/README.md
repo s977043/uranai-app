@@ -37,12 +37,16 @@ Analyze
 Hypothesis
   ↓
 Experiment
-  └────────→ Product / Growth / Reading
+  ↓
+Evaluation
+  ↓
+Accepted Learning
+  └────────→ Next Experience Hypothesis / MLP Polish
 ```
 
-AI-Native化の価値は各作業の自動化ではなく、**この学習ループを短く、検証可能にすること**にあります。
+AI-Native化の価値は各作業の自動化ではなく、**EvidenceからLearningを作り、そのLearningを次の体験改善へ戻すループを短く、検証可能にすること**にあります。
 
-プロダクト開発側では、この事業学習ループを [`product-development.md`](../product-development.md) の `Experience Hypothesis → Vertical Slice → Lovability Review → User Observation → Polish Loop → MLP Release → Retention Validation` に接続します。AI-Native運用で得たEvidenceを次のExperience Hypothesisへ戻し、単なる機能追加ではなくLovabilityとRetentionの改善へ使います。
+プロダクト開発側では、この事業学習ループを [`product-development.md`](../product-development.md) の `Experience Hypothesis → Vertical Slice → Lovability Review → User Observation → Polish Loop → MLP Release → Retention Validation` に接続します。
 
 ## 設計原則
 
@@ -63,6 +67,9 @@ AI-Native化の価値は各作業の自動化ではなく、**この学習ルー
 5. **Controlled autonomy**
    - 自律化は低リスクで可逆な操作から段階的に広げる。
 
+6. **Learning must return to product**
+   - Accepted Learningを蓄積するだけで終わらせず、次のExperience Hypothesis / MLP Polishへ戻す。
+
 ## Core documents
 
 - [Product Development — MLP First](../product-development.md)
@@ -71,6 +78,8 @@ AI-Native化の価値は各作業の自動化ではなく、**この学習ルー
 - [Execution Plan](./execution-plan.md)
 - [Foundation Review](./review-record.md)
 - [Observe Review](./observe-review-record.md)
+- [Assist Review](./assist-review-record.md)
+- [Closed Loop Review](./closed-loop-review-record.md)
 - [Safety Policy](./safety-policy.md)
 - [Metrics & Evals](./metrics-and-evals.md)
 
@@ -80,8 +89,11 @@ AI-Native化の価値は各作業の自動化ではなく、**この学習ルー
 
 - [Event Taxonomy](./event-taxonomy.md)
 - [Funnel Metrics](./funnel-metrics.md)
-- [`ai/evals/`](../../ai/evals/README.md) — regression fixture / review rubric / validator
-- [`weekly-learning-report.md`](../../ai/workflows/templates/weekly-learning-report.md) — 週次Learningの標準テンプレート
+- [`Metric Registry`](../../ai/contracts/metric-registry.json) — Agent/Skillが参照するstable Metric IDの正本
+- [`ai/evals/`](../../ai/evals/README.md)
+- [`weekly-learning-report.md`](../../ai/workflows/templates/weekly-learning-report.md)
+
+Metric参照にはMarkdown見出しURLではなく `metric:<stable-id>` を使い、CIでRegistryへの解決可能性を検証します。
 
 ## Assist contracts — Iteration 3
 
@@ -103,8 +115,6 @@ AI-Native化の価値は各作業の自動化ではなく、**この学習ルー
 
 - [`Draft → Review → Human Gate`](../../ai/workflows/draft-review-publish.md)
 
-標準境界:
-
 ```text
 Maker
   ↓
@@ -117,24 +127,78 @@ Independent Review
 Human Gate
 ```
 
-Message Guardrailは既知NG表現を検出する**一層**であり、包括Safety保証ではありません。Contextual ReviewとHuman Gateを置き換えません。
+Message Guardrailは既知NG表現を検出する**一層**であり、包括Safety保証ではありません。
 
-Iteration 3で自動化しないもの:
+## Closed Learning Loop — Iteration 4
 
-- SNS公開 / scheduling
-- LINE / メール / Push送信
-- 価格変更 / 課金操作
-- 鑑定生成Agent
-- Human Gate解除
-- Orchestrator
+Humanが承認・実行したExperimentを、Accepted Learningへ安全に変換し、MLP改善へ戻します。
+
+### Contracts
+
+- [`Experiment Result Record`](../../ai/workflows/templates/experiment-result.md)
+- [`Learning Candidate`](../../ai/workflows/templates/learning-candidate.md)
+- [`Metric Registry`](../../ai/contracts/metric-registry.json)
+
+### Skills / Reviewer
+
+- [`evaluate-experiment`](../../ai/skills/evaluate-experiment/SKILL.md)
+- [`review-learning-candidate`](../../ai/skills/review-learning-candidate/SKILL.md)
+- [`Learning Reviewer Agent`](../../ai/agents/learning-reviewer.md)
+
+### Workflow
+
+- [`Closed Learning Loop`](../../ai/workflows/closed-learning-loop.md)
+
+```text
+Experiment Proposal
+  ↓
+Human Approval / Manual Execution
+  ↓
+Experiment Result
+  ↓
+Evaluator / Candidate Maker
+  ↓
+Learning Candidate + provenance
+  ↓
+Independent Learning Reviewer
+  ↓
+Human Gate
+  ↓
+Accepted Learning
+  ↓
+Experience Hypothesis / MLP Polish
+```
+
+重要な境界:
+
+- AIはExperimentを自動開始しない
+- `metric_definition_ref` はactiveなMetric Registry IDへ解決できること
+- Learning Candidateに`candidate_maker_id`とsource evaluation provenanceを残す
+- `reviewer_id != candidate_maker_id`
+- Safety/Trust悪化をBusiness metric改善で上書きしない
+- invalid ExperimentからLearningを昇格しない
+- Learning Reviewerは推薦まで
+- Accepted Learning確定はHumanのみ
+- Raw PII / consultation textをResult/Learningへ保存しない
 
 ## Iteration status
 
 - Iteration 1 Foundation: Issue #18 / PR #19 — 完了
 - Iteration 2 Observe: Issue #20 / PR #21 — 完了
-- Deterministic Message Guardrail: PR #22 — 完了（旧PR #17を置換）
+- Deterministic Message Guardrail: PR #22 — 完了
 - MLP First: PR #24 — 完了
-- Iteration 3 Assist: Issue #23 — 実装・評価中
+- Iteration 3 Assist: Issue #23 / PR #25 — 完了
+- Iteration 4 Closed Learning Loop: Issue #27 / PR #28 — レビュー・検証中
+
+Iteration 4でも自動化しないもの:
+
+- SNS / CRMの自動実行
+- 価格変更 / 課金操作
+- Experimentの自動開始
+- Accepted LearningのAI単独確定
+- 実Analytics SDK / 実ユーザーデータ接続
+- Human Gate解除
+- Orchestrator
 
 ## 関連
 
