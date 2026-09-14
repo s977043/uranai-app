@@ -11,11 +11,11 @@
   "target_metric_ref": "metric:reading_flow_completion",
   "guardrail_metric_refs": ["metric:helpful_feedback_rate"],
   "metric_observability": {
-    "target": "uninstrumented",
+    "target": "partial",
     "guardrails": [
       {
         "ref": "metric:helpful_feedback_rate",
-        "status": "uninstrumented"
+        "status": "partial"
       }
     ]
   },
@@ -23,11 +23,12 @@
   "evidence_source_operational": false,
   "deployment_or_test_surface_ref": null,
   "execution_surface_available": false,
-  "sample_or_duration_rule": "define after telemetry is operational",
+  "sample_or_duration_rule": "define after an operational evidence source and shared test surface exist",
   "stop_conditions": ["safety concern", "metric evidence missing or invalid"],
   "rollback": "restore pre-pilot experience; no automated rollout",
   "privacy_notes": [
     "session-level telemetry only for first pilot",
+    "browser sessionStorage is local rehearsal evidence, not a central operational evidence source",
     "no raw consultation text or PII",
     "cross-session identity remains out of scope"
   ],
@@ -36,7 +37,7 @@
     "no pricing, charge, high-stakes reading, fear or vulnerability targeting"
   ],
   "blocking_dependencies": [
-    "issue:#31 privacy-safe session telemetry and evidence source",
+    "operational central evidence source with reviewed retention and deletion policy",
     "issue:#15 production/shared test surface decision"
   ],
   "start_decision": "need_evidence",

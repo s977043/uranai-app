@@ -1,4 +1,4 @@
-export type ReadingType = "tarot" | "numerology" | "maya" | "other";
+export type ReadingType = "tarot" | "numerology" | "maya" | "reflection" | "other";
 export type EntryContext =
   | "daily"
   | "relationship"
@@ -71,6 +71,7 @@ const readingTypes = new Set<ReadingType>([
   "tarot",
   "numerology",
   "maya",
+  "reflection",
   "other",
 ]);
 const entryContexts = new Set<EntryContext>([

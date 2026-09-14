@@ -1,6 +1,6 @@
 # Event Taxonomy
 
-Tracking: #20, #31
+Tracking: #20, #31, #33
 
 ## Purpose
 
@@ -55,7 +55,7 @@ properties: object
 
 `anonymous_visitor_id` を安全に保持できない場合、cross-session KPIは `N/A` とし、session単位の指標だけを利用する。
 
-Iteration #31ではsession-level telemetryに限定し、`anonymous_visitor_id` は `null` 固定とする。
+Iteration #31 / #33ではsession-level telemetryに限定し、`anonymous_visitor_id` は `null` 固定とする。
 
 ### Forbidden by default
 
@@ -74,7 +74,7 @@ Iteration #31ではsession-level telemetryに限定し、`anonymous_visitor_id` 
 `reading_started` / `reading_completed` / `reading_feedback_submitted` は、1回の鑑定フローを識別する `reading_flow_id` を持つ。
 
 ```yaml
-reading_flow_id: reading-flow_<random-uuid>
+reading_flow_id: reading-flow_<random-uuid-v4>
 ```
 
 Rules:
@@ -111,12 +111,14 @@ entry_point: direct | shared_link | campaign | unknown
 Allowed properties:
 
 ```yaml
-reading_flow_id: reading-flow_<random-uuid>
-reading_type: tarot | numerology | maya | other
+reading_flow_id: reading-flow_<random-uuid-v4>
+reading_type: tarot | numerology | maya | reflection | other
 entry_context: daily | relationship | work | self_reflection | other
 ```
 
 `entry_context` はユーザー入力本文ではなく粗いカテゴリのみ。
+
+`reflection` はIssue #33の1枚リフレクションReadingを表す独立dimension。
 
 ---
 
@@ -127,8 +129,8 @@ entry_context: daily | relationship | work | self_reflection | other
 Allowed properties:
 
 ```yaml
-reading_flow_id: reading-flow_<random-uuid>
-reading_type: tarot | numerology | maya | other
+reading_flow_id: reading-flow_<random-uuid-v4>
+reading_type: tarot | numerology | maya | reflection | other
 duration_bucket: lt_30s | 30s_2m | gt_2m | unknown
 ```
 
@@ -143,12 +145,14 @@ duration_bucket: lt_30s | 30s_2m | gt_2m | unknown
 Allowed properties:
 
 ```yaml
-reading_flow_id: reading-flow_<random-uuid>
+reading_flow_id: reading-flow_<random-uuid-v4>
 helpfulness: helpful | neutral | not_helpful
 feedback_reason_category: clear | reassuring | actionable | inaccurate | too_generic | unsafe_feeling | other | none
 ```
 
 自由記述本文はanalytics eventへ載せない。別のVoC管理経路で扱う。
+
+Helpful Feedback集約では、対応する`reading_completed`と同一flow / sessionで相関できるfeedbackだけをeligibleとし、orphan / cross-session / pre-completion feedbackはData Quality異常として扱う。
 
 ---
 
@@ -265,8 +269,8 @@ Eventを変更する際は以下を記録する。
 
 ## Scope note
 
-この文書は論理taxonomyです。
+Issue #31で `reading_started` / `reading_completed` / `reading_feedback_submitted` のTypeScript Contract、session / reading-flow identifier、local/test sink、集約を実装した。
 
-Issue #31では `reading_started` / `reading_completed` / `reading_feedback_submitted` のTypeScript Contract、session / reading-flow identifier、local/test sink、集約を実装する。
+Issue #33では3イベントを実Product Flowへ接続し、browser `sessionStorage`をsession-local Evidence surfaceとして利用する。ただし中央集約されたoperational Evidence sourceではないため、対象MetricのObservabilityは`partial`までとし、`observable`へは昇格しない。
 
-実Product Flowからのemit、外部Analytics SDK、同意管理、cross-session identifier保持/削除は別Iterationで扱う。
+外部Analytics SDK、同意管理、cross-session identifier保持/削除は別Iterationで扱う。

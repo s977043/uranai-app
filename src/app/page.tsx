@@ -1,103 +1,271 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+
+import {
+  getOrCreateAnonymousSessionId,
+  SessionStorageTelemetrySink,
+} from "@/adapters/telemetry/browserSession";
+import { createReadingFlowId } from "@/adapters/telemetry/identifiers";
+import { recordTelemetryEvent } from "@/adapters/telemetry/sink";
+import {
+  createReflectionReading,
+  type ReadingContext,
+  type ReflectionReading,
+} from "@/domain/reflectionReading";
+import type {
+  DurationBucket,
+  Helpfulness,
+  ProductTelemetryEvent,
+} from "@/domain/telemetry/events";
+import {
+  reflectionReadingCompleted,
+  reflectionReadingFeedbackSubmitted,
+  reflectionReadingStarted,
+} from "@/domain/telemetry/reflectionEvents";
+
+const CONTEXTS: readonly {
+  value: ReadingContext;
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: "self_reflection",
+    label: "今の自分",
+    description: "考えが散らかっているときに、いま大切なことを一つ見つける。",
+  },
+  {
+    value: "work",
+    label: "仕事",
+    description: "正解を決めるより、次に試せる小さな行動を見つける。",
+  },
+  {
+    value: "relationship",
+    label: "人間関係",
+    description: "相手を決めつけず、自分が大切にしたいことへ戻る。",
+  },
+] as const;
+
+function durationBucket(startedAt: number, completedAt: number): DurationBucket {
+  const seconds = (completedAt - startedAt) / 1000;
+  if (seconds < 30) return "lt_30s";
+  if (seconds <= 120) return "30s_2m";
+  return "gt_2m";
+}
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [context, setContext] = useState<ReadingContext | null>(null);
+  const [flowId, setFlowId] = useState<string | null>(null);
+  const [startedAt, setStartedAt] = useState<number | null>(null);
+  const [reading, setReading] = useState<ReflectionReading | null>(null);
+  const [feedback, setFeedback] = useState<Helpfulness | null>(null);
+  const [telemetryError, setTelemetryError] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+  async function emit(buildEvent: (sessionId: string) => ProductTelemetryEvent) {
+    try {
+      const storage = window.sessionStorage;
+      const sessionId = getOrCreateAnonymousSessionId(storage);
+      const sink = new SessionStorageTelemetrySink(storage);
+      await recordTelemetryEvent(buildEvent(sessionId), sink);
+    } catch {
+      setTelemetryError(true);
+    }
+  }
+
+  function startReading(nextContext: ReadingContext) {
+    const nextFlowId = createReadingFlowId();
+    const now = Date.now();
+
+    setContext(nextContext);
+    setFlowId(nextFlowId);
+    setStartedAt(now);
+    setReading(null);
+    setFeedback(null);
+    setTelemetryError(false);
+
+    void emit((sessionId) =>
+      reflectionReadingStarted({
+        flowId: nextFlowId,
+        sessionId,
+        occurredAt: new Date(now).toISOString(),
+        context: nextContext,
+      }),
+    );
+  }
+
+  function drawCard() {
+    if (context === null || flowId === null || startedAt === null) return;
+
+    const nextReading = createReflectionReading(flowId, context);
+    const completedAt = Date.now();
+    setReading(nextReading);
+
+    void emit((sessionId) =>
+      reflectionReadingCompleted({
+        flowId,
+        sessionId,
+        occurredAt: new Date(completedAt).toISOString(),
+        durationBucket: durationBucket(startedAt, completedAt),
+      }),
+    );
+  }
+
+  function submitFeedback(value: Helpfulness) {
+    if (flowId === null || feedback !== null) return;
+
+    setFeedback(value);
+
+    void emit((sessionId) =>
+      reflectionReadingFeedbackSubmitted({
+        flowId,
+        sessionId,
+        occurredAt: new Date().toISOString(),
+        helpfulness: value,
+      }),
+    );
+  }
+
+  function reset() {
+    setContext(null);
+    setFlowId(null);
+    setStartedAt(null);
+    setReading(null);
+    setFeedback(null);
+    setTelemetryError(false);
+  }
+
+  return (
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#20204a_0%,#101126_38%,#090a16_72%)] px-5 py-10 text-slate-100 sm:px-8 sm:py-16">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
+        <header className="space-y-3 text-center">
+          <p className="text-xs font-medium uppercase tracking-[0.32em] text-violet-300">Reflection Reading</p>
+          <h1 className="text-3xl font-semibold tracking-tight sm:text-5xl">迷いを、やさしく言語化する。</h1>
+          <p className="mx-auto max-w-xl text-sm leading-7 text-slate-300 sm:text-base">
+            未来を決めつけるためではなく、今の気持ちを少し整理して、今日できる一歩を見つけるための一枚です。
+          </p>
+        </header>
+
+        {context === null ? (
+          <section className="rounded-3xl border border-white/10 bg-white/[0.06] p-5 shadow-2xl shadow-black/30 backdrop-blur sm:p-8">
+            <div className="mb-6 space-y-2">
+              <p className="text-sm text-violet-200">いま整えたいテーマ</p>
+              <h2 className="text-xl font-medium sm:text-2xl">一つだけ選んでください</h2>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {CONTEXTS.map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() => startReading(item.value)}
+                  className="rounded-2xl border border-white/10 bg-black/20 p-5 text-left transition hover:-translate-y-0.5 hover:border-violet-300/50 hover:bg-violet-300/10 focus:outline-none focus:ring-2 focus:ring-violet-300"
+                >
+                  <span className="block text-base font-medium text-white">{item.label}</span>
+                  <span className="mt-2 block text-sm leading-6 text-slate-400">{item.description}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        ) : reading === null ? (
+          <section className="rounded-3xl border border-violet-300/20 bg-white/[0.07] p-7 text-center shadow-2xl shadow-black/30 backdrop-blur sm:p-10">
+            <p className="text-sm text-violet-200">{CONTEXTS.find((item) => item.value === context)?.label}</p>
+            <div className="mx-auto my-7 flex h-40 w-28 items-center justify-center rounded-[1.4rem] border border-violet-200/30 bg-gradient-to-b from-violet-300/20 to-indigo-950 shadow-[0_0_50px_rgba(167,139,250,0.16)]">
+              <span aria-hidden="true" className="text-4xl">✦</span>
+            </div>
+            <h2 className="text-2xl font-medium">今のあなたに向けた一枚</h2>
+            <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-slate-300">
+              正解を当てるのではなく、今の見方を少し広げるために使います。
+            </p>
+            <div className="mt-7 flex flex-col items-center gap-3">
+              <button
+                type="button"
+                onClick={drawCard}
+                className="rounded-full bg-violet-200 px-7 py-3 text-sm font-semibold text-slate-950 transition hover:bg-violet-100 focus:outline-none focus:ring-2 focus:ring-white"
+              >
+                一枚ひく
+              </button>
+              <button
+                type="button"
+                onClick={reset}
+                className="text-sm text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline focus:outline-none focus:ring-2 focus:ring-violet-300"
+              >
+                テーマを選び直す
+              </button>
+            </div>
+          </section>
+        ) : (
+          <section className="space-y-5 rounded-3xl border border-violet-300/20 bg-white/[0.07] p-6 shadow-2xl shadow-black/30 backdrop-blur sm:p-9">
+            <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-5">
+              <div>
+                <p className="text-xs uppercase tracking-[0.24em] text-violet-300">{reading.contextLabel}</p>
+                <h2 className="mt-2 text-3xl font-semibold">{reading.card.title}</h2>
+                <p className="mt-1 text-sm text-slate-400">{reading.card.keyword}</p>
+              </div>
+              <div aria-hidden="true" className="flex h-16 w-12 shrink-0 items-center justify-center rounded-xl border border-violet-200/30 bg-violet-300/10 text-xl">✦</div>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-sm leading-7 text-violet-100">{reading.contextPrompt}</p>
+              <p className="text-base leading-8 text-slate-200">{reading.card.interpretation}</p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
+              <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-400">自分への問い</p>
+              <p className="mt-2 text-lg leading-8 text-white">{reading.card.question}</p>
+            </div>
+
+            <div className="rounded-2xl border border-emerald-300/15 bg-emerald-200/[0.07] p-5">
+              <p className="text-xs font-medium uppercase tracking-[0.2em] text-emerald-200">今日の一歩</p>
+              <p className="mt-2 leading-7 text-slate-100">{reading.card.nextAction}</p>
+            </div>
+
+            <div className="border-t border-white/10 pt-5">
+              <p className="text-center text-sm text-slate-300">このReadingは、今の整理に役立ちましたか？</p>
+              <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                {([
+                  ["helpful", "役立った"],
+                  ["neutral", "どちらでもない"],
+                  ["not_helpful", "役立たなかった"],
+                ] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    disabled={feedback !== null}
+                    onClick={() => submitFeedback(value)}
+                    className={`rounded-xl border px-3 py-3 text-sm transition ${
+                      feedback === value
+                        ? "border-violet-200 bg-violet-200 text-slate-950"
+                        : "border-white/10 bg-white/[0.04] text-slate-300 hover:border-violet-300/40 disabled:opacity-40"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {feedback !== null && (
+                <p className="mt-3 text-center text-xs text-slate-400">ありがとう。次の改善の参考にします。</p>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={reset}
+              className="w-full rounded-full border border-white/15 px-5 py-3 text-sm text-slate-200 transition hover:bg-white/[0.06]"
+            >
+              別のテーマで、もう一度
+            </button>
+          </section>
+        )}
+
+        {telemetryError && (
+          <p role="status" className="text-center text-xs text-amber-200">
+            利用状況の記録に失敗しました。Reading自体はそのまま利用できます。
+          </p>
+        )}
+
+        <footer className="text-center text-xs leading-6 text-slate-500">
+          この体験は意思決定を代行するものではありません。大切な判断は、ご自身の状況や専門家の助言も踏まえて決めてください。
+        </footer>
+      </div>
+    </main>
   );
 }
