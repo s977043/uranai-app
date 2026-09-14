@@ -17,16 +17,18 @@ AI-Native Observe フェーズで使う、**プロダクト行動の論理イベ
 5. 必要な属性だけを収集し、将来使うかもしれないという理由で過収集しない。
 6. Event schemaはversionを持ち、意味変更を黙って行わない。
 7. Safety / AI qualityの内部イベントと、ユーザー行動イベントを区別する。
+8. セッション横断識別が必要なKPIは、Privacy条件を満たす場合だけ計算する。
 
 ## Common envelope
 
-将来の実装では最低限、次の論理項目を持つ。
+将来の実装では次の論理項目を持つ。
 
 ```yaml
 event_name: string
 event_version: 1
 occurred_at: ISO-8601
 anonymous_session_id: string
+anonymous_visitor_id: string | null
 properties: object
 ```
 
@@ -36,6 +38,21 @@ properties: object
 - `event_version`
 - `occurred_at`
 - `anonymous_session_id`
+
+### Conditional
+
+`anonymous_visitor_id` は、D1/D7 Return・Repeat Reading・複数sessionにまたがるPaid Conversionなど、**cross-session集計が必要でPrivacy条件を満たす場合のみ**利用する。
+
+条件:
+
+- ランダム生成したpseudonymous identifierであること
+- 氏名、メール、電話番号、端末固有情報等から決定論的に生成しない
+- authentication identifierをそのまま流用しない
+- 利用目的をRetention等の明示済み分析に限定する
+- 保持期間・rotation・削除方針を実装前Privacy reviewで確定する
+- 外部サービス間の追跡キーとして使わない
+
+`anonymous_visitor_id` を安全に保持できない場合、cross-session KPIは `N/A` とし、session単位の指標だけを利用する。
 
 ### Forbidden by default
 
@@ -47,6 +64,7 @@ properties: object
 - authentication token
 - payment card data
 - raw AI prompt / raw model response
+- deterministic hash of PII as visitor identifier
 
 ## Product events
 
@@ -126,7 +144,7 @@ action_type: reflect | save | share | another_reading | close | other
 
 ### `session_returned`
 
-意味: 過去利用セッションのある匿名ユーザーが、新しいセッションを開始した。
+意味: Privacy条件を満たす `anonymous_visitor_id` で、過去sessionの存在を確認できる匿名訪問者が新しいsessionを開始した。
 
 Allowed properties:
 
@@ -134,7 +152,12 @@ Allowed properties:
 return_window: d1 | d2_d7 | d8_d30 | gt_d30
 ```
 
-実装時にはanonymous identifierの保持期間とPrivacy方針を別途レビューする。
+Precondition:
+
+- `anonymous_visitor_id` が利用可能
+- 保持期間・rotation・削除方針がPrivacy review済み
+
+利用できない場合、このイベントは生成せずD1/D7 Returnを `N/A` とする。
 
 ---
 
@@ -218,4 +241,4 @@ Eventを変更する際は以下を記録する。
 
 ## Scope note
 
-この文書は論理taxonomyです。SDK選定、DB schema、送信処理、同意管理の実装は別Iterationで扱います。
+この文書は論理taxonomyです。SDK選定、DB schema、送信処理、同意管理、identifier保持/削除の実装は別Iterationで扱います。
