@@ -83,6 +83,8 @@ AI-Native化の価値は各作業の自動化ではなく、**EvidenceからLear
 - [Operational Pilot Review](./closed-loop-pilot-review-record.md)
 - [Pilot Telemetry Foundation](./telemetry-foundation.md)
 - [Pilot Telemetry Review](./telemetry-foundation-review-record.md)
+- [Reading Vertical Slice](./reading-vertical-slice.md)
+- [Reading Vertical Slice Review](./reading-vertical-slice-review-record.md)
 - [Safety Policy](./safety-policy.md)
 - [Metrics & Evals](./metrics-and-evals.md)
 
@@ -204,34 +206,74 @@ Manual Real Pilot                  → blocked
 Controlled Autonomy                → not entered
 ```
 
-## Pilot Telemetry Foundation — Iteration 4.6
+## Pilot Telemetry Foundation — Iteration 4.6 ✅
 
-Tracking: #31  
-Product instrumentation: #33
+Tracking: #31 / PR #34
 
 - Design: [`telemetry-foundation.md`](./telemetry-foundation.md)
 - Review: [`telemetry-foundation-review-record.md`](./telemetry-foundation-review-record.md)
 
-Foundationで実装するもの:
+Completed:
 
 - `reading_started` / `reading_completed` / `reading_feedback_submitted` Contract
-- random UUID v4 session ID
-- random UUID v4 `reading_flow_id`
+- random UUID v4 session ID / `reading_flow_id`
 - strict property allowlist / PII boundary
 - Telemetry Sink port + InMemory sink
 - Reading Flow Completion / Helpful Feedback Rate集約
 - Metric Observability promotion assessment
 
-重要な境界:
+境界:
 
 - `reading_flow_id`は1回のReadingのcorrelation keyでありuser identityではない
-- `anonymous_visitor_id`は#31では`null`固定
-- persistence / external Analytics Vendorは導入しない
+- `anonymous_visitor_id`は`null`固定
+- persistence / external Analytics VendorはこのIterationで導入しない
 - local/syntheticで`computed`でもRegistryは`observable`へ昇格しない
 
-最新mainにはReading Product Flow自体が無いため、#31完了時も対象Metricは意図的に`uninstrumented`を維持する。
+## Reading Vertical Slice — Iteration 4.7 ✅
 
-次に#33でMLP FirstのReading Vertical Sliceを作り、Product FlowへTelemetryを接続する。
+Tracking: #33 / PR #35
+
+- Design: [`reading-vertical-slice.md`](./reading-vertical-slice.md)
+- Review: [`reading-vertical-slice-review-record.md`](./reading-vertical-slice-review-record.md)
+
+Completed:
+
+- 1枚のReflection ReadingをVertical Sliceとして実装
+- `reading_type: reflection`
+- テーマ → 一枚ひく → 解釈 → 自分への問い → 今日の一歩 → feedback
+- Product Flowから3つのTelemetry Eventをemit
+- browser `sessionStorage`をsession-local Evidence surfaceとして利用
+- Message Guardrail regression
+- Product / UX / Architecture / Privacy / Safety / Analytics / QA の複数視点レビュー
+
+Current observability:
+
+```yaml
+metric:reading_flow_completion: partial
+metric:helpful_feedback_rate: partial
+```
+
+`browser-session-storage:v1`はsession-local Evidenceであり、central operational Evidenceではないため`observable`にはしない。
+
+Lovabilityはproxy reviewまで。actual User Observation / Retention / MLP Release readinessは未検証。
+
+## Current next gates
+
+```text
+#15 shared / production test surface
+  +
+Operational central Evidence source
+  ↓
+Actual User Observation
+  ↓
+Polish Loop
+  ↓
+Metric observable再評価
+  ↓
+Manual Real Pilot
+  ↓
+Controlled Autonomy
+```
 
 ## Iteration status
 
@@ -242,9 +284,11 @@ Foundationで実装するもの:
 - Iteration 3 Assist: 完了
 - Iteration 4 Closed Learning Loop: PR #28 / Issue #27 — 完了
 - Iteration 4.5 Operational Readiness: Issue #30 / PR #32 — 完了
-- Iteration 4.6 Pilot Telemetry Foundation: Issue #31 — 実装・レビュー中
-- Reading Vertical Slice + instrumentation: Issue #33 — open
+- Iteration 4.6 Pilot Telemetry Foundation: Issue #31 / PR #34 — 完了
+- Iteration 4.7 Reading Vertical Slice + instrumentation: Issue #33 / PR #35 — 完了
 - Shared / production test surface: Issue #15 — open
+- Operational central Evidence source: 未実装
+- Manual Real Pilot: blocked
 - Iteration 5 Controlled Autonomy: **blocked until Manual Real Pilot evidence exists**
 
 ## Human Gateを維持するもの
