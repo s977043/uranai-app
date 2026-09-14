@@ -6,56 +6,80 @@
       "name": "First Reading Completion",
       "definition_source": "docs/ai-native/funnel-metrics.md#1-first-reading-completion",
       "identity_requirement": "cross_session",
-      "status": "active"
+      "status": "active",
+      "observability_status": "uninstrumented",
+      "required_events": ["reading_started", "reading_completed"],
+      "evidence_source_ref": null
     },
     {
       "ref": "metric:reading_flow_completion",
       "name": "Reading Flow Completion",
       "definition_source": "docs/ai-native/funnel-metrics.md#reference-metric-reading-flow-completion",
       "identity_requirement": "session",
-      "status": "active"
+      "status": "active",
+      "observability_status": "uninstrumented",
+      "required_events": ["reading_started", "reading_completed"],
+      "evidence_source_ref": null
     },
     {
       "ref": "metric:d1_return",
       "name": "D1 Return",
       "definition_source": "docs/ai-native/funnel-metrics.md#2-d1-return",
       "identity_requirement": "cross_session",
-      "status": "active"
+      "status": "active",
+      "observability_status": "uninstrumented",
+      "required_events": ["reading_completed", "session_returned"],
+      "evidence_source_ref": null
     },
     {
       "ref": "metric:d7_return",
       "name": "D7 Return",
       "definition_source": "docs/ai-native/funnel-metrics.md#3-d7-return",
       "identity_requirement": "cross_session",
-      "status": "active"
+      "status": "active",
+      "observability_status": "uninstrumented",
+      "required_events": ["reading_completed", "session_returned"],
+      "evidence_source_ref": null
     },
     {
       "ref": "metric:repeat_reading_rate",
       "name": "Repeat Reading Rate",
       "definition_source": "docs/ai-native/funnel-metrics.md#4-repeat-reading-rate",
       "identity_requirement": "cross_session",
-      "status": "active"
+      "status": "active",
+      "observability_status": "uninstrumented",
+      "required_events": ["reading_completed"],
+      "evidence_source_ref": null
     },
     {
       "ref": "metric:helpful_feedback_rate",
       "name": "Helpful Feedback Rate",
       "definition_source": "docs/ai-native/funnel-metrics.md#5-helpful-feedback-rate",
       "identity_requirement": "none",
-      "status": "active"
+      "status": "active",
+      "observability_status": "uninstrumented",
+      "required_events": ["reading_feedback_submitted"],
+      "evidence_source_ref": null
     },
     {
       "ref": "metric:paid_conversion",
       "name": "Paid Conversion",
       "definition_source": "docs/ai-native/funnel-metrics.md#6-paid-conversion",
       "identity_requirement": "cross_session",
-      "status": "active"
+      "status": "active",
+      "observability_status": "uninstrumented",
+      "required_events": ["paywall_viewed", "purchase_completed"],
+      "evidence_source_ref": null
     },
     {
       "ref": "metric:safety_rejection_rate",
       "name": "Safety Rejection Rate",
       "definition_source": "docs/ai-native/funnel-metrics.md#7-safety-rejection-rate",
       "identity_requirement": "none",
-      "status": "provisional"
+      "status": "provisional",
+      "observability_status": "uninstrumented",
+      "required_events": ["ai_output_rejected"],
+      "evidence_source_ref": null
     }
   ]
 }
