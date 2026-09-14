@@ -26,11 +26,12 @@ function calendarDate(value) {
 
 assert(document.version === 1, "execution receipt: fixture version must be 1");
 assert(document.skill === "evaluate-experiment", "execution receipt: skill mismatch");
-assert(Array.isArray(document.fixtures) && document.fixtures.length >= 7, "execution receipt: at least 7 fixtures required");
+assert(Array.isArray(document.fixtures) && document.fixtures.length >= 8, "execution receipt: at least 8 fixtures required");
 
 let deviationCases = 0;
 let stoppedCases = 0;
 let triggeredStopCases = 0;
+let manualStopCases = 0;
 
 for (const fixture of document.fixtures) {
   const result = fixture.input?.experiment_result;
@@ -56,6 +57,10 @@ for (const fixture of document.fixtures) {
   if (result.status === "stopped") {
     stoppedCases += 1;
     assert(nonEmptyString(execution.stop_reason), `${fixture.id}: stopped execution requires stop_reason`);
+    if (!execution.stop_condition_triggered) {
+      manualStopCases += 1;
+      assert(fixture.expect?.must_preserve_manual_stop_reason === true, `${fixture.id}: manual stop case must preserve stop reason`);
+    }
   } else if (!execution.stop_condition_triggered) {
     assert(execution.stop_reason === null, `${fixture.id}: non-stopped execution without triggered condition requires null stop_reason`);
   }
@@ -75,7 +80,8 @@ for (const fixture of document.fixtures) {
 }
 
 assert(deviationCases >= 1, "execution receipt: at least one material deviation regression case required");
-assert(stoppedCases >= 1, "execution receipt: at least one stopped execution regression case required");
+assert(stoppedCases >= 2, "execution receipt: triggered and manual stopped cases required");
 assert(triggeredStopCases >= 1, "execution receipt: at least one triggered stop-condition regression case required");
+assert(manualStopCases >= 1, "execution receipt: at least one explicit manual stop regression case required");
 
-console.log(`✓ execution receipt contract: ${document.fixtures.length} fixtures, deviations=${deviationCases}, stopped=${stoppedCases}, triggered_stops=${triggeredStopCases}`);
+console.log(`✓ execution receipt contract: ${document.fixtures.length} fixtures, deviations=${deviationCases}, stopped=${stoppedCases}, triggered_stops=${triggeredStopCases}, manual_stops=${manualStopCases}`);
