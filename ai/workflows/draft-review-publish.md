@@ -2,9 +2,16 @@
 
 ## Goal
 
-Content / Growth / Reading系のユーザー向けArtifactを、**Draftのまま作成し、独立ReviewとHuman Gateを通す**。
+Content / Growth / Reading系のユーザー向けArtifactを、**Draftのまま作成し、Makerとは別主体のReviewとHuman Gateを通す**。
 
 Iteration 3ではPublish / Send / Price changeを自動実行しない。
+
+## Reviewer independence
+
+- `reviewer != maker` を必須とする。
+- Content / Growth は **Human reviewerを既定**とする。独立Reviewer Agentを追加する場合もMakerと同一コンテキストで自己承認しない。
+- Readingは `Reading Quality Agent` が一次Reviewし、その後Human Gateを通す。
+- Makerが自己修正した場合は、再度別主体のReviewが必要。
 
 ## Flow
 
@@ -17,7 +24,7 @@ Draft artifact
   ↓
 Deterministic message guardrail（該当テキスト）
   ↓
-Independent review
+Independent review (reviewer != maker)
   ↓
 Human Gate
   ↓
@@ -37,7 +44,7 @@ Draft
   ↓
 Message Guardrail
   ↓
-Human Review
+Human Review (independent)
 ```
 
 必須:
@@ -51,7 +58,7 @@ Human Review
 ## Growth flow
 
 ```text
-Evidence + Metric definition
+Evidence + Metric Contract
   ↓
 Growth Agent / design-growth-experiment
   ↓
@@ -59,7 +66,7 @@ Experiment proposal + Draft assets
   ↓
 Message Guardrail（Draft assets）
   ↓
-Independent review
+Human Review (independent)
   ↓
 Human decision
 ```
@@ -123,6 +130,7 @@ guardrail_result:
   passed: boolean
   violation_ids: []
 reviewer: string | human
+reviewer_is_independent: true
 review_result: pass | revise | block
 human_decision: pending | approve | reject | revise
 ```
@@ -146,6 +154,6 @@ human_decision: pending | approve | reject | revise
 
 - Draft contract準拠
 - deterministic guardrail実行済み
-- independent review済み
+- reviewer != maker の独立Review済み
 - Human decision記録済み
 - Publish / Send等の副作用は未実行、または別の明示Human操作として追跡可能
