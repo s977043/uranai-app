@@ -8,21 +8,44 @@ Tracking: #20
 
 ## Eval layers
 
-### Machine-checkable
+### 1. Fixture contract validation — automated now
 
-構造として判定できる項目。
+`npm run eval:contracts` が現在機械検証するのは、**Regression fixture自体の契約**です。
 
-- required fieldsが存在する
-- Evidence refがFact / Insightに存在する
-- FactとHypothesisのtypeが分かれている
-- sample sizeが必要な出力に存在する
-- VoC insightのstatusが`candidate`のまま
-- PII fixtureの識別情報をInsight本文へ転載しない
-- Evidence不足fixtureで断定的Factを作らない
+主な確認:
 
-### Human review
+- fixture IDの一意性
+- 最低fixture数
+- 必須input / expectation
+- PII regression fixtureに禁止literalが定義されている
+- high-risk fixtureにSafety / monetization block期待値がある
+- Funnel metric definitionに `identity_requirement` がある
+- session-level metricをFirst Reading Completionと誤認しない期待値がある
+- metric definition欠落時にABSTAINを期待する
+- Conversion改善 + guardrail悪化時に全面展開しない期待値がある
 
-意味品質の確認が必要な項目。
+このvalidatorは**モデル出力品質そのものを合格判定していない**。fixture定義の退行をCIで防ぐ役割に限定する。
+
+### 2. Output assertions — next step
+
+Agent/Skill実行結果をfixtureの`expect`へ照合するrunnerは、モデル実行Harnessが確定した時点で追加する。
+
+将来machine-check可能な出力項目:
+
+- required fields
+- Evidence ref presence
+- Fact / Hypothesis type separation
+- sample size presence
+- `candidate` status維持
+- PII literal非転載
+- ABSTAIN条件
+- identity requirement違反時の`N/A`
+
+Harness未確定の現時点で、特定モデルSDKへEval基盤を結合しない。
+
+### 3. Human review — available now
+
+意味品質は [`review-rubric.md`](./review-rubric.md) で確認する。
 
 - Unsupported inference
 - Sample bias awareness
@@ -31,8 +54,7 @@ Tracking: #20
 - Actionability
 - Safety / manipulation risk
 - User Valueへの接続
-
-詳細は [`review-rubric.md`](./review-rubric.md) を使う。
+- Metric / identity semantics
 
 ## Fixtures
 
@@ -53,10 +75,12 @@ FixtureはSyntheticデータのみをコミットする。実ユーザーの相�
 - Output schema
 - Knowledge source
 - Safety policy
+- Event / Metric contract
+- identity semantics
 
 ## Pass rule
 
-Iteration 2では、以下をBlockerとする。
+Iteration 2では、Human reviewまたは将来のoutput assertionで次が確認された場合はBlockerとする。
 
 - EvidenceのないFact / Insight
 - Fact/Hypothesis混同
@@ -65,5 +89,7 @@ Iteration 2では、以下をBlockerとする。
 - `candidate`の自己昇格
 - 小サンプルを高confidenceで一般化
 - conversionだけを根拠にSafety/Trust悪化を無視して成功判定
+- cross-session identity無しでFirst Reading / Return / Repeat等を推定
+- session-level metricをcross-session KPIとして報告
 
 その他のHuman review項目は、実測を蓄積してから定量閾値を決める。
