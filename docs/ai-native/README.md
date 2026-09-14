@@ -82,6 +82,7 @@ AI-Native化の価値は各作業の自動化ではなく、**EvidenceからLear
 - [Closed Loop Operational Pilot](./closed-loop-pilot.md)
 - [Operational Pilot Review](./closed-loop-pilot-review-record.md)
 - [Pilot Telemetry Foundation](./telemetry-foundation.md)
+- [Pilot Telemetry Review](./telemetry-foundation-review-record.md)
 - [Safety Policy](./safety-policy.md)
 - [Metrics & Evals](./metrics-and-evals.md)
 
@@ -208,13 +209,14 @@ Controlled Autonomy                → not entered
 Tracking: #31  
 Product instrumentation: #33
 
-[`telemetry-foundation.md`](./telemetry-foundation.md) を正本とする。
+- Design: [`telemetry-foundation.md`](./telemetry-foundation.md)
+- Review: [`telemetry-foundation-review-record.md`](./telemetry-foundation-review-record.md)
 
 Foundationで実装するもの:
 
 - `reading_started` / `reading_completed` / `reading_feedback_submitted` Contract
-- random session ID
-- random `reading_flow_id`
+- random UUID v4 session ID
+- random UUID v4 `reading_flow_id`
 - strict property allowlist / PII boundary
 - Telemetry Sink port + InMemory sink
 - Reading Flow Completion / Helpful Feedback Rate集約
