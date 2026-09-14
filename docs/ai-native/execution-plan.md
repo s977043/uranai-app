@@ -15,7 +15,7 @@ Tracking: #18, #20, #23, #27
 - Deterministic message guardrail: PR #22 merge済み
 - MLP First: PR #24 merge済み
 - Assist: PR #25 merge済み / Issue #23 close済み
-- Iteration 4 Closed Learning Loop: Issue #27 / PR #28 — 実装・7視点レビュー完了、latest CI確認中
+- Iteration 4 Closed Learning Loop: Issue #27 / PR #28 — 実装・7視点レビュー・CI完了、merge ready
 - PR #16 数秘術ドメインは別系統で進行中
 
 # Iteration 1 — Foundation ✅
@@ -60,7 +60,7 @@ Intentional scope out:
 - 自動Price / Charge
 - Human Gate解除
 
-# Iteration 4 — Closed Learning Loop 🚧 final validation
+# Iteration 4 — Closed Learning Loop ✅ implementation/review complete
 
 Tracking: #27 / PR #28
 
@@ -105,7 +105,7 @@ Next Experience Hypothesis / MLP Polish
 5. Accepted LearningをKnowledge蓄積で終わらせず、次のExperience Hypothesis / MLP Polishへ戻す。
 6. Model Harness未確定のため、output runnerよりfixture contract / Human rubricを先行する。
 7. Markdown anchorではなくMachine-readable Metric Registryのstable IDを導入する。
-8. Learning Candidateに`candidate_maker_id` / `source_evaluation_refs`を残し、Reviewer独立性を監査可能にする。
+8. Learning Candidate自身に`candidate_maker_id` / `source_evaluation_refs`を残し、Reviewer独立性を監査可能にする。
 9. Experiment execution statusとevaluation validityを分離する。
 
 ## Entry criteria
@@ -154,12 +154,12 @@ Next Experience Hypothesis / MLP Polish
 - [x] AI-Native README更新
 - [x] Execution Plan更新
 - [x] Closed Loop review record
-- [ ] Issue #27最終進捗更新
+- [x] Issue #27進捗更新
 - [x] PR #28作成
-- [ ] Latest CI Green
+- [x] Reviewed implementation CI Green
 - [x] タスク完了前の7視点レビュー
 - [x] Review blocker反映
-- [ ] Final diff / unresolved thread確認
+- [x] Final diff / unresolved thread確認
 - [ ] merge / Issue close
 
 ## Multi-perspective review findings resolved
@@ -167,8 +167,9 @@ Next Experience Hypothesis / MLP Polish
 1. **Metric参照がMarkdown anchor依存 / 未定義KPI参照**
    - `ai/contracts/metric-registry.json` と `metric:<stable-id>` を導入
    - Registry専用validatorでfixture参照をCI検証
-2. **Learning Reviewの`maker_id`が曖昧**
-   - `candidate_maker_id`へ変更しCandidate provenanceを必須化
+2. **Learning Reviewのmaker identityが曖昧 / 重複入力可能**
+   - Candidate自身の`candidate_maker_id`をprovenanceの唯一の正本へ変更
+   - `source_evaluation_refs`をCandidateへ保持し、source evaluationへの解決をvalidatorで確認
 3. **Experiment statusと分析validityの混同**
    - `completed|stopped|invalid` と `valid|limited|invalid` を分離
    - Sample不足は隠さず`limited / inconclusive`へ反映
@@ -180,7 +181,7 @@ Next Experience Hypothesis / MLP Polish
 - invalid ExperimentからAccepted Learningを作らない
 - insufficient sampleをhigh confidenceで一般化しない
 - conflicting evidenceを隠さない
-- `reviewer_id != candidate_maker_id`
+- `reviewer_id != candidate.candidate_maker_id`
 - Human decision無しで`accepted_learning`へ遷移しない
 - Raw PII / consultation textをResult/Learningへ保存しない
 
