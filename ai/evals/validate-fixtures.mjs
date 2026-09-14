@@ -13,7 +13,6 @@ const specs = [
     validateFixture(fixture) {
       assert(fixture.input?.sources?.length > 0, `${fixture.id}: sources required`);
       assert(fixture.expect && typeof fixture.expect === "object", `${fixture.id}: expect required`);
-
       if (fixture.id === "voc-04-pii-redaction") {
         assert(Array.isArray(fixture.expect.must_not_output_literals) && fixture.expect.must_not_output_literals.length >= 2, `${fixture.id}: PII literals must be enumerated for regression checking`);
       }
@@ -80,7 +79,6 @@ const specs = [
       assert(fixture.input?.objective, `${fixture.id}: objective required`);
       assert(fixture.input?.hypothesis, `${fixture.id}: hypothesis required`);
       assert(fixture.expect && typeof fixture.expect === "object", `${fixture.id}: expect required`);
-
       if (fixture.id !== "growth-05-missing-definition") {
         assert(typeof fixture.input.metric_definition_ref === "string" && fixture.input.metric_definition_ref.length > 0, `${fixture.id}: metric_definition_ref required`);
       }
@@ -88,7 +86,6 @@ const specs = [
         assert(typeof guardrail.metric === "string" && guardrail.metric.length > 0, `${fixture.id}: guardrail metric required`);
         assert(typeof guardrail.metric_definition_ref === "string" && guardrail.metric_definition_ref.length > 0, `${fixture.id}: guardrail metric_definition_ref required`);
       }
-
       if (fixture.id === "growth-01-evidence-backed") {
         assert(fixture.expect.must_have_metric_definition_ref === true, `${fixture.id}: metric definition ref expectation required`);
         assert(fixture.expect.must_have_guardrails === true, `${fixture.id}: guardrails required`);
@@ -125,6 +122,57 @@ const specs = [
       }
       if (fixture.id === "reading-01-faithful-safe" || fixture.id === "reading-06-agency-preserving") {
         assert(fixture.expect.must_require_human_review === true, `${fixture.id}: pass still requires Human Gate`);
+      }
+    },
+  },
+  {
+    name: "evaluate-experiment",
+    file: path.join(here, "experiment", "fixtures.json"),
+    minFixtures: 7,
+    validateFixture(fixture) {
+      assert(fixture.input?.experiment_id, `${fixture.id}: experiment_id required`);
+      assert(fixture.input?.proposal_ref, `${fixture.id}: proposal_ref required`);
+      assert(fixture.input?.human_decision?.decision === "approve", `${fixture.id}: approved human decision required`);
+      assert(fixture.input?.execution_receipt?.executed_by, `${fixture.id}: execution receipt required`);
+      assert(typeof fixture.input?.observation?.window === "string" && fixture.input.observation.window.length > 0, `${fixture.id}: observation window required`);
+      assert(fixture.expect && typeof fixture.expect === "object", `${fixture.id}: expect required`);
+
+      const targetMetric = fixture.input.observation.target_metric;
+      assert(typeof targetMetric?.name === "string" && targetMetric.name.length > 0, `${fixture.id}: target metric required`);
+      if (fixture.id !== "experiment-05-missing-baseline-definition") {
+        assert(typeof targetMetric.metric_definition_ref === "string" && targetMetric.metric_definition_ref.length > 0, `${fixture.id}: target metric definition ref required`);
+      }
+      for (const guardrail of fixture.input.observation.guardrails ?? []) {
+        assert(typeof guardrail.name === "string" && guardrail.name.length > 0, `${fixture.id}: guardrail metric name required`);
+        assert(typeof guardrail.metric_definition_ref === "string" && guardrail.metric_definition_ref.length > 0, `${fixture.id}: guardrail metric definition ref required`);
+      }
+
+      if (fixture.id === "experiment-02-target-up-guardrail-down") {
+        assert(fixture.expect.must_not_recommend_adopt === true, `${fixture.id}: guardrail regression must block adopt`);
+        assert(fixture.expect.must_report_guardrail_worsened === true, `${fixture.id}: guardrail worsening must be reported`);
+      }
+      if (fixture.id === "experiment-03-negative-useful-learning") {
+        assert(fixture.expect.result === "negative", `${fixture.id}: negative result required`);
+        assert(fixture.expect.learning_candidate_allowed === true, `${fixture.id}: useful negative learning must be retained`);
+        assert(fixture.expect.must_not_discard_negative === true, `${fixture.id}: negative result must not be discarded`);
+      }
+      if (fixture.id === "experiment-04-small-sample-inconclusive") {
+        assert(fixture.expect.result === "inconclusive", `${fixture.id}: small sample must be inconclusive`);
+      }
+      if (fixture.id === "experiment-05-missing-baseline-definition") {
+        assert(targetMetric.metric_definition_ref === null, `${fixture.id}: missing definition must use null ref`);
+        assert(targetMetric.baseline === null, `${fixture.id}: missing baseline must use null`);
+        assert(fixture.expect.result === "inconclusive", `${fixture.id}: missing contract must be inconclusive`);
+        assert(fixture.expect.learning_candidate_allowed === false, `${fixture.id}: effect learning candidate must not be allowed`);
+      }
+      if (fixture.id === "experiment-06-safety-stop") {
+        assert(fixture.input.execution_receipt.stop_condition_triggered === true, `${fixture.id}: stop condition must be triggered`);
+        assert(fixture.expect.result === "stopped", `${fixture.id}: safety stop must result in stopped`);
+        assert(fixture.expect.must_not_recommend_adopt === true, `${fixture.id}: stopped experiment must not adopt`);
+      }
+      if (fixture.id === "experiment-07-correlation-not-causation") {
+        assert(Array.isArray(fixture.input.execution_receipt.deviations_from_proposal) && fixture.input.execution_receipt.deviations_from_proposal.length > 0, `${fixture.id}: confounder/deviation required`);
+        assert(fixture.expect.causal_claim_allowed === false, `${fixture.id}: causal claim must be disallowed`);
       }
     },
   },
