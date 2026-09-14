@@ -69,57 +69,73 @@ AI-Native化の価値は各作業の自動化ではなく、**この学習ルー
 - [North Star](./north-star.md)
 - [Operating Model](./operating-model.md)
 - [Execution Plan](./execution-plan.md)
-- [Multi-perspective Review](./review-record.md)
+- [Foundation Review](./review-record.md)
+- [Observe Review](./observe-review-record.md)
 - [Safety Policy](./safety-policy.md)
 - [Metrics & Evals](./metrics-and-evals.md)
 
-## Observe contracts
+## Observe contracts — Iteration 2
 
-Iteration 2では、実データ接続より前に分析の入力・評価境界を固定します。
+実データ接続より前に分析の入力・評価境界を固定しています。
 
 - [Event Taxonomy](./event-taxonomy.md)
 - [Funnel Metrics](./funnel-metrics.md)
 - [`ai/evals/`](../../ai/evals/README.md) — regression fixture / review rubric / validator
 - [`weekly-learning-report.md`](../../ai/workflows/templates/weekly-learning-report.md) — 週次Learningの標準テンプレート
 
-### Why contracts first
+## Assist contracts — Iteration 3
 
-Analytics SDKや外部サービスを先に入れると、計測項目が実装都合で固定されやすくなります。先に論理Event / KPI / Evalを定義し、後で任意の計測基盤へマッピングします。
+ユーザー向けExecutionは、まず**Draft-only**で扱います。
 
-## Iteration 1 — Foundation
+### Agents
 
-PR #19で完了・マージ済み。
+- [`Content Agent`](../../ai/agents/content.md) — Content Draft Maker
+- [`Growth Agent`](../../ai/agents/growth.md) — Experiment / Draft Maker
+- [`Reading Quality Agent`](../../ai/agents/reading-quality.md) — Reviewer only
 
-- AI/Human/Deterministic の責務境界
-- Analyst / VoC Analyst のAgent Contract
-- `analyze-voc` / `analyze-funnel` Skill Contract
-- Weekly Learning Loop
-- Safety / Metrics / Eval / Knowledge更新規則
+### Skills
 
-## Iteration 2 — Observe
+- [`draft-content`](../../ai/skills/draft-content/SKILL.md)
+- [`design-growth-experiment`](../../ai/skills/design-growth-experiment/SKILL.md)
+- [`review-reading-quality`](../../ai/skills/review-reading-quality/SKILL.md)
 
-対象:
+### Workflow
 
-- Event taxonomy
-- Funnel metric definitions
-- Synthetic regression fixtures
-- Machine-checkable fixture contract validation
-- Human review rubric
-- Weekly Learning Report template / synthetic example
+- [`Draft → Review → Human Gate`](../../ai/workflows/draft-review-publish.md)
 
-まだ実装しないもの:
+標準境界:
 
-- 本番Analytics SDK
-- 実ユーザーデータ接続
-- SNS自動投稿
-- LINE / メール / Pushの自動送信
-- 自動価格変更
-- Growth / Content / CRM Agent
+```text
+Maker
+  ↓
+Draft / Proposal
+  ↓
+Deterministic Message Guardrail
+  ↓
+Independent Review
+  ↓
+Human Gate
+```
+
+Message Guardrailは既知NG表現を検出する**一層**であり、包括Safety保証ではありません。Contextual ReviewとHuman Gateを置き換えません。
+
+Iteration 3で自動化しないもの:
+
+- SNS公開 / scheduling
+- LINE / メール / Push送信
+- 価格変更 / 課金操作
+- 鑑定生成Agent
+- Human Gate解除
 - Orchestrator
+
+## Iteration status
+
+- Iteration 1 Foundation: Issue #18 / PR #19 — 完了
+- Iteration 2 Observe: Issue #20 / PR #21 — 完了
+- Deterministic Message Guardrail: PR #22 — 完了（旧PR #17を置換）
+- MLP First: PR #24 — 完了
+- Iteration 3 Assist: Issue #23 — 実装・評価中
 
 ## 関連
 
-- Foundation: Issue #18 / PR #19
-- Observe: Issue #20
 - 数秘術ドメイン: PR #16
-- 文言ガードレール: PR #17
