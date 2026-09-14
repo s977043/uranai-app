@@ -115,8 +115,10 @@ function hasExactlyKeys(
   return actual.length === allowed.length && actual.every((key, i) => key === allowed[i]);
 }
 
-function isIsoDate(value: unknown): value is string {
-  return typeof value === "string" && !Number.isNaN(Date.parse(value));
+function isCanonicalIsoDate(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  const parsed = Date.parse(value);
+  return !Number.isNaN(parsed) && new Date(parsed).toISOString() === value;
 }
 
 function isSessionId(value: unknown): value is string {
@@ -151,7 +153,9 @@ function validateCommonEnvelope(
     errors.push("event envelope contains missing or unknown fields");
   }
   if (input.event_version !== 1) errors.push("event_version must be 1");
-  if (!isIsoDate(input.occurred_at)) errors.push("occurred_at must be a valid ISO date string");
+  if (!isCanonicalIsoDate(input.occurred_at)) {
+    errors.push("occurred_at must be canonical ISO-8601 from Date.toISOString()");
+  }
   if (!isSessionId(input.anonymous_session_id)) {
     errors.push("anonymous_session_id must be a random session UUID");
   }
