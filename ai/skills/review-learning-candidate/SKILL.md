@@ -11,7 +11,7 @@ Learning Candidateを独立レビューし、Accepted Learningへの昇格可否
 - candidate statusである
 - Evidence refsが存在
 - Experiment由来ならExperiment validityが確認可能
-- reviewerはcandidate makerと別主体
+- reviewerはLearning Candidateを作った主体と別である
 
 不足時は `need_more_evidence` または `invalid_review_input` を返す。
 
@@ -23,12 +23,14 @@ candidate: object
 source_evaluations:
   - string
 reviewer_id: string
-maker_id: string
+candidate_maker_id: string
 ```
+
+`candidate_maker_id` はExperiment proposalの作成者ではなく、**このLearning Candidateを生成したEvaluator / Maker**を指す。
 
 ## Process
 
-1. reviewer != makerを確認
+1. `reviewer_id != candidate_maker_id` を確認
 2. Evidence traceabilityを確認
 3. Experiment validityを確認
 4. Metric fidelityを確認
@@ -44,6 +46,8 @@ maker_id: string
 
 ```yaml
 candidate_ref: string
+reviewer_id: string
+candidate_maker_id: string
 recommendation: accept_candidate | reject_candidate | need_more_evidence | invalid_review_input
 findings:
   - severity: blocker | warning | note
@@ -60,7 +64,7 @@ human_gate_required: true
 
 ## Blockers
 
-- reviewer == maker
+- reviewer_id == candidate_maker_id
 - Evidence ref無し
 - invalid Experimentを主要根拠にしている
 - Safety/Trust悪化を成功学習化している
