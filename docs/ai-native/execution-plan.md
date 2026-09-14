@@ -14,7 +14,7 @@ Tracking: #18, #20
 - PR #19 の AI-Native Foundation はレビュー・CI Green後にマージ済み
 - PR #16 で数秘術ドメイン実装が進行中
 - PR #17 で文言ガードレールが進行中
-- Iteration 2 Observe を Issue #20 で実施中
+- Iteration 2 Observe はPR #21で実装・複数視点レビュー完了
 
 ---
 
@@ -41,9 +41,9 @@ Agentを増やす前に、AI-Native運用の「契約」を作る。
 
 ---
 
-# Iteration 2 — Observe
+# Iteration 2 — Observe ✅ implementation/review complete
 
-Tracking: #20
+Tracking: #20 / PR #21
 
 ## Goal
 
@@ -71,6 +71,8 @@ Tracking: #20
 
 - [x] `event-taxonomy.md`
 - [x] `funnel-metrics.md`
+- [x] cross-session identity requirementを明文化
+- [x] First Reading Completion / Reading Flow Completionを分離
 
 ### Regression / Eval
 
@@ -79,79 +81,64 @@ Tracking: #20
 - [x] Funnel fixture 6ケース
 - [x] Human review rubric
 - [x] fixture contract validator
+- [x] identity requirement validation
 - [x] `npm run eval:contracts`
 - [x] CIへAI eval contract validationを追加
+- [x] Fixture validation / Output assertion / Human reviewの責務を分離
 
 ### Weekly learning
 
 - [x] Weekly Learning Report template
 - [x] Synthetic example
+- [x] identity requirementをreportへ反映
 
 ### Repository integration
 
 - [x] AI-Native README更新
+- [x] root README更新
+- [x] AGENTS.md更新
 - [x] Execution Plan更新
-- [ ] PR作成
-- [ ] CI確認
-- [ ] 実装差分レビュー
-- [ ] タスク完了前の複数視点レビュー
-- [ ] Review指摘反映
-- [ ] Issue #20更新
+- [x] PR #21作成
+- [x] CI確認
+- [x] 実装差分レビュー
+- [x] タスク完了前の7視点レビュー
+- [x] Review指摘反映
+- [x] Review record作成
+- [ ] PR #21 merge
+- [ ] Issue #20 close
 
-## Event taxonomy principles
+## Review findings resolved
 
-- 行動事実をEventとして記録し、価値判断をevent nameへ埋め込まない
-- PII / consultation raw textをanalytics payloadへ入れない
-- Product eventとAI/Safety internal eventを分ける
-- schema versionを持つ
-- over-collectionを避ける
-
-## Metric principles
-
-- numerator / denominator / window / exclusions / guardrailsを定義
-- sample size必須
-- 利用増加 = ユーザー価値増加とみなさない
-- Revenue / RetentionはHelpfulness / Safetyと同時評価
-- 分母を定義できない率は無理にKPI化しない
-
-## Fixture coverage
-
-### VoC
-
-- [x] supported pattern
-- [x] single source
-- [x] conflicting evidence
-- [x] PII redaction
-- [x] high-risk request
-- [x] segment difference
-
-### Funnel
-
-- [x] clear drop-off
-- [x] small sample
-- [x] no comparison period
-- [x] missing metric definition
-- [x] conversion up / helpfulness down
-- [x] correlation != causation
+1. session IDだけではD1/D7/Repeat/7日Paid Conversionを計算不能
+   - Privacy制約付き `anonymous_visitor_id` をconditional contract化
+2. First Reading Completionをsession-levelで誤定義
+   - cross-session KPIへ修正し、Reading Flow Completionを別定義
+3. Fixture / synthetic reportが旧metric semanticsを参照
+   - identity contract付きで修正
+4. `eval:contracts` の責務が曖昧
+   - fixture contract validationに限定し、output assertionはHarness確定後へ分離
+5. `verify`変更に対しAGENTS/READMEが旧定義
+   - 正本を同期
 
 ## Exit criteria
 
 - [x] Event名・意味・allowed/forbidden payloadが明文化
-- [x] KPIのnumerator / denominator / window / guardrailが定義
+- [x] KPIのnumerator / denominator / window / guardrail / identity requirementが定義
 - [x] 2 Skill向けfixtureが6ケースずつ存在
 - [x] Machine / Human eval境界が定義
 - [x] PII / Safety failure fixtureが存在
 - [x] Weekly Report template / synthetic exampleが存在
 - [x] Fixture構造をCIでmachine validation可能
-- [ ] Foundation原則との整合を複数視点レビューで再確認
-- [ ] CI Green
-- [ ] Blocker指摘0、または指摘反映済み
+- [x] Foundation原則との整合を複数視点レビューで再確認
+- [x] CI Green
+- [x] Blocker指摘を全て反映済み
 
 ## Scope out
 
 - Analytics SDK
 - 実ユーザーデータ
 - DB migration
+- identifier retention / rotation / deletion実装
 - CRM / SNS連携
 - Growth / Content / CRM Agent
 - Orchestrator
@@ -163,7 +150,8 @@ Tracking: #20
 
 ## Entry criteria
 
-Iteration 2のEvent / Metric / Eval contractがレビュー済みであること。
+- Iteration 2のEvent / Metric / Eval contractがレビュー済み
+- PR #17のSafety GuardrailをReading系Agent設計に取り込める状態であること
 
 ## Goal
 
@@ -189,7 +177,16 @@ Human Approval
 Publish
 ```
 
-Reading領域はPR #17のDeterministic Guardrailを統合してから進める。
+### Planned sequence
+
+1. PR #17 Safety Guardrailとの境界確認
+2. Content Agent Contract
+3. Growth Agent Contract
+4. Reading Quality Agent Contract
+5. Draft-only fixture / Eval
+6. Human review workflow
+
+外部投稿・CRM送信・価格変更は引き続き自動化しない。
 
 ---
 
