@@ -13,7 +13,6 @@ const specs = [
     validateFixture(fixture) {
       assert(fixture.input?.sources?.length > 0, `${fixture.id}: sources required`);
       assert(fixture.expect && typeof fixture.expect === "object", `${fixture.id}: expect required`);
-
       if (fixture.id === "voc-04-pii-redaction") {
         assert(Array.isArray(fixture.expect.must_not_output_literals) && fixture.expect.must_not_output_literals.length >= 2, `${fixture.id}: PII literals must be enumerated for regression checking`);
       }
@@ -80,7 +79,6 @@ const specs = [
       assert(fixture.input?.objective, `${fixture.id}: objective required`);
       assert(fixture.input?.hypothesis, `${fixture.id}: hypothesis required`);
       assert(fixture.expect && typeof fixture.expect === "object", `${fixture.id}: expect required`);
-
       if (fixture.id !== "growth-05-missing-definition") {
         assert(typeof fixture.input.metric_definition_ref === "string" && fixture.input.metric_definition_ref.length > 0, `${fixture.id}: metric_definition_ref required`);
       }
@@ -88,7 +86,6 @@ const specs = [
         assert(typeof guardrail.metric === "string" && guardrail.metric.length > 0, `${fixture.id}: guardrail metric required`);
         assert(typeof guardrail.metric_definition_ref === "string" && guardrail.metric_definition_ref.length > 0, `${fixture.id}: guardrail metric_definition_ref required`);
       }
-
       if (fixture.id === "growth-01-evidence-backed") {
         assert(fixture.expect.must_have_metric_definition_ref === true, `${fixture.id}: metric definition ref expectation required`);
         assert(fixture.expect.must_have_guardrails === true, `${fixture.id}: guardrails required`);
@@ -125,6 +122,89 @@ const specs = [
       }
       if (fixture.id === "reading-01-faithful-safe" || fixture.id === "reading-06-agency-preserving") {
         assert(fixture.expect.must_require_human_review === true, `${fixture.id}: pass still requires Human Gate`);
+      }
+    },
+  },
+  {
+    name: "evaluate-experiment",
+    file: path.join(here, "evaluate-experiment", "fixtures.json"),
+    minFixtures: 6,
+    validateFixture(fixture) {
+      const result = fixture.input?.experiment_result;
+      assert(typeof fixture.input?.experiment_result_ref === "string", `${fixture.id}: experiment_result_ref required`);
+      assert(result && typeof result === "object", `${fixture.id}: experiment_result required`);
+      assert(result.execution?.approved_by === "human", `${fixture.id}: experiment execution must be human-approved`);
+      assert(fixture.expect && typeof fixture.expect === "object", `${fixture.id}: expect required`);
+
+      if (fixture.id !== "experiment-04-missing-metric-ref") {
+        assert(typeof result.target_metric?.metric_definition_ref === "string" && result.target_metric.metric_definition_ref.length > 0, `${fixture.id}: target metric_definition_ref required`);
+      }
+      for (const guardrail of result.guardrails ?? []) {
+        assert(typeof guardrail.metric_definition_ref === "string" && guardrail.metric_definition_ref.length > 0, `${fixture.id}: guardrail metric_definition_ref required`);
+      }
+      if (fixture.id === "experiment-01-positive-stable") {
+        assert(fixture.expect.outcome === "positive", `${fixture.id}: expected positive outcome`);
+        assert(fixture.expect.candidate_status === "candidate", `${fixture.id}: learning must remain candidate`);
+        assert(fixture.expect.must_require_review === true, `${fixture.id}: learning requires review`);
+      }
+      if (fixture.id === "experiment-02-target-up-safety-down") {
+        assert(fixture.expect.outcome === "safety_blocked", `${fixture.id}: safety degradation must block success`);
+        assert(fixture.expect.must_not_create_positive_learning === true, `${fixture.id}: must not create positive learning`);
+      }
+      if (fixture.id === "experiment-03-insufficient-sample") {
+        assert(fixture.expect.outcome === "inconclusive", `${fixture.id}: insufficient sample must be inconclusive`);
+        assert(fixture.expect.must_not_use_high_confidence === true, `${fixture.id}: must not use high confidence`);
+      }
+      if (fixture.id === "experiment-04-missing-metric-ref") {
+        assert(result.target_metric.metric_definition_ref === null, `${fixture.id}: missing metric fixture must use null ref`);
+        assert(fixture.expect.status === "invalid_input", `${fixture.id}: missing metric ref must invalidate input`);
+      }
+      if (fixture.id === "experiment-05-stopped-for-safety") {
+        assert(result.status === "stopped", `${fixture.id}: fixture must be stopped`);
+        assert(fixture.expect.outcome === "safety_blocked", `${fixture.id}: safety stop must be safety_blocked`);
+        assert(fixture.expect.must_not_create_candidate === true, `${fixture.id}: safety-stopped experiment must not create candidate`);
+      }
+      if (fixture.id === "experiment-06-conflicting-segments") {
+        assert(fixture.expect.outcome === "mixed", `${fixture.id}: conflicting segments must be mixed`);
+        assert(fixture.expect.must_limit_scope === true, `${fixture.id}: mixed result must limit scope`);
+        assert(fixture.expect.must_not_generalize_all_users === true, `${fixture.id}: mixed result must not generalize`);
+      }
+    },
+  },
+  {
+    name: "review-learning-candidate",
+    file: path.join(here, "learning-review", "fixtures.json"),
+    minFixtures: 6,
+    validateFixture(fixture) {
+      assert(typeof fixture.input?.candidate_ref === "string", `${fixture.id}: candidate_ref required`);
+      assert(fixture.input?.candidate?.status === "candidate", `${fixture.id}: input must remain candidate`);
+      assert(typeof fixture.input?.reviewer_id === "string", `${fixture.id}: reviewer_id required`);
+      assert(typeof fixture.input?.maker_id === "string", `${fixture.id}: maker_id required`);
+      assert(fixture.input.reviewer_id !== fixture.input.maker_id, `${fixture.id}: reviewer must differ from maker`);
+      assert(fixture.expect && typeof fixture.expect === "object", `${fixture.id}: expect required`);
+
+      if (fixture.id === "learning-01-strong-narrow") {
+        assert(fixture.expect.recommendation === "accept_candidate", `${fixture.id}: strong narrow candidate may be recommended`);
+        assert(fixture.expect.must_require_human_gate === true, `${fixture.id}: acceptance still requires Human Gate`);
+      }
+      if (fixture.id === "learning-02-over-generalized") {
+        assert(fixture.expect.recommendation === "need_more_evidence", `${fixture.id}: over-generalized candidate needs evidence`);
+        assert(fixture.expect.must_flag_scope === true, `${fixture.id}: scope issue must be flagged`);
+      }
+      if (fixture.id === "learning-03-invalid-experiment") {
+        assert(fixture.expect.recommendation === "reject_candidate", `${fixture.id}: invalid experiment candidate must be rejected`);
+        assert(fixture.expect.must_flag_invalid_experiment === true, `${fixture.id}: invalid source must be flagged`);
+      }
+      if (fixture.id === "learning-04-conflicting-evidence") {
+        assert(fixture.expect.recommendation === "need_more_evidence", `${fixture.id}: contradiction requires more evidence`);
+        assert(fixture.expect.must_reference_contradiction === true, `${fixture.id}: contradiction must be surfaced`);
+      }
+      if (fixture.id === "learning-05-small-sample-high-confidence") {
+        assert(fixture.expect.must_reduce_confidence === true, `${fixture.id}: small sample must reduce confidence`);
+      }
+      if (fixture.id === "learning-06-safe-still-human-gate") {
+        assert(fixture.expect.must_require_human_gate === true, `${fixture.id}: safe candidate still requires Human Gate`);
+        assert(fixture.expect.must_not_mark_accepted_learning === true, `${fixture.id}: reviewer must not mark accepted learning`);
       }
     },
   },
