@@ -18,6 +18,11 @@ import type {
   Helpfulness,
   ProductTelemetryEvent,
 } from "@/domain/telemetry/events";
+import {
+  reflectionReadingCompleted,
+  reflectionReadingFeedbackSubmitted,
+  reflectionReadingStarted,
+} from "@/domain/telemetry/reflectionEvents";
 
 const CONTEXTS: readonly {
   value: ReadingContext;
@@ -78,18 +83,14 @@ export default function Home() {
     setFeedback(null);
     setTelemetryError(false);
 
-    void emit((sessionId) => ({
-      event_name: "reading_started",
-      event_version: 1,
-      occurred_at: new Date(now).toISOString(),
-      anonymous_session_id: sessionId,
-      anonymous_visitor_id: null,
-      properties: {
-        reading_flow_id: nextFlowId,
-        reading_type: "reflection",
-        entry_context: nextContext,
-      },
-    }));
+    void emit((sessionId) =>
+      reflectionReadingStarted({
+        flowId: nextFlowId,
+        sessionId,
+        occurredAt: new Date(now).toISOString(),
+        context: nextContext,
+      }),
+    );
   }
 
   function drawCard() {
@@ -99,18 +100,14 @@ export default function Home() {
     const completedAt = Date.now();
     setReading(nextReading);
 
-    void emit((sessionId) => ({
-      event_name: "reading_completed",
-      event_version: 1,
-      occurred_at: new Date(completedAt).toISOString(),
-      anonymous_session_id: sessionId,
-      anonymous_visitor_id: null,
-      properties: {
-        reading_flow_id: flowId,
-        reading_type: "reflection",
-        duration_bucket: durationBucket(startedAt, completedAt),
-      },
-    }));
+    void emit((sessionId) =>
+      reflectionReadingCompleted({
+        flowId,
+        sessionId,
+        occurredAt: new Date(completedAt).toISOString(),
+        durationBucket: durationBucket(startedAt, completedAt),
+      }),
+    );
   }
 
   function submitFeedback(value: Helpfulness) {
@@ -118,18 +115,14 @@ export default function Home() {
 
     setFeedback(value);
 
-    void emit((sessionId) => ({
-      event_name: "reading_feedback_submitted",
-      event_version: 1,
-      occurred_at: new Date().toISOString(),
-      anonymous_session_id: sessionId,
-      anonymous_visitor_id: null,
-      properties: {
-        reading_flow_id: flowId,
+    void emit((sessionId) =>
+      reflectionReadingFeedbackSubmitted({
+        flowId,
+        sessionId,
+        occurredAt: new Date().toISOString(),
         helpfulness: value,
-        feedback_reason_category: "none",
-      },
-    }));
+      }),
+    );
   }
 
   function reset() {
