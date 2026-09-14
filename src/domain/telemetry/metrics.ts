@@ -1,7 +1,7 @@
 import type { ProductTelemetryEvent } from "@/domain/telemetry/events";
 
-type ObservableMetric = {
-  status: "observable";
+type ComputedMetric = {
+  status: "computed";
   numerator: number;
   denominator: number;
   rate: number;
@@ -13,13 +13,13 @@ type ObservableMetric = {
   };
 };
 
-type NotObservableMetric = {
-  status: "not_observable";
+type NotComputableMetric = {
+  status: "not_computable";
   reason: "missing_required_evidence" | "zero_denominator";
   sample_size: 0;
 };
 
-export type MetricEvidence = ObservableMetric | NotObservableMetric;
+export type MetricEvidence = ComputedMetric | NotComputableMetric;
 
 function timestamp(value: string): number {
   return Date.parse(value);
@@ -59,7 +59,7 @@ export function calculateReadingFlowCompletion(
 
   if (starts.size === 0) {
     return {
-      status: "not_observable",
+      status: "not_computable",
       reason: events.length === 0 ? "missing_required_evidence" : "zero_denominator",
       sample_size: 0,
     };
@@ -84,7 +84,7 @@ export function calculateReadingFlowCompletion(
   }
 
   return {
-    status: "observable",
+    status: "computed",
     numerator: completed,
     denominator: starts.size,
     rate: completed / starts.size,
@@ -118,7 +118,7 @@ export function calculateHelpfulFeedbackRate(
 
   if (feedbackByFlow.size === 0) {
     return {
-      status: "not_observable",
+      status: "not_computable",
       reason: events.length === 0 ? "missing_required_evidence" : "zero_denominator",
       sample_size: 0,
     };
@@ -129,7 +129,7 @@ export function calculateHelpfulFeedbackRate(
   ).length;
 
   return {
-    status: "observable",
+    status: "computed",
     numerator: helpful,
     denominator: feedbackByFlow.size,
     rate: helpful / feedbackByFlow.size,
