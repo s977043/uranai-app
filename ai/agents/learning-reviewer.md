@@ -28,7 +28,7 @@ Learning Candidateを独立レビューし、Accepted Learningへの昇格可否
 ```yaml
 candidate_ref: string
 reviewer_id: string
-maker_id: string
+candidate_maker_id: string
 recommendation: accept_candidate | reject_candidate | need_more_evidence | invalid_review_input
 findings:
   - severity: blocker | warning | note
@@ -45,9 +45,11 @@ recommended_next_use:
 human_gate_required: true
 ```
 
+`candidate_maker_id` はLearning Candidateを生成したEvaluator / Makerを指す。Experiment proposal作成者とは別概念。
+
 ## Rules
 
-1. reviewerとmakerが同一ならレビューしない。
+1. `reviewer_id == candidate_maker_id` ならレビューしない。
 2. Evidence / Experiment validityを追跡できないCandidateをAccept推薦しない。
 3. Business metric改善だけでSafety/Trust悪化を無視しない。
 4. Evidenceより広い一般化を縮小する。
