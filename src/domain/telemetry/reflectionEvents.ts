@@ -1,7 +1,9 @@
 import type {
   DurationBucket,
   Helpfulness,
-  ProductTelemetryEvent,
+  ReadingCompletedEvent,
+  ReadingFeedbackSubmittedEvent,
+  ReadingStartedEvent,
 } from "@/domain/telemetry/events";
 import type { ReadingContext } from "@/domain/reflectionReading";
 
@@ -13,7 +15,7 @@ type CommonInput = {
 
 export function reflectionReadingStarted(
   input: CommonInput & { readonly context: ReadingContext },
-): ProductTelemetryEvent {
+): ReadingStartedEvent {
   return {
     event_name: "reading_started",
     event_version: 1,
@@ -30,7 +32,7 @@ export function reflectionReadingStarted(
 
 export function reflectionReadingCompleted(
   input: CommonInput & { readonly durationBucket: DurationBucket },
-): ProductTelemetryEvent {
+): ReadingCompletedEvent {
   return {
     event_name: "reading_completed",
     event_version: 1,
@@ -47,7 +49,7 @@ export function reflectionReadingCompleted(
 
 export function reflectionReadingFeedbackSubmitted(
   input: CommonInput & { readonly helpfulness: Helpfulness },
-): ProductTelemetryEvent {
+): ReadingFeedbackSubmittedEvent {
   return {
     event_name: "reading_feedback_submitted",
     event_version: 1,
