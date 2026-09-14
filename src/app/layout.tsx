@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Uranai App - Fortune Telling",
-  description: "Fortune telling app with numerology, tarot, and Mayan calendar features",
+  title: "Reflection Reading | 迷いを、やさしく言語化する",
+  description: "未来を断定せず、今の気持ちを整理して今日の一歩を見つける短いリフレクションReading。",
 };
 
 export default function RootLayout({
@@ -12,10 +12,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="antialiased">
-        {children}
-      </body>
+    <html lang="ja">
+      <body className="antialiased">{children}</body>
     </html>
   );
 }
