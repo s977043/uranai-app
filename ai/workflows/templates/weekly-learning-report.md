@@ -32,15 +32,22 @@ Raw VoC / PIIは貼らない。
 
 ## 5. Funnel / product signals
 
-| Metric | Current | Comparison | Sample | Interpretation | Guardrail |
-| --- | ---: | ---: | ---: | --- | --- |
-| First Reading Completion |  |  |  |  | Helpfulness / Safety |
-| D1 Return |  |  |  |  | Helpfulness / Safety |
-| Repeat Reading Rate |  |  |  |  | Helpfulness / manipulation risk |
-| Helpful Feedback Rate |  |  |  |  |  |
-| Paid Conversion |  |  |  |  | Helpfulness / Safety |
+| Metric | Current | Comparison | Sample | Identity | Interpretation | Guardrail |
+| --- | ---: | ---: | ---: | --- | --- | --- |
+| First Reading Completion |  |  |  | cross_session |  | Helpfulness / Safety |
+| Reading Flow Completion |  |  |  | session |  | Helpfulness / Safety |
+| D1 Return |  |  |  | cross_session |  | Helpfulness / Safety |
+| D7 Return |  |  |  | cross_session |  | Helpfulness / Safety |
+| Repeat Reading Rate |  |  |  | cross_session |  | Helpfulness / manipulation risk |
+| Helpful Feedback Rate |  |  |  | none |  |  |
+| Paid Conversion |  |  |  | cross_session |  | Helpfulness / Safety |
 
-分母ゼロや定義不一致は値を無理に出さず `N/A` とする。
+Rules:
+
+- 分母ゼロや定義不一致は値を無理に出さず `N/A` とする。
+- `identity_requirement` を満たさないKPIも `N/A` とする。
+- First Reading CompletionをReading Flow Completionで代用しない。
+- cross-session identifierがPrivacy条件を満たさない場合、cross-session KPIを推定しない。
 
 ## 6. Safety / trust findings
 
@@ -106,6 +113,7 @@ AIが処理できる量ではなく、User Value / Evidence / Learning Valueで�
 - [ ] FactとHypothesisが分離されている
 - [ ] Fact / InsightにEvidence refがある
 - [ ] sample / window / metric definitionを追跡できる
+- [ ] identity requirementを満たしている
 - [ ] Raw VoC / PIIを転載していない
 - [ ] Revenue / RetentionをSafety / Trustと併記した
 - [ ] Accepted Learningを自動昇格していない
