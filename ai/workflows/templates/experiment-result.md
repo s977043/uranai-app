@@ -84,7 +84,7 @@ Registryに存在しない、または`active`でないMetric refを通常Experi
 - `actual_change`: 実際に適用した変更の要約
 - `deviations_from_proposal`: Proposalとの差分。差分無しでも空配列を明示
 - `stop_condition_triggered`: 事前Stop conditionが発火したか
-- `stop_reason`: 停止した場合の理由
+- `stop_reason`: 停止した場合の理由。事前Stop condition以外のHuman判断による停止も記録する
 
 Rules:
 
@@ -92,6 +92,8 @@ Rules:
 - 実行内容を確認できない場合は推測せず、Evidence不足として扱う
 - `deviations_from_proposal` を隠さない
 - material deviationはEvaluatorが`validity` / `limitations` / scopeへ反映する
+- `status: stopped` の場合は理由を必ず残す。`stop_condition_triggered=false`でもHuman判断・Data Quality等で停止できる
+- `stop_condition_triggered=true` なら `status: stopped` とする
 - ReceiptへRaw相談本文、PII、secretを保存しない
 - Evaluator / ReviewerはReceiptを書き換えず、矛盾があればFindingとして残す
 
@@ -110,6 +112,7 @@ valid | limited | invalid
 例:
 
 - HumanがExperimentを終了したが事前sample rule未達 → `status: completed` または実行理由に応じて`stopped`、Evaluatorは `validity: limited` / `outcome: inconclusive`
+- HumanがData Quality異常を見つけ事前Stop condition外で停止 → `status: stopped`, `stop_condition_triggered: false`, `stop_reason`必須
 - Metric definitionが途中変更され比較不能 → `status: invalid`、Evaluatorも `validity: invalid`
 - Proposalと実施内容に差分があるが結果は一部解釈可能 → `status: completed`、Evaluatorは差分の影響に応じて `validity: limited`
 - 実施差分により比較条件そのものが壊れた → `status: invalid` またはEvaluator `validity: invalid`
@@ -134,9 +137,11 @@ Iteration 4ではAIが`approved`や`running`へ遷移させない。Experiment�
 - `metric_definition_ref` が無いMetricを評価対象にしない
 - Metric refはMetric Registryのactive entryへ解決できること
 - `execution.approved_by` はHumanであること
+- `approved_at <= started_at <= ended_at` を満たすこと
 - `execution_scope` / `implementation_ref` / `actual_change` を必須とする
 - `deviations_from_proposal` は差分無しでも空配列を必須とする
-- `stop_condition_triggered=true` の場合は `stop_reason` を必須とする
+- `status: stopped` の場合は `stop_reason` を必須とする
+- `stop_condition_triggered=true` の場合は `status: stopped` と `stop_reason` を必須とする
 - Resultは集約値とEvidence refを中心にし、Raw相談本文やPIIを保存しない
 - `result_evidence_refs` を必須とし、観測結果を追跡可能にする
 - `sample_rule` と `stop_conditions` は実行前Proposalから引き継ぐ
