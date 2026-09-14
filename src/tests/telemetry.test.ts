@@ -16,6 +16,7 @@ import {
   calculateHelpfulFeedbackRate,
   calculateReadingFlowCompletion,
 } from "@/domain/telemetry/metrics";
+import { assessMetricObservability } from "@/domain/telemetry/observability";
 
 const SESSION_ID = "session_11111111-1111-4111-8111-111111111111";
 const SESSION_ID_2 = "session_22222222-2222-4222-8222-222222222222";
@@ -243,5 +244,55 @@ describe("Helpful Feedback Rate", () => {
       reason: "zero_denominator",
       sample_size: 0,
     });
+  });
+});
+
+describe("metric observability promotion", () => {
+  const requiredEvents = ["reading_started", "reading_completed"] as const;
+
+  it("keeps a foundation-only metric uninstrumented", () => {
+    expect(
+      assessMetricObservability({
+        required_events: requiredEvents,
+        instrumented_events: [],
+        product_surface_connected: false,
+        evidence_source_operational: false,
+        schema_validation_green: true,
+      }),
+    ).toEqual({
+      status: "uninstrumented",
+      blockers: [
+        "product_surface_not_connected",
+        "missing_event:reading_started",
+        "missing_event:reading_completed",
+        "evidence_source_not_operational",
+      ],
+    });
+  });
+
+  it("reports partial when some event wiring exists but readiness is incomplete", () => {
+    const result = assessMetricObservability({
+      required_events: requiredEvents,
+      instrumented_events: ["reading_started"],
+      product_surface_connected: true,
+      evidence_source_operational: false,
+      schema_validation_green: true,
+    });
+
+    expect(result.status).toBe("partial");
+    expect(result.blockers).toContain("missing_event:reading_completed");
+    expect(result.blockers).toContain("evidence_source_not_operational");
+  });
+
+  it("promotes only when product wiring, Evidence source, and validation are ready", () => {
+    expect(
+      assessMetricObservability({
+        required_events: requiredEvents,
+        instrumented_events: requiredEvents,
+        product_surface_connected: true,
+        evidence_source_operational: true,
+        schema_validation_green: true,
+      }),
+    ).toEqual({ status: "observable", blockers: [] });
   });
 });
