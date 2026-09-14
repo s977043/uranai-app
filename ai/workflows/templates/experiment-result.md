@@ -13,12 +13,12 @@ evidence_refs:
 
 target_metric:
   name: string
-  metric_definition_ref: string
+  metric_definition_ref: metric:<stable-id>
   baseline: string | number | null
 
 guardrails:
   - name: string
-    metric_definition_ref: string
+    metric_definition_ref: metric:<stable-id>
     baseline: string | number | null
 
 execution:
@@ -51,6 +51,20 @@ safety_findings:
 status: completed | stopped | invalid
 ```
 
+## Metric reference contract
+
+`metric_definition_ref` はMarkdown見出しURLではなく、[`ai/contracts/metric-registry.json`](../../contracts/metric-registry.json) の安定IDを使用する。
+
+例:
+
+```text
+metric:reading_flow_completion
+metric:helpful_feedback_rate
+metric:paid_conversion
+```
+
+Registryに存在しない、または`active`でないMetric refを通常Experimentの評価に使わない。正式定義がまだ無いMetricは先にMetric Contractを定義する。
+
 ## State machine
 
 ```text
@@ -67,6 +81,7 @@ Iteration 4ではAIが`approved`や`running`へ遷移させない。Experiment�
 ## Required rules
 
 - `metric_definition_ref` が無いMetricを評価対象にしない
+- Metric refはMetric Registryのactive entryへ解決できること
 - `execution.approved_by` はHumanであること
 - Resultは集約値とEvidence refを中心にし、Raw相談本文やPIIを保存しない
 - `sample_rule` と `stop_conditions` は実行前Proposalから引き継ぐ
@@ -79,6 +94,7 @@ Iteration 4ではAIが`approved`や`running`へ遷移させない。Experiment�
 例:
 
 - Metric definitionが途中で変わった
+- Metric Registryでrefを解決できない
 - Sample ruleを満たしていないのに終了した
 - データ欠損が大きく比較不能
 - Control / comparison条件が崩れた
