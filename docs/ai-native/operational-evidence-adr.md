@@ -63,6 +63,18 @@ existing metric aggregation
 
 BrowserからDBへ直接writeしない。
 
+### Public endpoint / cost boundary
+
+Telemetry APIは認証無しbrowserから呼ばれるpublic endpointになるため、初回実装からabuse/cost controlを持つ。
+
+- request bodyは最大16 KiB
+- durable client identityをabuse controlのために追加しない
+- provider/platformのrate / abuse protectionを利用可能なら優先
+- application側でcontrolを追加する場合もRaw IP/User-AgentをProduct Evidence tableへ保存しない
+- raw request bodyをapplication logへ出さない
+
+具体的なrate limit方式はPhase B / provider reviewで決める。
+
 ### Product failure boundary
 
 Telemetry失敗はReadingを止めない。
@@ -124,9 +136,13 @@ D1 / D7 / repeat-readingは本ADRの範囲外。
 - session-level識別子を長期保存しない
 - Retention Validation用cross-session trackingを先取りしない
 
+Retention basisは**server-generated `ingested_at`** とする。
+
+Client-controlledな`occurred_at`を削除基準にすると、未来時刻を送信されたイベントがretentionを回避できるため使わない。`occurred_at`はイベント順序・Metric計算・Data Quality確認に利用する。
+
 Deletion contract:
 
-- `occurred_at < now - 30 days` のraw telemetryを削除可能であること
+- `ingested_at < now - 30 days` のraw telemetryを削除可能であること
 - deletion query/runbookを実装時に用意する
 - Evidence export後もraw dataを無期限保持しない
 
@@ -187,6 +203,8 @@ Production incident時はingestionを先にdisableし、Product surfaceを維持
 - raw retention/deletion procedure verified
 - Privacy review complete
 - Data Quality signals reviewed
+
+Gateは自己申告booleanではなく、**実際のfact + verification refからCIが導出**する。
 
 それまでは:
 
