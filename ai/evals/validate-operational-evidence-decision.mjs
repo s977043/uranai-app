@@ -73,6 +73,20 @@ assert(
   contract.ingestion?.product_failure_mode === "fail_open",
   "operational evidence: telemetry failure must not block product value flow",
 );
+assert(
+  Number.isInteger(contract.ingestion?.request_body_max_bytes) &&
+    contract.ingestion.request_body_max_bytes > 0 &&
+    contract.ingestion.request_body_max_bytes <= 16384,
+  "operational evidence: public telemetry request body must be capped at 16 KiB or less",
+);
+assert(
+  contract.ingestion?.abuse_control_required === true,
+  "operational evidence: public telemetry endpoint requires abuse/cost control",
+);
+assert(
+  contract.ingestion?.durable_client_identity_for_abuse_control === false,
+  "operational evidence: abuse control must not add durable client identity",
+);
 
 assert(
   contract.privacy?.identity_scope === "session_only",
@@ -85,6 +99,10 @@ assert(
 assert(
   contract.privacy?.raw_retention_days === 30,
   "operational evidence: raw retention must be 30 days for the first pilot",
+);
+assert(
+  contract.privacy?.retention_basis === "ingested_at",
+  "operational evidence: retention must use server-generated ingested_at",
 );
 assert(
   contract.privacy?.persist_request_ip === false,
