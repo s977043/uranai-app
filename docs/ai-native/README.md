@@ -68,6 +68,8 @@ AI-Native化の価値は各作業の自動化ではなく、**EvidenceからLear
    - Metric定義がactiveでも、実イベント・Evidence sourceが無ければ実測可能とは扱わない。
 8. **Computed does not mean observable**
    - Synthetic/local Evidenceを集約できても、実Product surfaceとoperational Evidence sourceが無ければ本番Metricを`observable`へ昇格しない。
+9. **Provisioned does not mean observable**
+   - DBやhostingを作っただけでは実測可能とみなさない。server-side validation / query / retention / shared surface E2Eまで確認する。
 
 ## Core documents
 
@@ -75,6 +77,8 @@ AI-Native化の価値は各作業の自動化ではなく、**EvidenceからLear
 - [North Star](./north-star.md)
 - [Operating Model](./operating-model.md)
 - [Execution Plan](./execution-plan.md)
+- [Operational Evidence ADR](./operational-evidence-adr.md)
+- [Operational Evidence Execution Plan](./operational-evidence-plan.md)
 - [Foundation Review](./review-record.md)
 - [Observe Review](./observe-review-record.md)
 - [Assist Review](./assist-review-record.md)
@@ -257,18 +261,50 @@ metric:helpful_feedback_rate: partial
 
 Lovabilityはproxy reviewまで。actual User Observation / Retention / MLP Release readinessは未検証。
 
+## Operational Evidence Decision — Phase A 🚧
+
+Tracking: #15 / #39
+
+- ADR: [`operational-evidence-adr.md`](./operational-evidence-adr.md)
+- Plan: [`operational-evidence-plan.md`](./operational-evidence-plan.md)
+- Machine contract: [`operational-evidence-source.json`](../../ai/contracts/operational-evidence-source.json)
+- CI validator: [`validate-operational-evidence-decision.mjs`](../../ai/evals/validate-operational-evidence-decision.mjs)
+
+Decision:
+
+```text
+Application runtime: Vercel Pro or higher
+Storage contract: PostgreSQL / DATABASE_URL
+DB provider: Neon or Supabase, selected at provision time
+Raw telemetry retention: 30 days
+Identity: session-only
+Browser direct DB write: prohibited
+Preview → Production DB write: prohibited
+Telemetry failure: fail-open for Product Value Flow
+```
+
+Phase Aは有料resourceを作らない。現在の正しいmachine stateは`operational_gate.status = blocked`。
+
+次にprovider-neutral server ingestion / PostgreSQL persistence / provider provisioning / shared-surface E2Eを順に進める。
+
 ## Current next gates
 
 ```text
-#15 shared / production test surface
-  +
-Operational central Evidence source
+Phase A Deployment + Evidence Decision
+  ↓
+Provider-neutral server ingestion
+  ↓
+PostgreSQL persistence / query / deletion
+  ↓
+Vercel Pro + DB provider provisioning
+  ↓
+Shared surface E2E
+  ↓
+Metric observable再評価
   ↓
 Actual User Observation
   ↓
 Polish Loop
-  ↓
-Metric observable再評価
   ↓
 Manual Real Pilot
   ↓
@@ -286,13 +322,17 @@ Controlled Autonomy
 - Iteration 4.5 Operational Readiness: Issue #30 / PR #32 — 完了
 - Iteration 4.6 Pilot Telemetry Foundation: Issue #31 / PR #34 — 完了
 - Iteration 4.7 Reading Vertical Slice + instrumentation: Issue #33 / PR #35 — 完了
-- Shared / production test surface: Issue #15 — open
-- Operational central Evidence source: 未実装
+- Execution Receipt hardening: Issue #40 / PR #41 — 完了
+- 数秘術 deterministic domain: PR #42 — 完了
+- Deployment / Evidence Decision: #15 / #39 — Phase A実装中
+- Operational central Evidence source: blocked until ingestion/storage/provisioning
 - Manual Real Pilot: blocked
 - Iteration 5 Controlled Autonomy: **blocked until Manual Real Pilot evidence exists**
 
 ## Human Gateを維持するもの
 
+- paid plan / external resource provisioning
+- DB provider最終選択
 - Experiment start / stop
 - SNS / CRM外部実行
 - 価格変更 / 課金操作
@@ -303,4 +343,4 @@ Controlled Autonomy
 
 ## 関連
 
-- 数秘術ドメイン: PR #16
+- 数秘術ドメイン: PR #42

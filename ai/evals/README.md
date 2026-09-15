@@ -1,6 +1,6 @@
 # AI-Native Eval Framework
 
-Tracking: #20, #23, #27, #30
+Tracking: #20, #23, #27, #30, #39
 
 ## Purpose
 
@@ -10,12 +10,13 @@ AI-Native Skill / Agent / Workflowの変更時に、出力品質と運用Contrac
 - Iteration 3: Draft Maker / Reviewer
 - Iteration 4: Experiment Evaluation / Learning Review
 - Iteration 4.5: Operational Pilot readiness / rehearsal
+- Operational Evidence: deployment / storage / privacy decision gate
 
 ## Eval layers
 
 ### 1. Contract validation — automated now
 
-`npm run eval:contracts` は3種類のContractを機械検証する。
+`npm run eval:contracts` は次のContract群を機械検証する。
 
 #### Fixture contracts
 
@@ -71,7 +72,7 @@ AI-Native Skill / Agent / Workflowの変更時に、出力品質と運用Contrac
 
 `ai/evals/validate-pilot-rehearsal.mjs`
 
-[`closed-loop-pilot-synthetic.json`](../workflows/examples/closed-loop-pilot-synthetic.json) を検証する。
+[`closed-loop-pilot-synthetic.json`](../workflows/examples/closed-loop-pilot-synthetic.json) とManual Real Pilot readinessを検証する。
 
 確認:
 
@@ -84,8 +85,50 @@ AI-Native Skill / Agent / Workflowの変更時に、出力品質と運用Contrac
 - ReviewerがCandidate Makerと独立
 - Safety-blocked resultからCandidateを作らない
 - Synthetic resultをAccepted Learningへ昇格しない
+- Manual Real Pilot readinessはobservability / Evidence / execution surfaceから導出
 
 Synthetic rehearsalではMetric observabilityを要求しない。これは**Workflow Contract rehearsal**であり、実測基盤の存在を証明しないため。
+
+#### Execution Receipt contract
+
+`ai/evals/validate-execution-receipt.mjs`
+
+確認:
+
+- Human-approved execution
+- actual execution scope / implementation ref / change summary
+- Proposal deviationの保持
+- triggered stopとHuman manual stopの区別
+- stopped executionの理由
+- approval / start / end dateの整合
+- material deviationをvalidityへ反映するregression
+
+#### Operational Evidence decision contract
+
+`ai/evals/validate-operational-evidence-decision.mjs`
+
+[`ai/contracts/operational-evidence-source.json`](../contracts/operational-evidence-source.json) を、#15 / #39のdeployment + Evidence Decision Gate正本とする。
+
+確認:
+
+- production runtimeはVercel Pro以上を要求
+- Storage ContractはPostgreSQL / `DATABASE_URL`
+- provider候補はNeon / Supabaseを許容し、provider固有SDKをContractに固定しない
+- browser direct DB write禁止
+- server-side `validateTelemetryEvent`再検証
+- telemetry failureはProduct Value Flowを止めない
+- session-only identity
+- raw event retention 30日
+- IP / User-Agent / raw consultation / raw prompt-responseをProduct Evidenceへ保存しない
+- Preview / Production credential分離
+- incomplete requirementでは`operational_gate.status = blocked`
+- provision / ingestion / query / retention / Privacy / Data Qualityが揃った場合だけ`operational`へ遷移可能
+
+重要:
+
+> **Provisioned ≠ Observable.**
+
+HostingやDB resourceが存在するだけではMetricを`observable`へ昇格しない。shared surface E2Eと再現可能なEvidence query/exportまで必要。
 
 ### 2. Output assertions — Harness確定後
 
@@ -134,7 +177,7 @@ Assist:
 - Fortune fact fidelity
 - Stop condition / reversibility
 
-Closed Loop / Pilot:
+Closed Loop / Pilot / Operational Evidence:
 
 - Experiment validity
 - Outcome integrity
@@ -144,6 +187,8 @@ Closed Loop / Pilot:
 - Candidate provenance
 - Metric observability
 - Evidence source readiness
+- retention / deletion / access boundary
+- environment separation / rollback
 - MLP loop reuse
 
 ## Fixtures / rehearsals
@@ -161,12 +206,17 @@ Assist:
 
 Closed Loop:
 
-- `evaluate-experiment/fixtures.json` — 6+
+- `evaluate-experiment/fixtures.json` — 8+
 - `learning-review/fixtures.json` — 6+
 
 Operational Pilot:
 
 - `../workflows/examples/closed-loop-pilot-synthetic.json` — positive + safety-blocked
+- `../workflows/examples/closed-loop-pilot-readiness.json` — Manual Real Pilot readiness
+
+Operational Evidence:
+
+- `../contracts/operational-evidence-source.json` — deployment/storage/privacy/readiness decision
 
 Syntheticデータのみをコミットする。実ユーザーの相談本文やPIIをテスト資産へコピーしない。
 
@@ -186,7 +236,10 @@ Syntheticデータのみをコミットする。実ユーザーの相談本文�
 - identity semantics
 - deterministic message guardrail
 - Experiment Result / Learning Candidate contract
+- Execution Receipt
 - Pilot Run / readiness rules
+- deployment / Evidence storage decision
+- retention / deletion / environment boundary
 
 ## Blocker conditions
 
@@ -217,12 +270,17 @@ Closed Loop:
 - self-review / self-approval
 - Human Gate無しで`accepted_learning`
 
-Operational Pilot:
+Operational Pilot / Evidence:
 
 - `status: active`だけでReal Pilotを開始
-- uninstrumented Metricを実測済みと扱う
+- partial/uninstrumented Metricを実測済みと扱う
 - Evidence source未実装でResultを捏造
 - Production/Test surface無しで実ユーザーPilot完了を主張
 - Synthetic結果をProduct Accepted Learningへ昇格
+- DB provisionだけでMetricをobservableへ昇格
+- browser direct DB write
+- raw consultation / PII / request metadataの保存
+- PreviewからProduction Evidence DBへのwrite
+- paid resourceをHuman判断なしで開始
 
 その他の数値閾値は実測後に決める。
