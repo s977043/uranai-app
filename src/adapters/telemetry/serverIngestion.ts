@@ -10,7 +10,10 @@ export type TelemetryIngestionResult =
       readonly status: "rejected";
       readonly reason: "body_too_large" | "invalid_json" | "invalid_event";
     }
-  | { readonly status: "unavailable"; readonly reason: "repository_write_failed" };
+  | {
+      readonly status: "unavailable";
+      readonly reason: "internal_error" | "repository_write_failed";
+    };
 
 type IngestionOptions = {
   readonly enabled: boolean;
@@ -51,7 +54,7 @@ export async function ingestTelemetryBody(
   try {
     ingestedAt = now().toISOString();
   } catch {
-    return { status: "unavailable", reason: "repository_write_failed" };
+    return { status: "unavailable", reason: "internal_error" };
   }
 
   try {
