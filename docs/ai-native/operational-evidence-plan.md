@@ -39,13 +39,13 @@ DeploymentとEvidence storageを別々に決めると、secret管理・environme
 
 ### Change 2: providerをコードContractへ埋め込まない
 
-Neon / Supabaseの最終選択前でも進められるよう、アプリ側ContractはPostgreSQL / `DATABASE_URL`に固定する。
+Neon / Supabaseは現時点の候補でありallowlistではない。アプリ側ContractはPostgreSQL / `DATABASE_URL`に固定し、選択providerがそのContractへ適合することをEvidence ref付きで確認する。
 
 ### Change 3: paid resource provisioningをPhase Aへ含めない
 
 現在接続Vercel TeamはHobby。production利用にはproduction-eligible planが必要。
 
-課金やresource作成はDecisionをmainへ入れ、実装境界をレビューした後に行う。
+課金やresource作成はDecisionをmainへ入れ、実装境界をレビューした後にHuman/account actionとして行う。
 
 ### Change 4: observable化をprovider provisionと同時に行わない
 
@@ -58,22 +58,39 @@ DBが存在するだけではobservableではない。
 - persistent write
 - query/export
 - retention/deletion
+- public endpoint abuse/cost control
 - Data Quality
 - shared surface E2E
+
+### Change 5: Readinessを自己申告booleanにしない
+
+Operational Gateは、provisioning / plan / provider compatibility / ingestion / environment separation / Privacy / retention / Data Quality等の**fact + verification ref**からCIで導出する。
+
+### Change 6: retentionはserver ingestion時刻を基準にする
+
+Clientが送る`occurred_at`ではなく、server-generated `ingested_at`を30日retentionの基準にする。未来時刻等でretentionを回避できないようにする。
+
+### Change 7: public endpointのcost / abuse境界をPhase Bへ含める
+
+初回は1 event/request、16 KiB以下。abuse controlは必要だが、そのためのdurable client identityは追加しない。
 
 ## Phase A — Decision / Contract
 
 Deliverables:
 
-- [x] Vercel Proをruntime採用方針に決定
+- [x] Vercel Pro以上をruntime採用方針に決定
 - [x] PostgreSQL / `DATABASE_URL`をstorage contractに決定
+- [x] Neon / Supabaseをcandidateとして記録しprovider lock-inを避ける
 - [x] browser direct DB write禁止
 - [x] session-only identityを維持
-- [x] raw retention 30日
+- [x] raw retention 30日 / `ingested_at`基準
 - [x] Preview / Production credential分離
 - [x] fail-open Product boundary
+- [x] one event/request / 16 KiB request boundary
+- [x] abuse control必須 / durable identity追加禁止
 - [x] ingestion disable switch contract
 - [x] machine-readable Operational Evidence Contract
+- [x] Gateをfact + verification refから導出
 - [x] CI validator
 - [ ] 7視点レビュー
 - [ ] PR merge
@@ -92,7 +109,8 @@ Target files (planned):
 Requirements:
 
 - [ ] `POST /api/telemetry`
-- [ ] request body size limit
+- [ ] 1 event/request
+- [ ] request body <= 16 KiB
 - [ ] JSON parse failureは4xx
 - [ ] `validateTelemetryEvent`をserver-side再実行
 - [ ] unknown field reject
@@ -100,7 +118,10 @@ Requirements:
 - [ ] `TELEMETRY_INGESTION_ENABLED=false`ならpersistent writeしない
 - [ ] DB failureでProduct Readingは止めない
 - [ ] IP / User-AgentをEvidence payloadへコピーしない
-- [ ] raw request bodyをlogしない
+- [ ] raw request bodyをapplication logへ出さない
+- [ ] public endpointのabuse/cost control
+- [ ] abuse controlのためにdurable client identityを追加しない
+- [ ] abuse controlのverification refを残す
 
 Provider-specific DB SDKはこのPhaseへ持ち込まない。
 
@@ -110,10 +131,11 @@ Requirements:
 
 - [ ] minimal telemetry table
 - [ ] idempotency / duplicate semanticsを定義
-- [ ] `occurred_at` / `ingested_at`
+- [ ] server-generated `ingested_at`
+- [ ] `occurred_at` / `ingested_at`の役割を分離
 - [ ] session / flow / event name query
 - [ ] existing domain aggregationへ戻せるexport
-- [ ] raw data 30日 deletion query / runbook
+- [ ] `ingested_at < now - 30 days` deletion query / runbook
 - [ ] migration strategy
 - [ ] local PostgreSQL integration test
 - [ ] Preview / Production credential separation contract
@@ -131,7 +153,7 @@ id
  properties (validated JSON)
 ```
 
-Do not add client IP / User-Agent / consultation text / prompt / response.
+Do not add client IP / User-Agent / consultation text / prompt / response。
 
 ## Phase D — Provider provisioning / deployment
 
@@ -139,25 +161,32 @@ Human / account action required:
 
 - [ ] Vercel production-eligible plan
 - [ ] `uranai-app` Vercel project
-- [ ] DB provider selected: Neon or Supabase
+- [ ] DB provider selected
+- [ ] selected providerのPostgreSQL / `DATABASE_URL`適合性をverification ref付きで確認
 - [ ] Preview DB/resource or isolated credential
 - [ ] Production DB/resource
 - [ ] server-only `DATABASE_URL`
 - [ ] `TELEMETRY_INGESTION_ENABLED`
 - [ ] provider log / retention Privacy review
 
-No automatic paid-plan change from code review workflow.
+Current candidate providers: Neon / Supabase。candidateはallowlistではない。
+
+No automatic paid-plan change from code review workflow。
 
 ## Phase E — Shared surface verification
 
 - [ ] Preview deploy
+- [ ] production-eligible plan verification ref
 - [ ] synthetic safe Reading session
 - [ ] central event arrival
-- [ ] invalid payload rejection
+- [ ] invalid / oversized payload rejection
+- [ ] abuse/cost control verification
 - [ ] Evidence query/export
 - [ ] metric aggregation reproduction
 - [ ] deletion dry-run / verification
 - [ ] telemetry disable rollback
+- [ ] PreviewからProduction DBへwriteできないことを確認
+- [ ] Privacy review
 - [ ] Data Quality check
 
 Only after this:
@@ -177,7 +206,7 @@ metric:helpful_feedback_rate: observable
 - [ ] Polish Loop
 - [ ] repeat shared-surface verification
 
-This is MLP learning; infrastructure completion is not Product success.
+This is MLP learning; infrastructure completion is not Product success。
 
 ## Phase G — Manual Real Pilot
 
@@ -215,14 +244,17 @@ Before each phase completion:
 3. Privacy — minimization / retention / deletion / access
 4. Safety — sensitive/high-risk dataを増やしていないか
 5. Analytics — Metric definitionとEvidence queryが一致するか
-6. QA / Eval — invalid / duplicate / missing / out-of-order
-7. Delivery / DX — disable / rollback / environment separation / cost
+6. QA / Eval — invalid / duplicate / missing / out-of-order / timestamp abuse
+7. Delivery / Cost — disable / rollback / environment separation / public endpoint abuse / spend
 
 ## Stop conditions
 
 - provider convenienceのためにbrowser direct DB writeへ変更
+- specific DB providerをDomain/API Contractへ固定
 - raw consultation / PIIを追加
 - cross-session IDを追加
+- client-controlled `occurred_at`をretention基準にする
+- abuse controlのためにdurable identityを追加
 - DB provisionだけでMetricをobservableへ昇格
 - Vercel Hobbyをcommercial productionへ利用
 - paid resourceをHuman判断なしで開始
