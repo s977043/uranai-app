@@ -47,10 +47,10 @@ assert(
   "operational evidence: DATABASE_URL must be the storage contract",
 );
 assert(
-  Array.isArray(contract.storage?.allowed_providers) &&
-    contract.storage.allowed_providers.includes("neon") &&
-    contract.storage.allowed_providers.includes("supabase"),
-  "operational evidence: Neon and Supabase must remain supported provider candidates",
+  Array.isArray(contract.storage?.candidate_providers) &&
+    contract.storage.candidate_providers.includes("neon") &&
+    contract.storage.candidate_providers.includes("supabase"),
+  "operational evidence: Neon and Supabase must remain documented provider candidates",
 );
 assert(
   contract.storage?.browser_direct_write === false,
@@ -72,6 +72,10 @@ assert(
 assert(
   contract.ingestion?.product_failure_mode === "fail_open",
   "operational evidence: telemetry failure must not block product value flow",
+);
+assert(
+  contract.ingestion?.max_events_per_request === 1,
+  "operational evidence: first pilot accepts one validated event per request",
 );
 assert(
   Number.isInteger(contract.ingestion?.request_body_max_bytes) &&
@@ -144,8 +148,22 @@ if (contract.runtime.production_eligible_plan_verified) {
 }
 if (contract.storage.provider !== null) {
   assert(
-    contract.storage.allowed_providers.includes(contract.storage.provider),
-    "operational evidence: selected storage provider must be allowed",
+    nonEmptyString(contract.storage.provider),
+    "operational evidence: selected storage provider must be non-empty",
+  );
+  assert(
+    verified(
+      contract.storage.provider_contract_verified,
+      contract.storage.provider_contract_verification_ref,
+    ),
+    "operational evidence: selected provider requires PostgreSQL contract verification",
+  );
+}
+if (contract.storage.provider_contract_verified) {
+  assert(
+    contract.storage.provider !== null &&
+      nonEmptyString(contract.storage.provider_contract_verification_ref),
+    "operational evidence: provider contract verification requires selected provider and ref",
   );
 }
 if (contract.storage.provisioned) {
@@ -154,12 +172,25 @@ if (contract.storage.provisioned) {
     "operational evidence: provisioned storage requires selected provider",
   );
   assert(
+    verified(
+      contract.storage.provider_contract_verified,
+      contract.storage.provider_contract_verification_ref,
+    ),
+    "operational evidence: provisioned storage requires provider contract verification",
+  );
+  assert(
     nonEmptyString(contract.storage.provisioning_ref),
     "operational evidence: provisioned storage requires provisioning_ref",
   );
   assert(
     nonEmptyString(contract.storage.evidence_source_ref),
     "operational evidence: provisioned storage requires evidence_source_ref",
+  );
+}
+if (contract.ingestion.abuse_control_verified) {
+  assert(
+    nonEmptyString(contract.ingestion.abuse_control_ref),
+    "operational evidence: verified abuse control requires evidence ref",
   );
 }
 if (contract.ingestion.operational) {
@@ -207,9 +238,12 @@ const facts = {
     contract.runtime.production_eligible_plan_verified,
     contract.runtime.plan_verification_ref,
   ),
-  storage_provider_selected:
+  storage_provider_selected_and_compatible:
     contract.storage.provider !== null &&
-    contract.storage.allowed_providers.includes(contract.storage.provider),
+    verified(
+      contract.storage.provider_contract_verified,
+      contract.storage.provider_contract_verification_ref,
+    ),
   storage_provisioned:
     contract.storage.provisioned === true &&
     nonEmptyString(contract.storage.provisioning_ref) &&
@@ -224,6 +258,10 @@ const facts = {
   server_ingestion_operational: verified(
     contract.ingestion.operational,
     contract.ingestion.verification_ref,
+  ),
+  abuse_control_verified: verified(
+    contract.ingestion.abuse_control_verified,
+    contract.ingestion.abuse_control_ref,
   ),
   evidence_query_export_reproducible: verified(
     contract.evidence.query_export_reproducible,
