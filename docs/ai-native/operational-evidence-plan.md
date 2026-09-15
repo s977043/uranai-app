@@ -1,6 +1,6 @@
 # Operational Evidence Source — Execution Plan
 
-Tracking: #15, #39  
+Tracking: #15, #39, #44  
 Decision: [`operational-evidence-adr.md`](./operational-evidence-adr.md)
 
 ## Objective
@@ -18,10 +18,11 @@ Session-local browser Evidence        ✅
 Reading Flow Completion               partial
 Helpful Feedback Rate                 partial
 Execution Receipt hardening           ✅
+Deployment/Evidence Decision          ✅ Phase A / PR #43
 
-Deployment/Evidence Decision          ← Phase A
-Server-side ingestion                 🔒
-Central PostgreSQL Evidence            🔒
+Server ingestion core                 ← Phase B / #44
+Public API route                       🔒 Phase C
+Central PostgreSQL Evidence            🔒 Phase C
 Shared surface E2E                    🔒
 Metric observable                     🔒
 Actual User Observation               🔒
@@ -70,13 +71,35 @@ Operational Gateは、provisioning / plan / provider compatibility / ingestion /
 
 Clientが送る`occurred_at`ではなく、server-generated `ingested_at`を30日retentionの基準にする。未来時刻等でretentionを回避できないようにする。
 
-### Change 7: public endpointのcost / abuse境界をPhase Bへ含める
+Metric windowの中央Evidence抽出も`ingested_at`を基準にする。`occurred_at`は同一flowの順序・Metric計算・Data Quality確認に利用する。
+
+### Change 7: public endpointのcost / abuse境界を含める
 
 初回は1 event/request、16 KiB以下。abuse controlは必要だが、そのためのdurable client identityは追加しない。
 
-## Phase A — Decision / Contract
+### Change 8: Phase Bではpublic routeをまだ公開しない
 
-Deliverables:
+PostgreSQL adapterが無い状態で`/api/telemetry`だけ公開すると、受け口はあるが永続化できない半端なsurfaceになる。
+
+Phase Bは次に限定する。
+
+```text
+raw body
+  ↓
+server ingestion core
+  ↓
+validateTelemetryEvent
+  ↓
+TelemetryEvidenceRepository port
+```
+
+Next.js route compositionはPhase CでPostgreSQL adapterと同時に接続する。Decision Contractのtarget path `/api/telemetry` は維持する。
+
+## Phase A — Decision / Contract ✅
+
+PR #43 / merge `4e2fa6b`
+
+Completed:
 
 - [x] Vercel Pro以上をruntime採用方針に決定
 - [x] PostgreSQL / `DATABASE_URL`をstorage contractに決定
@@ -92,40 +115,53 @@ Deliverables:
 - [x] machine-readable Operational Evidence Contract
 - [x] Gateをfact + verification refから導出
 - [x] CI validator
-- [ ] 7視点レビュー
-- [ ] PR merge
+- [x] 7視点レビュー
+- [x] PR merge
 
-Phase Aでは`operational_gate.status = blocked`が正しい結果。
+Phase A完了後も`operational_gate.status = blocked`が正しい。
 
-## Phase B — Provider-neutral server ingestion
+## Phase B — Provider-neutral server ingestion core 🚧
 
-Target files (planned):
+Tracking: #44
 
-- `src/app/api/telemetry/route.ts`
+Target files:
+
 - `src/adapters/telemetry/evidenceRepository.ts`
 - `src/adapters/telemetry/serverIngestion.ts`
-- tests
+- `src/tests/serverTelemetryIngestion.test.ts`
+- `src/tests/operationalEvidenceContract.test.ts`
 
 Requirements:
 
-- [ ] `POST /api/telemetry`
-- [ ] 1 event/request
-- [ ] request body <= 16 KiB
-- [ ] JSON parse failureは4xx
-- [ ] `validateTelemetryEvent`をserver-side再実行
-- [ ] unknown field reject
-- [ ] Evidence repository port
-- [ ] `TELEMETRY_INGESTION_ENABLED=false`ならpersistent writeしない
-- [ ] DB failureでProduct Readingは止めない
-- [ ] IP / User-AgentをEvidence payloadへコピーしない
-- [ ] raw request bodyをapplication logへ出さない
-- [ ] public endpointのabuse/cost control
-- [ ] abuse controlのためにdurable client identityを追加しない
-- [ ] abuse controlのverification refを残す
+- [x] provider-neutral `TelemetryEvidenceRepository` port
+- [x] InMemory repository for regression
+- [x] exact enable switch semantics (`"true"` only)
+- [x] disabled時はparse / writeしない
+- [x] 1 event/request
+- [x] request body <= 16 KiB (UTF-8 byte)
+- [x] invalid JSON reject
+- [x] `validateTelemetryEvent`をserver-side再利用
+- [x] unknown field / array reject
+- [x] server-generated canonical `ingested_at`
+- [x] Repository failureをsanitized resultへ変換
+- [x] internal failureとRepository failureを区別
+- [x] Evidence record APIにIP / User-Agent / headersを持たせない
+- [x] machine contractへcore implementation refsを記録
+- [x] dedicated CI validator
+- [ ] 7視点レビュー
+- [ ] final CI / PR merge
 
-Provider-specific DB SDKはこのPhaseへ持ち込まない。
+Intentional scope out in Phase B:
 
-## Phase C — PostgreSQL persistence / query / deletion
+- `/api/telemetry` route exposure
+- PostgreSQL client / schema
+- abuse control実装（Decision Contract上は引き続き未verified）
+- browser network sink
+- retry queue
+
+`ingestion.operational=false` / `operational_gate.status=blocked`を維持する。
+
+## Phase C — PostgreSQL persistence + route composition
 
 Requirements:
 
@@ -133,24 +169,32 @@ Requirements:
 - [ ] idempotency / duplicate semanticsを定義
 - [ ] server-generated `ingested_at`
 - [ ] `occurred_at` / `ingested_at`の役割を分離
+- [ ] query windowは`ingested_at`基準
+- [ ] same-flow ordering / DQは`occurred_at`を利用
 - [ ] session / flow / event name query
 - [ ] existing domain aggregationへ戻せるexport
 - [ ] `ingested_at < now - 30 days` deletion query / runbook
 - [ ] migration strategy
 - [ ] local PostgreSQL integration test
+- [ ] provider-neutral PostgreSQL adapter
+- [ ] `/api/telemetry` route composition
+- [ ] routeでbody readを16 KiB以内に制御
+- [ ] HTTP status mappingを固定
+- [ ] `TELEMETRY_INGESTION_ENABLED=false`でpersistent writeしない
+- [ ] raw request bodyをapplication logへ出さない
 - [ ] Preview / Production credential separation contract
 
 ### Minimal stored columns
 
 ```text
 id
- event_name
- event_version
- occurred_at
- ingested_at
- anonymous_session_id
- anonymous_visitor_id (must remain null for first pilot)
- properties (validated JSON)
+event_name
+event_version
+occurred_at
+ingested_at
+anonymous_session_id
+anonymous_visitor_id (must remain null for first pilot)
+properties (validated JSON)
 ```
 
 Do not add client IP / User-Agent / consultation text / prompt / response。
@@ -253,8 +297,9 @@ Before each phase completion:
 - specific DB providerをDomain/API Contractへ固定
 - raw consultation / PIIを追加
 - cross-session IDを追加
-- client-controlled `occurred_at`をretention基準にする
+- client-controlled `occurred_at`をretention/query-window基準にする
 - abuse controlのためにdurable identityを追加
+- persistence無しのpublic telemetry routeを先行公開
 - DB provisionだけでMetricをobservableへ昇格
 - Vercel Hobbyをcommercial productionへ利用
 - paid resourceをHuman判断なしで開始
