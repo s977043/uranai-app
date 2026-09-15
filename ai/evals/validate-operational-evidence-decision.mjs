@@ -288,10 +288,19 @@ assert(
   `operational evidence: gate status must derive to ${expectedStatus}`,
 );
 
-if (!derivedOperational) {
+const blockingIssues = contract.operational_gate?.blocking_issues;
+assert(
+  Array.isArray(blockingIssues),
+  "operational evidence: blocking_issues must be an array",
+);
+if (derivedOperational) {
   assert(
-    Array.isArray(contract.operational_gate?.blocking_issues) &&
-      contract.operational_gate.blocking_issues.length > 0,
+    blockingIssues.length === 0,
+    "operational evidence: operational state must have no blocking issues",
+  );
+} else {
+  assert(
+    blockingIssues.length > 0,
     "operational evidence: blocked state requires blocking issues",
   );
 }
