@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "status": "accepted_for_implementation",
+  "runtime": {
+    "provider": "vercel",
+    "required_plan": "pro_or_higher",
+    "provisioned": false,
+    "shared_surface_ref": null
+  },
+  "storage": {
+    "protocol": "postgresql",
+    "connection_env": "DATABASE_URL",
+    "provider": null,
+    "allowed_providers": ["neon", "supabase"],
+    "provisioned": false,
+    "evidence_source_ref": null,
+    "browser_direct_write": false
+  },
+  "ingestion": {
+    "server_route": "/api/telemetry",
+    "server_validation": "validateTelemetryEvent",
+    "disable_env": "TELEMETRY_INGESTION_ENABLED",
+    "product_failure_mode": "fail_open",
+    "operational": false
+  },
+  "privacy": {
+    "identity_scope": "session_only",
+    "anonymous_visitor_id_required": null,
+    "raw_retention_days": 30,
+    "persist_request_ip": false,
+    "persist_user_agent": false,
+    "persist_raw_consultation": false,
+    "persist_raw_prompt_or_response": false
+  },
+  "environments": {
+    "preview_production_credentials_separate": true,
+    "preview_may_write_production": false
+  },
+  "operational_gate": {
+    "status": "blocked",
+    "requirements": {
+      "runtime_provisioned": false,
+      "production_eligible_plan_verified": false,
+      "storage_provider_selected": false,
+      "storage_provisioned": false,
+      "environment_separation_verified": false,
+      "server_ingestion_operational": false,
+      "evidence_query_export_reproducible": false,
+      "retention_deletion_verified": false,
+      "privacy_review_complete": false,
+      "data_quality_review_complete": false
+    },
+    "blocking_issues": ["issue:#15", "issue:#39"]
+  }
+}
