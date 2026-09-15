@@ -24,6 +24,9 @@
     "server_validation": "validateTelemetryEvent",
     "disable_env": "TELEMETRY_INGESTION_ENABLED",
     "product_failure_mode": "fail_open",
+    "request_body_max_bytes": 16384,
+    "abuse_control_required": true,
+    "durable_client_identity_for_abuse_control": false,
     "operational": false,
     "verification_ref": null
   },
@@ -31,6 +34,7 @@
     "identity_scope": "session_only",
     "anonymous_visitor_id_required": null,
     "raw_retention_days": 30,
+    "retention_basis": "ingested_at",
     "persist_request_ip": false,
     "persist_user_agent": false,
     "persist_raw_consultation": false,
