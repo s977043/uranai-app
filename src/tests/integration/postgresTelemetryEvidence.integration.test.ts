@@ -63,6 +63,29 @@ describeIntegration("PostgreSQL telemetry Evidence", () => {
     ]);
   });
 
+  it("rejects direct rows that miss the required reading flow identity", async () => {
+    await expect(
+      sql`
+        INSERT INTO telemetry_evidence (
+          event_name,
+          event_version,
+          occurred_at,
+          ingested_at,
+          anonymous_session_id,
+          properties
+        )
+        VALUES (
+          'reading_started',
+          1,
+          '2026-09-23T00:00:00.000Z',
+          '2026-09-23T00:00:01.000Z',
+          ${sessionId},
+          ${sql.json({ reading_type: "reflection" })}
+        )
+      `,
+    ).rejects.toThrow();
+  });
+
   it("round-trips a window by server ingested_at and reproduces metrics", async () => {
     const start = readingStarted("2026-09-23T00:00:00.000Z");
     const completed = readingCompleted("2026-09-23T00:00:15.000Z");
