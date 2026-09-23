@@ -19,8 +19,10 @@ Tracking: #18, #20, #23, #27, #30, #31, #33
 - Iteration 4.5 Operational Readiness: Issue #30 / PR #32 — 完了
 - Iteration 4.6 Pilot Telemetry Foundation: Issue #31 / PR #34 — 完了
 - Iteration 4.7 Reading Vertical Slice + Product instrumentation: Issue #33 / PR #35 — 完了
-- Operational central Evidence source — 次のBlocking dependency
-- Deployment / shared test surface: Issue #15 — User Observation前に必要
+- Operational Evidence Phase A Decision: #15 / #39 / PR #43 — 完了
+- Operational Evidence Phase B ingestion core: #44 / PR #45 — 完了
+- Operational Evidence Phase C PostgreSQL persistence + API: #46 / PR #48 — 進行中
+- Deployment / managed storage / shared test surface: #15 / #39 — Phase D/Eで必要
 - Manual Real Pilot — blocked
 - Iteration 5 Controlled Autonomy — blocked
 - PR #16 数秘術ドメインは別系統
@@ -339,14 +341,52 @@ Review: [`reading-vertical-slice-review-record.md`](./reading-vertical-slice-rev
 - MLP Release readiness
 - Manual Real Pilot
 
+# Iteration 4.8 — Operational Evidence Source 🚧
+
+Tracking: #15 / #39 / #44 / #46
+
+Completed:
+
+- [x] Phase A: runtime/storage/privacy Decision Gate — PR #43
+- [x] Phase B: provider-neutral server ingestion core — PR #45
+
+Phase C / PR #48:
+
+- [x] PostgreSQL / `DATABASE_URL` adapter
+- [x] minimized Evidence schema / migration / rollback
+- [x] bounded `POST /api/telemetry`
+- [x] query/export by server `ingested_at`
+- [x] duplicate Evidence preservation / existing Metric reproduction
+- [x] 30-day retention implementation / runbook
+- [x] PostgreSQL 16 integration CI
+- [ ] 7-view final review
+- [ ] final CI / merge
+
+Phase C completion still does **not** mean operational readiness. Managed resource provisioning, environment separation,
+production abuse/cost control, provider Privacy review, shared-surface E2E, and Product network wiring remain later gates.
+
+Current invariant:
+
+```yaml
+metric:reading_flow_completion: partial
+metric:helpful_feedback_rate: partial
+Operational Evidence: blocked
+Manual Real Pilot: blocked
+Controlled Autonomy: blocked
+```
+
 # Next — Evidence + User Observation 🔒
 
 順序:
 
 ```text
-#15 shared / production test surface
-  +
-Operational central Evidence source
+Phase D managed runtime / PostgreSQL provisioning
+  ↓
+Phase E environment separation / abuse control / shared-surface E2E
+  ↓
+Product central telemetry wiring
+  ↓
+Metric observable再評価
   ↓
 Actual User Observation
   ↓
