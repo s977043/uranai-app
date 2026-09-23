@@ -21,10 +21,15 @@ export async function handleTelemetryPost(
     return errorResponse(415, "unsupported_media_type");
   }
 
-  const bodyResult = await readBoundedUtf8Body(
-    request,
-    MAX_TELEMETRY_REQUEST_BYTES,
-  );
+  let bodyResult: BodyReadResult;
+  try {
+    bodyResult = await readBoundedUtf8Body(
+      request,
+      MAX_TELEMETRY_REQUEST_BYTES,
+    );
+  } catch {
+    return errorResponse(400, "invalid_telemetry_event");
+  }
   if (bodyResult.status === "too_large") {
     return errorResponse(413, "payload_too_large");
   }
@@ -88,7 +93,11 @@ export async function readBoundedUtf8Body(
 
     total += value.byteLength;
     if (total > maxBytes) {
-      await reader.cancel();
+      try {
+        await reader.cancel();
+      } catch {
+        // Size rejection is authoritative even if stream cancellation fails.
+      }
       return { status: "too_large" };
     }
     chunks.push(value);
