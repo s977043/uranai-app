@@ -15,18 +15,7 @@ CREATE TABLE telemetry_evidence (
   ingested_at timestamptz NOT NULL,
   anonymous_session_id text NOT NULL
     CHECK (
-      anonymous_session_id ~* '^session_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}
-);
-
-CREATE INDEX telemetry_evidence_ingested_at_idx
-  ON telemetry_evidence (ingested_at, id);
-
-CREATE INDEX telemetry_evidence_session_ingested_at_idx
-  ON telemetry_evidence (anonymous_session_id, ingested_at, id);
-
-CREATE INDEX telemetry_evidence_flow_ingested_at_idx
-  ON telemetry_evidence ((properties ->> 'reading_flow_id'), ingested_at, id);
-
+      anonymous_session_id ~* '^session_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
     ),
   properties jsonb NOT NULL
     CHECK (jsonb_typeof(properties) = 'object')
