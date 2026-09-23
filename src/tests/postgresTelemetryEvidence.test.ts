@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { Pool } from "pg";
 
 import { PostgresTelemetryEvidenceRepository } from "@/adapters/telemetry/postgresEvidenceRepository";
@@ -70,6 +70,10 @@ describePostgres("PostgreSQL telemetry evidence integration", () => {
     await pool.query(readSql("0001_create_telemetry_evidence.sql"));
   });
 
+  beforeEach(async () => {
+    await pool.query("TRUNCATE telemetry_evidence RESTART IDENTITY");
+  });
+
   afterAll(async () => {
     await pool.query(readSql("0001_create_telemetry_evidence.down.sql"));
     await pool.end();
@@ -128,6 +132,10 @@ describePostgres("PostgreSQL telemetry evidence integration", () => {
   });
 
   it("session / flow / event name filterをparameterized queryで再現する", async () => {
+    await insertRecord(started, "2026-09-15T00:01:00.000Z");
+    await insertRecord(completed, "2026-09-15T00:01:01.000Z");
+    await insertRecord(feedback, "2026-09-15T00:01:02.000Z");
+
     const bySession = await repository.list({
       from_ingested_at: "2026-09-15T00:00:00.000Z",
       to_ingested_at: "2026-09-15T00:02:00.000Z",
@@ -140,6 +148,7 @@ describePostgres("PostgreSQL telemetry evidence integration", () => {
   });
 
   it("重複eventをEvidenceから消さず保存する", async () => {
+    await insertRecord(started, "2026-09-15T00:01:00.000Z");
     await insertRecord(started, "2026-09-15T00:01:03.000Z");
 
     const records = await repository.list({
