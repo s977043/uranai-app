@@ -4,6 +4,7 @@ import { InMemoryTelemetryEvidenceRepository } from "@/adapters/telemetry/eviden
 import {
   handleTelemetryPost,
   readBoundedUtf8Body,
+  telemetryHttpIngestionEnabled,
 } from "@/adapters/telemetry/httpIngestion";
 import { MAX_TELEMETRY_REQUEST_BYTES } from "@/adapters/telemetry/serverIngestion";
 import type { ProductTelemetryEvent } from "@/domain/telemetry/events";
@@ -170,4 +171,36 @@ describe("readBoundedUtf8Body", () => {
       readBoundedUtf8Body(request, MAX_TELEMETRY_REQUEST_BYTES),
     ).resolves.toEqual({ status: "too_large" });
   });
+});
+
+describe("telemetryHttpIngestionEnabled", () => {
+  it("localではexplicit ingestion flagだけで有効化できる", () => {
+    expect(
+      telemetryHttpIngestionEnabled({
+        enabledEnv: "true",
+        deploymentEnv: undefined,
+      }),
+    ).toBe(true);
+  });
+
+  it.each(["preview", "production"])(
+    "Vercel %sではabuse-control verificationが無ければfail-closed",
+    (deploymentEnv) => {
+      expect(
+        telemetryHttpIngestionEnabled({
+          enabledEnv: "true",
+          abuseControlVerifiedEnv: "false",
+          deploymentEnv,
+        }),
+      ).toBe(false);
+
+      expect(
+        telemetryHttpIngestionEnabled({
+          enabledEnv: "true",
+          abuseControlVerifiedEnv: "true",
+          deploymentEnv,
+        }),
+      ).toBe(true);
+    },
+  );
 });
