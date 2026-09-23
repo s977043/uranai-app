@@ -1,6 +1,6 @@
 # AI-Native Execution Plan
 
-Tracking: #18, #20, #23, #27, #30, #31, #33
+Tracking: #18, #20, #23, #27, #30, #31, #33, #39, #44, #46
 
 ## Objective
 
@@ -19,8 +19,10 @@ Tracking: #18, #20, #23, #27, #30, #31, #33
 - Iteration 4.5 Operational Readiness: Issue #30 / PR #32 — 完了
 - Iteration 4.6 Pilot Telemetry Foundation: Issue #31 / PR #34 — 完了
 - Iteration 4.7 Reading Vertical Slice + Product instrumentation: Issue #33 / PR #35 — 完了
-- Operational central Evidence source — 次のBlocking dependency
-- Deployment / shared test surface: Issue #15 — User Observation前に必要
+- Operational Evidence Phase A Decision: PR #43 — 完了
+- Operational Evidence Phase B Server Ingestion Core: Issue #44 / PR #45 — 完了
+- Operational Evidence Phase C PostgreSQL + Route: Issue #46 / PR #47 — review中
+- Managed central Evidence / Deployment shared surface: Issue #39 / #15 — Phase D/E blocker
 - Manual Real Pilot — blocked
 - Iteration 5 Controlled Autonomy — blocked
 - PR #16 数秘術ドメインは別系統
