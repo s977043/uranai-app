@@ -93,8 +93,12 @@ assert(
 
 const migration = readText(contract.storage.schema_ref);
 assert(
-  /CREATE TABLE IF NOT EXISTS telemetry_evidence/i.test(migration),
-  "postgres telemetry: migration must create telemetry_evidence",
+  (migration.match(/CREATE TABLE\\s+telemetry_evidence/gi) ?? []).length === 1,
+  "postgres telemetry: migration must create telemetry_evidence exactly once",
+);
+assert(
+  !/IF NOT EXISTS/i.test(migration),
+  "postgres telemetry: migration must fail rather than hide unexpected schema drift",
 );
 assert(
   /occurred_at\s+timestamptz\s+NOT NULL/i.test(migration),
