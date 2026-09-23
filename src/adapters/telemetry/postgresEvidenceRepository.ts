@@ -1,16 +1,16 @@
 import postgres from "postgres";
 
-import type {
-  OperationalTelemetryEvidenceRepository,
-  TelemetryEvidenceRecord,
-  TelemetryEvidenceWindow,
+import {
+  assertCanonicalEvidenceTimestamp,
+  assertTelemetryEvidenceWindow,
+  type OperationalTelemetryEvidenceRepository,
+  type TelemetryEvidenceRecord,
+  type TelemetryEvidenceWindow,
 } from "@/adapters/telemetry/evidenceRepository";
 import {
   type ProductTelemetryEvent,
   validateTelemetryEvent,
 } from "@/domain/telemetry/events";
-
-export const MAX_EVIDENCE_EXPORT_EVENTS = 5_000;
 
 type Sql = ReturnType<typeof postgres>;
 
@@ -53,7 +53,7 @@ export class PostgresTelemetryEvidenceRepository
   async listByIngestedAtWindow(
     window: TelemetryEvidenceWindow,
   ): Promise<TelemetryEvidenceRecord[]> {
-    assertWindow(window);
+    assertTelemetryEvidenceWindow(window);
 
     const rows = await this.sql<TelemetryRow[]>`
       SELECT
@@ -74,7 +74,7 @@ export class PostgresTelemetryEvidenceRepository
   }
 
   async countBeforeIngestedAt(cutoff: string): Promise<number> {
-    assertCanonicalTimestamp(cutoff, "retention cutoff");
+    assertCanonicalEvidenceTimestamp(cutoff, "retention cutoff");
     const rows = await this.sql<{ count: number }[]>`
       SELECT COUNT(*)::int AS count
       FROM telemetry_evidence
@@ -84,7 +84,7 @@ export class PostgresTelemetryEvidenceRepository
   }
 
   async deleteBeforeIngestedAt(cutoff: string): Promise<number> {
-    assertCanonicalTimestamp(cutoff, "retention cutoff");
+    assertCanonicalEvidenceTimestamp(cutoff, "retention cutoff");
     const rows = await this.sql<{ count: number }[]>`
       WITH deleted AS (
         DELETE FROM telemetry_evidence
@@ -140,34 +140,6 @@ function rowToRecord(row: TelemetryRow): TelemetryEvidenceRecord {
     event: validation.event as ProductTelemetryEvent,
     ingested_at: canonicalTimestamp(row.ingested_at),
   };
-}
-
-function assertWindow(window: TelemetryEvidenceWindow): void {
-  assertCanonicalTimestamp(window.from_ingested_at, "window start");
-  assertCanonicalTimestamp(window.to_ingested_at, "window end");
-
-  if (
-    Date.parse(window.from_ingested_at) >= Date.parse(window.to_ingested_at)
-  ) {
-    throw new RangeError("telemetry evidence window start must be before end");
-  }
-
-  if (
-    !Number.isInteger(window.limit) ||
-    window.limit < 1 ||
-    window.limit > MAX_EVIDENCE_EXPORT_EVENTS
-  ) {
-    throw new RangeError(
-      `telemetry evidence export limit must be 1..${MAX_EVIDENCE_EXPORT_EVENTS}`,
-    );
-  }
-}
-
-function assertCanonicalTimestamp(value: string, label: string): void {
-  const parsed = Date.parse(value);
-  if (Number.isNaN(parsed) || new Date(parsed).toISOString() !== value) {
-    throw new RangeError(`${label} must be canonical ISO-8601`);
-  }
 }
 
 function canonicalTimestamp(value: Date | string): string {
