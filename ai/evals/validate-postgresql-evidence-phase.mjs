@@ -93,7 +93,7 @@ assert(
 
 const migration = readText(contract.storage.schema_ref);
 assert(
-  (migration.match(/CREATE TABLE\\s+telemetry_evidence/gi) ?? []).length === 1,
+  (migration.match(/CREATE TABLE\s+telemetry_evidence/gi) ?? []).length === 1,
   "postgres telemetry: migration must create telemetry_evidence exactly once",
 );
 assert(
@@ -108,6 +108,26 @@ assert(
   /ingested_at\s+timestamptz\s+NOT NULL/i.test(migration),
   "postgres telemetry: migration must store ingested_at",
 );
+assert(
+  /anonymous_session_id\s+text\s+NOT NULL[\s\S]*?anonymous_session_id\s+~\*/i.test(
+    migration,
+  ),
+  "postgres telemetry: migration must constrain session identifier shape",
+);
+assert(
+  /properties\s+\?\s+'reading_flow_id'/i.test(migration),
+  "postgres telemetry: migration must require reading_flow_id presence",
+);
+for (const indexName of [
+  "telemetry_evidence_ingested_at_idx",
+  "telemetry_evidence_session_ingested_at_idx",
+  "telemetry_evidence_flow_ingested_at_idx",
+]) {
+  assert(
+    (migration.match(new RegExp(indexName, "g")) ?? []).length === 1,
+    `postgres telemetry: index must be declared exactly once: ${indexName}`,
+  );
+}
 for (const disallowedColumn of [
   "anonymous_visitor_id",
   "client_ip",
