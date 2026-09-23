@@ -1,6 +1,6 @@
 BEGIN;
 
-CREATE TABLE IF NOT EXISTS telemetry_evidence (
+CREATE TABLE telemetry_evidence (
   id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   event_name text NOT NULL,
   event_version smallint NOT NULL,
@@ -19,16 +19,16 @@ CREATE TABLE IF NOT EXISTS telemetry_evidence (
     CHECK (jsonb_typeof(properties) = 'object')
 );
 
-CREATE INDEX IF NOT EXISTS telemetry_evidence_ingested_at_idx
+CREATE INDEX telemetry_evidence_ingested_at_idx
   ON telemetry_evidence (ingested_at);
 
-CREATE INDEX IF NOT EXISTS telemetry_evidence_event_ingested_idx
+CREATE INDEX telemetry_evidence_event_ingested_idx
   ON telemetry_evidence (event_name, ingested_at);
 
-CREATE INDEX IF NOT EXISTS telemetry_evidence_session_ingested_idx
+CREATE INDEX telemetry_evidence_session_ingested_idx
   ON telemetry_evidence (anonymous_session_id, ingested_at);
 
-CREATE INDEX IF NOT EXISTS telemetry_evidence_flow_ingested_idx
+CREATE INDEX telemetry_evidence_flow_ingested_idx
   ON telemetry_evidence ((properties ->> 'reading_flow_id'), ingested_at);
 
 COMMIT;
