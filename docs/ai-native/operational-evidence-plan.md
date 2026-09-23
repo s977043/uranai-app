@@ -1,7 +1,8 @@
 # Operational Evidence Source — Execution Plan
 
 Tracking: #15, #39, #44, #46  
-Decision: [`operational-evidence-adr.md`](./operational-evidence-adr.md)
+Decision: [`operational-evidence-adr.md`](./operational-evidence-adr.md)  
+Review: [`postgres-evidence-review.md`](./postgres-evidence-review.md)
 
 ## Objective
 
