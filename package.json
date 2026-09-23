@@ -14,8 +14,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "eval:contracts": "node ai/evals/validate-fixtures.mjs && node ai/evals/validate-metric-registry.mjs && node ai/evals/validate-pilot-rehearsal.mjs && node ai/evals/validate-execution-receipt.mjs && node ai/evals/validate-operational-evidence-decision.mjs && node ai/evals/validate-server-ingestion-core.mjs",
-    "verify": "npm run lint && npm run typecheck && npm run test && npm run eval:contracts"
+    "eval:contracts": "node ai/evals/validate-fixtures.mjs && node ai/evals/validate-metric-registry.mjs && node ai/evals/validate-pilot-rehearsal.mjs && node ai/evals/validate-execution-receipt.mjs && node ai/evals/validate-operational-evidence-decision.mjs && node ai/evals/validate-server-ingestion-core.mjs && node ai/evals/validate-postgres-evidence-contract.mjs",
+    "verify": "npm run lint && npm run typecheck && npm run test && npm run eval:contracts",
+    "test:postgres": "vitest run src/tests/postgresTelemetryEvidence.test.ts"
   },
   "dependencies": {
     "react": "19.1.0",
