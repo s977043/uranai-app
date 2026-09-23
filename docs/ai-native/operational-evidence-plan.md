@@ -221,11 +221,13 @@ Human / account action required:
 - [ ] `uranai-app` Vercel project
 - [ ] DB provider selected
 - [ ] selected providerのPostgreSQL / `DATABASE_URL`適合性をverification ref付きで確認
+- [ ] production TLS verification modeを明示レビューしEvidence refを記録
 - [ ] Preview DB/resource or isolated credential
 - [ ] Production DB/resource
 - [ ] server-only `DATABASE_URL`
 - [ ] `TELEMETRY_INGESTION_ENABLED`
 - [ ] provider log / retention Privacy review
+- [ ] connection stringのTLS semanticsを暗黙defaultへ依存させない
 
 Current candidate providers: Neon / Supabase。candidateはallowlistではない。
 
