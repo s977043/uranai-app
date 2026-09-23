@@ -38,6 +38,12 @@ export class PostgresTelemetryEvidenceRepository
   constructor(private readonly pool: QueryablePool) {}
 
   async insert(record: TelemetryEvidenceRecord): Promise<void> {
+    const validation = validateTelemetryEvent(record.event);
+    if (!validation.ok) {
+      throw new Error("telemetry evidence failed contract validation");
+    }
+    assertCanonicalIso(record.ingested_at, "ingested_at");
+
     await this.pool.query(
       `INSERT INTO telemetry_evidence (
         event_name,
@@ -49,13 +55,13 @@ export class PostgresTelemetryEvidenceRepository
         properties
       ) VALUES ($1, $2, $3::timestamptz, $4::timestamptz, $5, $6, $7::jsonb)`,
       [
-        record.event.event_name,
-        record.event.event_version,
-        record.event.occurred_at,
+        validation.event.event_name,
+        validation.event.event_version,
+        validation.event.occurred_at,
         record.ingested_at,
-        record.event.anonymous_session_id,
-        record.event.anonymous_visitor_id,
-        JSON.stringify(record.event.properties),
+        validation.event.anonymous_session_id,
+        validation.event.anonymous_visitor_id,
+        JSON.stringify(validation.event.properties),
       ],
     );
   }
