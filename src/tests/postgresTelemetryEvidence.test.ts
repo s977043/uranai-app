@@ -101,6 +101,15 @@ describePostgres("PostgreSQL telemetry evidence integration", () => {
     });
   });
 
+  it("逆転したEvidence windowをDB query前にrejectする", async () => {
+    await expect(
+      repository.list({
+        from_ingested_at: "2026-09-16T00:00:00.000Z",
+        to_ingested_at: "2026-09-15T00:00:00.000Z",
+      }),
+    ).rejects.toThrow("from_ingested_at must be earlier than to_ingested_at");
+  });
+
   it("session / flow / event name filterをparameterized queryで再現する", async () => {
     const bySession = await repository.list({
       from_ingested_at: "2026-09-15T00:00:00.000Z",
