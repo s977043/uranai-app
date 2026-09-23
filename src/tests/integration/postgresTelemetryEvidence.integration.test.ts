@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import postgres, { type Sql } from "postgres";
+import postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { PostgresTelemetryEvidenceRepository } from "@/adapters/telemetry/postgresEvidenceRepository";
@@ -15,7 +15,7 @@ const databaseUrl = process.env.INTEGRATION_DATABASE_URL;
 const describeIntegration = databaseUrl ? describe : describe.skip;
 
 describeIntegration("PostgreSQL telemetry Evidence", () => {
-  let sql: Sql;
+  let sql: ReturnType<typeof postgres>;
   let repository: PostgresTelemetryEvidenceRepository;
 
   beforeAll(async () => {
