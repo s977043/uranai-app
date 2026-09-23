@@ -45,7 +45,9 @@
     "operational": false,
     "verification_ref": null,
     "route_implemented": true,
-    "route_ref": "src/app/api/telemetry/route.ts"
+    "route_ref": "src/app/api/telemetry/route.ts",
+    "abuse_control_enable_env": "TELEMETRY_ABUSE_CONTROL_VERIFIED",
+    "shared_surface_fail_closed": true
   },
   "privacy": {
     "identity_scope": "session_only",
