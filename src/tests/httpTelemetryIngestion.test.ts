@@ -173,8 +173,9 @@ describe("telemetry HTTP ingestion", () => {
     );
 
     expect(response.status).toBe(503);
-    expect(await response.text()).not.toContain("secret");
-    expect(await response.clone().text()).not.toContain("postgresql");
+    const body = await response.text();
+    expect(body).not.toContain("secret");
+    expect(body).not.toContain("postgresql");
   });
 });
 
