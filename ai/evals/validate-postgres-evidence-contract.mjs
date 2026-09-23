@@ -54,6 +54,8 @@ if (contract.evidence.local_integration_verified) {
 assert(contract.operational_gate?.status === "blocked", "postgres evidence: Phase C must not open the operational gate");
 assert(contract.ingestion?.operational === false, "postgres evidence: route implementation is not operational evidence");
 
+assert(!migration.includes("IF NOT EXISTS"), "postgres evidence: up migration must fail on unexpected schema drift");
+
 for (const required of [
   "ingested_at timestamptz NOT NULL",
   "anonymous_visitor_id text NULL",
