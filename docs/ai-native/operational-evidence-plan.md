@@ -1,6 +1,6 @@
 # Operational Evidence Source — Execution Plan
 
-Tracking: #15, #39, #44  
+Tracking: #15, #39, #44, #46  
 Decision: [`operational-evidence-adr.md`](./operational-evidence-adr.md)
 
 ## Objective
@@ -20,9 +20,10 @@ Helpful Feedback Rate                 partial
 Execution Receipt hardening           ✅
 Deployment/Evidence Decision          ✅ Phase A / PR #43
 
-Server ingestion core                 ← Phase B / #44
-Public API route                       🔒 Phase C
-Central PostgreSQL Evidence            🔒 Phase C
+Server ingestion core                 ✅ Phase B / #44 / PR #45
+Public API route                       ← Phase C / #46 / PR #47
+Local PostgreSQL Evidence              ← Phase C / #46 / PR #47
+Central managed PostgreSQL Evidence    🔒 Phase D/E
 Shared surface E2E                    🔒
 Metric observable                     🔒
 Actual User Observation               🔒
@@ -95,6 +96,12 @@ TelemetryEvidenceRepository port
 
 Next.js route compositionはPhase CでPostgreSQL adapterと同時に接続する。Decision Contractのtarget path `/api/telemetry` は維持する。
 
+### Change 9: shared surfaceはabuse-control verification前にfail-closed
+
+Local/testでは明示的なingestion flagで検証できる。一方、Vercel Preview / Productionでは
+`TELEMETRY_ABUSE_CONTROL_VERIFIED=true`も満たさない限り永続化しない。
+これはOperational GateのEvidence判定そのものではなく、誤有効化を防ぐactivation guard。
+
 ## Phase A — Decision / Contract ✅
 
 PR #43 / merge `4e2fa6b`
@@ -120,9 +127,9 @@ Completed:
 
 Phase A完了後も`operational_gate.status = blocked`が正しい。
 
-## Phase B — Provider-neutral server ingestion core 🚧
+## Phase B — Provider-neutral server ingestion core ✅
 
-Tracking: #44
+Tracking: #44 / PR #45 / merge `5c509ef`
 
 Target files:
 
@@ -148,8 +155,8 @@ Requirements:
 - [x] Evidence record APIにIP / User-Agent / headersを持たせない
 - [x] machine contractへcore implementation refsを記録
 - [x] dedicated CI validator
-- [ ] 7視点レビュー
-- [ ] final CI / PR merge
+- [x] 7視点レビュー
+- [x] final CI / PR merge
 
 Intentional scope out in Phase B:
 
@@ -161,28 +168,35 @@ Intentional scope out in Phase B:
 
 `ingestion.operational=false` / `operational_gate.status=blocked`を維持する。
 
-## Phase C — PostgreSQL persistence + route composition
+## Phase C — PostgreSQL persistence + route composition 🚧
+
+Tracking: #46 / PR #47
 
 Requirements:
 
-- [ ] minimal telemetry table
-- [ ] idempotency / duplicate semanticsを定義
-- [ ] server-generated `ingested_at`
-- [ ] `occurred_at` / `ingested_at`の役割を分離
-- [ ] query windowは`ingested_at`基準
-- [ ] same-flow ordering / DQは`occurred_at`を利用
-- [ ] session / flow / event name query
-- [ ] existing domain aggregationへ戻せるexport
-- [ ] `ingested_at < now - 30 days` deletion query / runbook
-- [ ] migration strategy
-- [ ] local PostgreSQL integration test
-- [ ] provider-neutral PostgreSQL adapter
-- [ ] `/api/telemetry` route composition
-- [ ] routeでbody readを16 KiB以内に制御
-- [ ] HTTP status mappingを固定
-- [ ] `TELEMETRY_INGESTION_ENABLED=false`でpersistent writeしない
-- [ ] raw request bodyをapplication logへ出さない
-- [ ] Preview / Production credential separation contract
+- [x] minimal telemetry table
+- [x] duplicateを消さずData Quality Evidenceとして保存
+- [x] server-generated `ingested_at`
+- [x] `occurred_at` / `ingested_at`の役割を分離
+- [x] query windowは`ingested_at`基準
+- [x] same-flow ordering / DQは`occurred_at`を利用
+- [x] session / flow / event name query
+- [x] existing domain aggregationへ戻せるexport
+- [x] `ingested_at < cutoff` deletion + 30-day runbook
+- [x] migration / rollback SQL
+- [x] PostgreSQL 16 integration testをCI定義
+- [x] provider-neutral PostgreSQL adapter
+- [x] `/api/telemetry` route composition
+- [x] routeでbody readを16 KiB以内に制御
+- [x] HTTP status mappingを固定
+- [x] `TELEMETRY_INGESTION_ENABLED=false`でDBを取得しない
+- [x] raw request body / DB errorをresponseへ出さない
+- [x] Vercel shared surfaceはabuse-control未verifiedならfail-closed
+- [ ] final-head PostgreSQL integration Green
+- [ ] 7視点final review
+- [ ] PR merge
+
+Phase C完了だけではMetricを`observable`へ昇格しない。local PostgreSQLはOperational central Evidenceではない。
 
 ### Minimal stored columns
 
