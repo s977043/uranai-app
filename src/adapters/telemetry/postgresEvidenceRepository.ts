@@ -63,6 +63,9 @@ export class PostgresTelemetryEvidenceRepository
   async list(query: TelemetryEvidenceQuery): Promise<TelemetryEvidenceRecord[]> {
     assertCanonicalIso(query.from_ingested_at, "from_ingested_at");
     assertCanonicalIso(query.to_ingested_at, "to_ingested_at");
+    if (Date.parse(query.from_ingested_at) >= Date.parse(query.to_ingested_at)) {
+      throw new RangeError("from_ingested_at must be earlier than to_ingested_at");
+    }
 
     const limit = normalizeLimit(query.limit);
     const clauses = [
