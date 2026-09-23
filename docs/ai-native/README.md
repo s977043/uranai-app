@@ -79,6 +79,7 @@ AI-Native化の価値は各作業の自動化ではなく、**EvidenceからLear
 - [Execution Plan](./execution-plan.md)
 - [Operational Evidence ADR](./operational-evidence-adr.md)
 - [Operational Evidence Execution Plan](./operational-evidence-plan.md)
+- [PostgreSQL Evidence Review](./postgres-evidence-review.md)
 - [Foundation Review](./review-record.md)
 - [Observe Review](./observe-review-record.md)
 - [Assist Review](./assist-review-record.md)
