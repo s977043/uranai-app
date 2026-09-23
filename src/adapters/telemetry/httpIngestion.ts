@@ -7,6 +7,8 @@ import {
 
 type TelemetryHttpOptions = {
   readonly enabledEnv: string | undefined;
+  readonly abuseControlVerifiedEnv?: string | undefined;
+  readonly deploymentEnv?: string | undefined;
   readonly repositoryFactory: () => TelemetryEvidenceRepository;
 };
 
@@ -14,7 +16,11 @@ export async function handleTelemetryPost(
   request: Request,
   options: TelemetryHttpOptions,
 ): Promise<Response> {
-  const enabled = telemetryIngestionEnabledFromEnv(options.enabledEnv);
+  const enabled = telemetryHttpIngestionEnabled({
+    enabledEnv: options.enabledEnv,
+    abuseControlVerifiedEnv: options.abuseControlVerifiedEnv,
+    deploymentEnv: options.deploymentEnv,
+  });
   if (!enabled) return noContent();
 
   if (!isJsonContentType(request.headers.get("content-type"))) {
@@ -61,6 +67,20 @@ export async function handleTelemetryPost(
     case "unavailable":
       return errorResponse(503, "telemetry_unavailable");
   }
+}
+
+export function telemetryHttpIngestionEnabled(input: {
+  readonly enabledEnv: string | undefined;
+  readonly abuseControlVerifiedEnv?: string | undefined;
+  readonly deploymentEnv?: string | undefined;
+}): boolean {
+  if (!telemetryIngestionEnabledFromEnv(input.enabledEnv)) return false;
+
+  const isSharedVercelSurface =
+    input.deploymentEnv === "preview" || input.deploymentEnv === "production";
+  if (!isSharedVercelSurface) return true;
+
+  return input.abuseControlVerifiedEnv === "true";
 }
 
 type BodyReadResult =
