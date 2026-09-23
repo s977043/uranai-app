@@ -75,6 +75,23 @@ describePostgres("PostgreSQL telemetry evidence integration", () => {
     await pool.end();
   });
 
+  it("invalid Event / ingested_atをDB write前にrejectする", async () => {
+    const invalidEventRecord = {
+      event: { ...started, consultation: "must-not-persist" },
+      ingested_at: "2026-09-15T00:01:00.000Z",
+    } as unknown as TelemetryEvidenceRecord;
+
+    await expect(repository.insert(invalidEventRecord)).rejects.toThrow(
+      "telemetry evidence failed contract validation",
+    );
+    await expect(
+      repository.insert({
+        event: started,
+        ingested_at: "2026-09-15",
+      }),
+    ).rejects.toThrow("ingested_at must be canonical ISO-8601");
+  });
+
   it("insert → ingested_at window export → existing metric aggregationを再現する", async () => {
     await insertRecord(started, "2026-09-15T00:01:00.000Z");
     await insertRecord(completed, "2026-09-15T00:01:01.000Z");
