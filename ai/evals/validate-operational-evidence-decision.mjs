@@ -56,6 +56,10 @@ assert(
   contract.storage?.browser_direct_write === false,
   "operational evidence: browser direct DB writes are prohibited",
 );
+assert(
+  contract.storage?.production_tls_verification_required === true,
+  "operational evidence: production PostgreSQL must require explicit TLS verification review",
+);
 
 assert(
   contract.ingestion?.server_route === "/api/telemetry",
@@ -166,6 +170,12 @@ if (contract.storage.provider_contract_verified) {
     "operational evidence: provider contract verification requires selected provider and ref",
   );
 }
+if (contract.storage.tls_verification_verified) {
+  assert(
+    nonEmptyString(contract.storage.tls_verification_ref),
+    "operational evidence: verified production TLS requires evidence ref",
+  );
+}
 if (contract.storage.provisioned) {
   assert(
     contract.storage.provider !== null,
@@ -248,6 +258,12 @@ const facts = {
     contract.storage.provisioned === true &&
     nonEmptyString(contract.storage.provisioning_ref) &&
     nonEmptyString(contract.storage.evidence_source_ref),
+  storage_tls_verification_verified:
+    contract.storage.production_tls_verification_required === true &&
+    verified(
+      contract.storage.tls_verification_verified,
+      contract.storage.tls_verification_ref,
+    ),
   environment_separation_verified:
     contract.environments.preview_production_credentials_separate === true &&
     contract.environments.preview_may_write_production === false &&
