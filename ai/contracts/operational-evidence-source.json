@@ -13,13 +13,23 @@
     "protocol": "postgresql",
     "connection_env": "DATABASE_URL",
     "provider": null,
-    "candidate_providers": ["neon", "supabase"],
+    "candidate_providers": [
+      "neon",
+      "supabase"
+    ],
     "provider_contract_verified": false,
     "provider_contract_verification_ref": null,
     "provisioned": false,
     "provisioning_ref": null,
     "evidence_source_ref": null,
-    "browser_direct_write": false
+    "browser_direct_write": false,
+    "local_adapter_implemented": true,
+    "local_adapter_ref": "src/adapters/telemetry/postgresEvidenceRepository.ts",
+    "migration_ref": "db/migrations/0001_create_telemetry_evidence.sql",
+    "rollback_ref": "db/migrations/0001_create_telemetry_evidence.down.sql",
+    "production_tls_verification_required": true,
+    "tls_verification_verified": false,
+    "tls_verification_ref": null
   },
   "ingestion": {
     "server_route": "/api/telemetry",
@@ -36,7 +46,11 @@
     "abuse_control_verified": false,
     "abuse_control_ref": null,
     "operational": false,
-    "verification_ref": null
+    "verification_ref": null,
+    "route_implemented": true,
+    "route_ref": "src/app/api/telemetry/route.ts",
+    "abuse_control_enable_env": "TELEMETRY_ABUSE_CONTROL_VERIFIED",
+    "shared_surface_fail_closed": true
   },
   "privacy": {
     "identity_scope": "session_only",
@@ -62,10 +76,16 @@
     "query_export_reproducible": false,
     "query_export_ref": null,
     "data_quality_review_complete": false,
-    "data_quality_ref": null
+    "data_quality_ref": null,
+    "operations_ref": "docs/ai-native/telemetry-evidence-operations.md",
+    "local_integration_verified": true,
+    "local_integration_ref": "github-actions:run/35818293842#PostgreSQL-integration"
   },
   "operational_gate": {
     "status": "blocked",
-    "blocking_issues": ["issue:#15", "issue:#39"]
+    "blocking_issues": [
+      "issue:#15",
+      "issue:#39"
+    ]
   }
 }

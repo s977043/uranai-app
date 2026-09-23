@@ -261,7 +261,7 @@ metric:helpful_feedback_rate: partial
 
 Lovabilityはproxy reviewまで。actual User Observation / Retention / MLP Release readinessは未検証。
 
-## Operational Evidence Decision — Phase A 🚧
+## Operational Evidence — Phase A/B complete, Phase C 🚧
 
 Tracking: #15 / #39
 
@@ -283,18 +283,29 @@ Preview → Production DB write: prohibited
 Telemetry failure: fail-open for Product Value Flow
 ```
 
-Phase Aは有料resourceを作らない。現在の正しいmachine stateは`operational_gate.status = blocked`。
+Completed:
+- Phase A Decision Gate: PR #43
+- Phase B provider-neutral ingestion core: PR #45
 
-次にprovider-neutral server ingestion / PostgreSQL persistence / provider provisioning / shared-surface E2Eを順に進める。
+Phase C / PR #47:
+- PostgreSQL migration / rollback
+- provider-neutral `pg` adapter
+- `/api/telemetry` route
+- local PostgreSQL 16 integration
+- `ingested_at` based query / retention
+- shared Vercel surface fail-closed guard
+
+Phase Cはlocal operational contractの検証であり、central managed EvidenceやShared Surfaceを証明しない。
+現在の正しいmachine stateは`operational_gate.status = blocked`。
 
 ## Current next gates
 
 ```text
-Phase A Deployment + Evidence Decision
+Phase A Deployment + Evidence Decision ✅
   ↓
-Provider-neutral server ingestion
+Phase B Provider-neutral server ingestion ✅
   ↓
-PostgreSQL persistence / query / deletion
+Phase C PostgreSQL persistence / query / deletion ← current
   ↓
 Vercel Pro + DB provider provisioning
   ↓
@@ -324,8 +335,10 @@ Controlled Autonomy
 - Iteration 4.7 Reading Vertical Slice + instrumentation: Issue #33 / PR #35 — 完了
 - Execution Receipt hardening: Issue #40 / PR #41 — 完了
 - 数秘術 deterministic domain: PR #42 — 完了
-- Deployment / Evidence Decision: #15 / #39 — Phase A実装中
-- Operational central Evidence source: blocked until ingestion/storage/provisioning
+- Deployment / Evidence Decision: #15 / #39 — Phase A完了
+- Server ingestion core: #44 / PR #45 — 完了
+- PostgreSQL local persistence + route: #46 / PR #47 — Phase C review中
+- Operational central Evidence source: blocked until managed provisioning/shared E2E
 - Manual Real Pilot: blocked
 - Iteration 5 Controlled Autonomy: **blocked until Manual Real Pilot evidence exists**
 
