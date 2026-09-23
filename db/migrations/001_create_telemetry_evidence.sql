@@ -2,7 +2,7 @@
 -- Product telemetry is validated by validateTelemetryEvent before persistence.
 -- anonymous_visitor_id is intentionally not stored because the first pilot contract fixes it to null.
 
-CREATE TABLE IF NOT EXISTS telemetry_evidence (
+CREATE TABLE telemetry_evidence (
   id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   event_name text NOT NULL
     CHECK (event_name IN (
@@ -19,11 +19,11 @@ CREATE TABLE IF NOT EXISTS telemetry_evidence (
     CHECK (jsonb_typeof(properties -> 'reading_flow_id') = 'string')
 );
 
-CREATE INDEX IF NOT EXISTS telemetry_evidence_ingested_at_idx
+CREATE INDEX telemetry_evidence_ingested_at_idx
   ON telemetry_evidence (ingested_at, id);
 
-CREATE INDEX IF NOT EXISTS telemetry_evidence_session_ingested_at_idx
+CREATE INDEX telemetry_evidence_session_ingested_at_idx
   ON telemetry_evidence (anonymous_session_id, ingested_at, id);
 
-CREATE INDEX IF NOT EXISTS telemetry_evidence_flow_ingested_at_idx
+CREATE INDEX telemetry_evidence_flow_ingested_at_idx
   ON telemetry_evidence ((properties ->> 'reading_flow_id'), ingested_at, id);
