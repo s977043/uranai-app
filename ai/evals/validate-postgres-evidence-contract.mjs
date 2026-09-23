@@ -40,6 +40,8 @@ assert(contract.storage?.migration_ref === "db/migrations/0001_create_telemetry_
 assert(contract.storage?.rollback_ref === "db/migrations/0001_create_telemetry_evidence.down.sql", "postgres evidence: rollback ref mismatch");
 assert(contract.ingestion?.route_implemented === true, "postgres evidence: route must be tracked");
 assert(contract.ingestion?.route_ref === "src/app/api/telemetry/route.ts", "postgres evidence: route ref mismatch");
+assert(contract.ingestion?.abuse_control_enable_env === "TELEMETRY_ABUSE_CONTROL_VERIFIED", "postgres evidence: abuse-control activation env mismatch");
+assert(contract.ingestion?.shared_surface_fail_closed === true, "postgres evidence: shared surface must fail closed before abuse-control verification");
 assert(contract.evidence?.operations_ref === "docs/ai-native/telemetry-evidence-operations.md", "postgres evidence: operations ref mismatch");
 assert(typeof contract.evidence?.local_integration_verified === "boolean", "postgres evidence: local integration flag must be boolean");
 if (contract.evidence.local_integration_verified) {
@@ -76,10 +78,13 @@ for (const forbidden of [
 assert(rollback.includes("DROP TABLE IF EXISTS telemetry_evidence"), "postgres evidence: rollback must drop telemetry table");
 assert(route.includes('export const runtime = "nodejs"'), "postgres evidence: route must use Node.js runtime");
 assert(route.includes("TELEMETRY_INGESTION_ENABLED"), "postgres evidence: route must use the explicit ingestion gate");
+assert(route.includes("TELEMETRY_ABUSE_CONTROL_VERIFIED"), "postgres evidence: route must require abuse-control gate on shared surfaces");
+assert(route.includes("VERCEL_ENV"), "postgres evidence: route must distinguish Vercel shared surfaces");
 assert(repository.includes("ingested_at >= $1::timestamptz"), "postgres evidence: export window must use ingested_at");
 assert(repository.includes("DELETE FROM telemetry_evidence WHERE ingested_at < $1::timestamptz"), "postgres evidence: deletion must use ingested_at");
 assert(operations.includes("30-day retention"), "postgres evidence: retention runbook missing");
 assert(envExample.includes("TELEMETRY_INGESTION_ENABLED=false"), "postgres evidence: ingestion must default off in env example");
+assert(envExample.includes("TELEMETRY_ABUSE_CONTROL_VERIFIED=false"), "postgres evidence: abuse-control activation must default off");
 
 console.log(
   `✓ PostgreSQL evidence contract: route=implemented, local_integration=${contract.evidence.local_integration_verified}, operational=blocked`,
