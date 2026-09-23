@@ -26,7 +26,10 @@
     "local_adapter_implemented": true,
     "local_adapter_ref": "src/adapters/telemetry/postgresEvidenceRepository.ts",
     "migration_ref": "db/migrations/0001_create_telemetry_evidence.sql",
-    "rollback_ref": "db/migrations/0001_create_telemetry_evidence.down.sql"
+    "rollback_ref": "db/migrations/0001_create_telemetry_evidence.down.sql",
+    "production_tls_verification_required": true,
+    "tls_verification_verified": false,
+    "tls_verification_ref": null
   },
   "ingestion": {
     "server_route": "/api/telemetry",
