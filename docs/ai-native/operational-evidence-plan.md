@@ -1,6 +1,6 @@
 # Operational Evidence Source — Execution Plan
 
-Tracking: #15, #39, #44  
+Tracking: #15, #39, #44, #46  
 Decision: [`operational-evidence-adr.md`](./operational-evidence-adr.md)
 
 ## Objective
@@ -20,9 +20,9 @@ Helpful Feedback Rate                 partial
 Execution Receipt hardening           ✅
 Deployment/Evidence Decision          ✅ Phase A / PR #43
 
-Server ingestion core                 ← Phase B / #44
-Public API route                       🔒 Phase C
-Central PostgreSQL Evidence            🔒 Phase C
+Server ingestion core                 ✅ Phase B / #44 / PR #45
+PostgreSQL persistence + API route     ← Phase C / #46 / PR #48
+Central operational Evidence           🔒 Phase D/E
 Shared surface E2E                    🔒
 Metric observable                     🔒
 Actual User Observation               🔒
@@ -95,6 +95,18 @@ TelemetryEvidenceRepository port
 
 Next.js route compositionはPhase CでPostgreSQL adapterと同時に接続する。Decision Contractのtarget path `/api/telemetry` は維持する。
 
+### Change 9: Phase C driverをPostgres.jsへ変更
+
+Issue #46作成時は`pg`を第一候補にしたが、Phase Cで必要なのは小さなPostgreSQL adapterだけ。Postgres.js (`postgres` 3.4.9) はruntime dependency 0で`DATABASE_URL` / parameterized query / TypeScriptを満たすため、依存面積を小さくできる。
+
+Provider contractは引き続きPostgreSQL / `DATABASE_URL`であり、Postgres.js固有型をDomain / APIへ露出しない。
+
+### Change 10: null固定identityは保存しない
+
+`anonymous_visitor_id` はfirst pilotで常に`null`のためDB列を作らない。Evidence export時に`null`を復元する。
+
+これによりcross-session identityを先取りしない。
+
 ## Phase A — Decision / Contract ✅
 
 PR #43 / merge `4e2fa6b`
@@ -120,9 +132,9 @@ Completed:
 
 Phase A完了後も`operational_gate.status = blocked`が正しい。
 
-## Phase B — Provider-neutral server ingestion core 🚧
+## Phase B — Provider-neutral server ingestion core ✅
 
-Tracking: #44
+Tracking: #44 / PR #45 / merge `5c509ef`
 
 Target files:
 
@@ -148,8 +160,8 @@ Requirements:
 - [x] Evidence record APIにIP / User-Agent / headersを持たせない
 - [x] machine contractへcore implementation refsを記録
 - [x] dedicated CI validator
-- [ ] 7視点レビュー
-- [ ] final CI / PR merge
+- [x] 7視点レビュー
+- [x] final CI / PR merge
 
 Intentional scope out in Phase B:
 
@@ -161,30 +173,38 @@ Intentional scope out in Phase B:
 
 `ingestion.operational=false` / `operational_gate.status=blocked`を維持する。
 
-## Phase C — PostgreSQL persistence + route composition
+## Phase C — PostgreSQL persistence + route composition 🚧
 
-Requirements:
+Tracking: #46 / PR #48
 
-- [ ] minimal telemetry table
-- [ ] idempotency / duplicate semanticsを定義
-- [ ] server-generated `ingested_at`
-- [ ] `occurred_at` / `ingested_at`の役割を分離
-- [ ] query windowは`ingested_at`基準
-- [ ] same-flow ordering / DQは`occurred_at`を利用
-- [ ] session / flow / event name query
-- [ ] existing domain aggregationへ戻せるexport
-- [ ] `ingested_at < now - 30 days` deletion query / runbook
-- [ ] migration strategy
-- [ ] local PostgreSQL integration test
-- [ ] provider-neutral PostgreSQL adapter
-- [ ] `/api/telemetry` route composition
-- [ ] routeでbody readを16 KiB以内に制御
-- [ ] HTTP status mappingを固定
-- [ ] `TELEMETRY_INGESTION_ENABLED=false`でpersistent writeしない
-- [ ] raw request bodyをapplication logへ出さない
-- [ ] Preview / Production credential separation contract
+Completed / implemented:
 
-### Minimal stored columns
+- [x] Postgres.js 3.4.9 / `DATABASE_URL` provider-neutral adapter
+- [x] minimal `telemetry_evidence` migration + destructive rollback
+- [x] migrationはschema driftを隠す`IF NOT EXISTS`を使わない
+- [x] server-generated `ingested_at`
+- [x] central query window / retentionを`ingested_at`基準に固定
+- [x] same-flow ordering / Data Qualityは`occurred_at`
+- [x] session / reading-flow / ingestion-window indexes
+- [x] raw duplicate Evidenceを保持
+- [x] bounded export: max 5,000 events
+- [x] existing metric aggregationへ`ProductTelemetryEvent[]`を復元
+- [x] 30日retention count / delete + Human Gate runbook
+- [x] `POST /api/telemetry` Node.js route
+- [x] disabled時はbody / DB connectionを取得しない
+- [x] `application/json` only
+- [x] Content-Length early reject + streamed 16 KiB cap
+- [x] invalid / oversized / unavailable HTTP mapping
+- [x] raw request body / DB errorをresponseへ漏らさない
+- [x] central ingestion default disabled
+- [x] PostgreSQL 16 CI service + integration test
+- [x] insert / query / metric reproduction / duplicate / retention regression
+- [x] malformed direct DB rowの最低限constraint
+- [x] Phase C machine contract validator
+- [ ] 7視点final review
+- [ ] final-head CI Green / merge
+
+### Stored columns
 
 ```text
 id
@@ -193,11 +213,27 @@ event_version
 occurred_at
 ingested_at
 anonymous_session_id
-anonymous_visitor_id (must remain null for first pilot)
 properties (validated JSON)
 ```
 
+`anonymous_visitor_id`はfirst pilotで必ず`null`なので保存せず、export時に`null`を復元する。
+
 Do not add client IP / User-Agent / consultation text / prompt / response。
+
+### Important boundary after Phase C
+
+Public route codeが存在しても、managed runtime/storage・abuse control・environment separationが未検証なので:
+
+```yaml
+ingestion.operational: false
+metric:reading_flow_completion: partial
+metric:helpful_feedback_rate: partial
+Operational Evidence: blocked
+Manual Real Pilot: blocked
+Controlled Autonomy: blocked
+```
+
+Browser Product Flowからcentral endpointへのnetwork sinkもまだ接続しない。
 
 ## Phase D — Provider provisioning / deployment
 

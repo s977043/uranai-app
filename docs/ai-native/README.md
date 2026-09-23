@@ -261,31 +261,43 @@ metric:helpful_feedback_rate: partial
 
 Lovabilityはproxy reviewまで。actual User Observation / Retention / MLP Release readinessは未検証。
 
-## Operational Evidence Decision — Phase A 🚧
+## Operational Evidence Source — Phase A–C 🚧
 
-Tracking: #15 / #39
+Tracking: #15 / #39 / #44 / #46
 
+- Phase A Decision Gate: PR #43 ✅
+- Phase B provider-neutral server ingestion core: PR #45 ✅
+- Phase C PostgreSQL persistence + API route: PR #48 🚧
 - ADR: [`operational-evidence-adr.md`](./operational-evidence-adr.md)
 - Plan: [`operational-evidence-plan.md`](./operational-evidence-plan.md)
+- Operations: [`telemetry-evidence-operations.md`](./telemetry-evidence-operations.md)
 - Machine contract: [`operational-evidence-source.json`](../../ai/contracts/operational-evidence-source.json)
-- CI validator: [`validate-operational-evidence-decision.mjs`](../../ai/evals/validate-operational-evidence-decision.mjs)
 
-Decision:
+Phase C adds:
 
-```text
-Application runtime: Vercel Pro or higher
-Storage contract: PostgreSQL / DATABASE_URL
-DB provider: Neon or Supabase, selected at provision time
-Raw telemetry retention: 30 days
-Identity: session-only
-Browser direct DB write: prohibited
-Preview → Production DB write: prohibited
-Telemetry failure: fail-open for Product Value Flow
+- Postgres.js / `DATABASE_URL` provider-neutral persistence
+- minimized `telemetry_evidence` schema
+- `POST /api/telemetry` with bounded body handling
+- central window/query by server `ingested_at`
+- raw duplicate preservation for Data Quality
+- 30-day retention implementation/runbook
+- PostgreSQL 16 CI integration
+
+Important boundary:
+
+```yaml
+ingestion.operational: false
+metric:reading_flow_completion: partial
+metric:helpful_feedback_rate: partial
+Operational Evidence: blocked
+Manual Real Pilot: blocked
+Controlled Autonomy: blocked
 ```
 
-Phase Aは有料resourceを作らない。現在の正しいmachine stateは`operational_gate.status = blocked`。
-
-次にprovider-neutral server ingestion / PostgreSQL persistence / provider provisioning / shared-surface E2Eを順に進める。
+The API route exists but central ingestion is disabled by default. Browser Product Flow is
+not connected to the central endpoint yet. Managed runtime/storage provisioning,
+environment separation, abuse/cost-control verification, provider Privacy review, and
+shared-surface E2E remain Phase D/E gates.
 
 ## Current next gates
 
@@ -324,8 +336,10 @@ Controlled Autonomy
 - Iteration 4.7 Reading Vertical Slice + instrumentation: Issue #33 / PR #35 — 完了
 - Execution Receipt hardening: Issue #40 / PR #41 — 完了
 - 数秘術 deterministic domain: PR #42 — 完了
-- Deployment / Evidence Decision: #15 / #39 — Phase A実装中
-- Operational central Evidence source: blocked until ingestion/storage/provisioning
+- Deployment / Evidence Decision: #15 / #39 — Phase A完了
+- Server ingestion core: #44 / PR #45 — 完了
+- PostgreSQL Evidence persistence + API route: #46 / PR #48 — Phase C進行中
+- Operational central Evidence source: blocked until provisioning/shared-surface verification
 - Manual Real Pilot: blocked
 - Iteration 5 Controlled Autonomy: **blocked until Manual Real Pilot evidence exists**
 

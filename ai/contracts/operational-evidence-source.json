@@ -13,13 +13,20 @@
     "protocol": "postgresql",
     "connection_env": "DATABASE_URL",
     "provider": null,
-    "candidate_providers": ["neon", "supabase"],
+    "candidate_providers": [
+      "neon",
+      "supabase"
+    ],
     "provider_contract_verified": false,
     "provider_contract_verification_ref": null,
     "provisioned": false,
     "provisioning_ref": null,
     "evidence_source_ref": null,
-    "browser_direct_write": false
+    "browser_direct_write": false,
+    "schema_implemented": true,
+    "schema_ref": "db/migrations/001_create_telemetry_evidence.sql",
+    "adapter_implemented": true,
+    "adapter_ref": "src/adapters/telemetry/postgresEvidenceRepository.ts"
   },
   "ingestion": {
     "server_route": "/api/telemetry",
@@ -36,7 +43,9 @@
     "abuse_control_verified": false,
     "abuse_control_ref": null,
     "operational": false,
-    "verification_ref": null
+    "verification_ref": null,
+    "route_implemented": true,
+    "route_ref": "src/app/api/telemetry/route.ts"
   },
   "privacy": {
     "identity_scope": "session_only",
@@ -50,7 +59,9 @@
     "retention_deletion_verified": false,
     "retention_deletion_ref": null,
     "review_complete": false,
-    "review_ref": null
+    "review_ref": null,
+    "retention_deletion_implemented": true,
+    "retention_deletion_implementation_ref": "docs/ai-native/telemetry-evidence-operations.md"
   },
   "environments": {
     "preview_production_credentials_separate": true,
@@ -62,10 +73,16 @@
     "query_export_reproducible": false,
     "query_export_ref": null,
     "data_quality_review_complete": false,
-    "data_quality_ref": null
+    "data_quality_ref": null,
+    "query_export_implemented": true,
+    "query_export_implementation_ref": "src/adapters/telemetry/postgresEvidenceRepository.ts",
+    "local_integration_test_ref": "src/tests/integration/postgresTelemetryEvidence.integration.test.ts"
   },
   "operational_gate": {
     "status": "blocked",
-    "blocking_issues": ["issue:#15", "issue:#39"]
+    "blocking_issues": [
+      "issue:#15",
+      "issue:#39"
+    ]
   }
 }
