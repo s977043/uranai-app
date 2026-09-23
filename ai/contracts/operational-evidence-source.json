@@ -78,8 +78,8 @@
     "data_quality_review_complete": false,
     "data_quality_ref": null,
     "operations_ref": "docs/ai-native/telemetry-evidence-operations.md",
-    "local_integration_verified": false,
-    "local_integration_ref": null
+    "local_integration_verified": true,
+    "local_integration_ref": "github-actions:run/35818293842#PostgreSQL-integration"
   },
   "operational_gate": {
     "status": "blocked",
