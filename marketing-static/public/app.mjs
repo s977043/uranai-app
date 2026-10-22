@@ -42,7 +42,8 @@ if (typeof document !== "undefined") {
       for (const other of document.querySelectorAll("button[data-theme]")) {
         other.setAttribute("aria-pressed", String(other === button));
       }
-      document.getElementById("sample-result").scrollIntoView({ behavior: "smooth", block: "start" });
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      document.getElementById("sample-result").scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
     });
     button.setAttribute("aria-pressed", "false");
   }
