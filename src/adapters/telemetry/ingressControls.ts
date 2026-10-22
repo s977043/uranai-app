@@ -76,12 +76,10 @@ export class AnonymousTelemetryRateLimiter implements TelemetryRateLimiter {
 
     // Clock rollback must not reset the budget.
     if (current < this.startMs) {
+      // Never emit a huge Retry-After after a system-clock rollback.
       return {
         allowed: false,
-        retryAfterSeconds: Math.max(
-          1,
-          Math.ceil((this.startMs + this.windowMs - current) / 1_000),
-        ),
+        retryAfterSeconds: Math.max(1, Math.ceil(this.windowMs / 1_000)),
       };
     }
 
