@@ -239,7 +239,7 @@ Browser Product Flowからcentral endpointへのnetwork sinkもまだ接続し�
 
 ## Phase C.5 — ingress protection before public provisioning
 
-Tracking: #49. This phase is testable without paid resources.
+Tracking: #49 / PR #51. This phase is testable without paid resources. Review: [telemetry-ingress-guard-review.md](./telemetry-ingress-guard-review.md).
 
 - Shared (including Vercel preview and production) must not enable telemetry merely by changing `TELEMETRY_INGESTION_ENABLED`. Require `TELEMETRY_SHARED_INGRESS_APPROVED=true` from the human owner **in addition** to ingestion flag.
 - Anonymous instance-local fixed window budget: 60 requests/60 seconds per app process, including invalid payloads. Return `429` with `Retry-After` before reading request bodies or acquiring DB resources when exceeded.
