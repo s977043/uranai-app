@@ -1,0 +1,35 @@
+name: Bug report
+description: 再現可能な不具合を報告する（脆弱性・秘密情報は公開しない）
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: "Security/Privacy問題の詳細は公開しないでください。SECURITY.mdの非公開報告手順を参照してください。"
+  - type: textarea
+    id: description
+    attributes:
+      label: 現象
+      description: 実際に起きたことと期待することを記載してください。
+      placeholder: 何が起き、何を期待しましたか？
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 最小再現手順
+      description: APIキーや相談全文を含めないでください。
+    validations:
+      required: true
+  - type: input
+    id: revision
+    attributes:
+      label: 対象バージョン・commit
+      placeholder: commit SHA または branch
+    validations:
+      required: false
+  - type: textarea
+    id: verification
+    attributes:
+      label: テスト結果・ログ（秘密情報を削除）
+    validations:
+      required: false
