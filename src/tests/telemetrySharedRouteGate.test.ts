@@ -6,6 +6,7 @@ describe("telemetry shared-route fail-closed regression", () => {
     enabled: process.env.TELEMETRY_INGESTION_ENABLED,
     approval: process.env.TELEMETRY_SHARED_INGRESS_APPROVED,
     vercelEnv: process.env.VERCEL_ENV,
+    databaseUrl: process.env.DATABASE_URL,
   };
 
   afterEach(() => {
@@ -17,6 +18,9 @@ describe("telemetry shared-route fail-closed regression", () => {
 
     if (before.vercelEnv === undefined) delete process.env.VERCEL_ENV;
     else process.env.VERCEL_ENV = before.vercelEnv;
+
+    if (before.databaseUrl === undefined) delete process.env.DATABASE_URL;
+    else process.env.DATABASE_URL = before.databaseUrl;
   });
 
   it("does not touch DB even if ingress=true when shared approval is absent", async () => {
