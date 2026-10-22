@@ -1,4 +1,5 @@
 import type { TelemetryEvidenceRepository } from "@/adapters/telemetry/evidenceRepository";
+import { AnonymousTelemetryRateLimiter, type TelemetryRateLimiter } from "@/adapters/telemetry/ingressControls";
 import {
   ingestTelemetryBody,
   MAX_TELEMETRY_REQUEST_BYTES,
@@ -6,8 +7,11 @@ import {
 
 type HandlerOptions = {
   readonly enabled: boolean;
+  readonly rateLimiter?: TelemetryRateLimiter;
   readonly repositoryFactory: () => TelemetryEvidenceRepository;
 };
+
+const instanceRateLimiter = new AnonymousTelemetryRateLimiter();
 
 type BodyReadResult =
   | { readonly ok: true; readonly body: string }
@@ -18,6 +22,20 @@ export async function handleTelemetryPost(
   options: HandlerOptions,
 ): Promise<Response> {
   if (!options.enabled) return new Response(null, { status: 204 });
+
+  const limit = (options.rateLimiter ?? instanceRateLimiter).consume();
+  if (!limit.allowed) {
+    return Response.json(
+      { status: "rate_limited" },
+      {
+        status: 429,
+        headers: {
+          "Cache-Control": "no-store",
+          "Retry-After": String(limit.retryAfterSeconds),
+        },
+      },
+    );
+  }
 
   if (!isJsonContentType(request.headers.get("content-type"))) {
     return jsonResponse(415, "unsupported_media_type");
