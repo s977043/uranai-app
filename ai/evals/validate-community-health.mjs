@@ -31,6 +31,11 @@ for (const f of required.filter((p) => p.startsWith(".github/ISSUE_TEMPLATE/")))
   const form = read(f);
   must(form.includes("name:") && form.includes("description:") && form.includes("title:") && form.includes("body:"), "issue form missing required keys: " + f);
   must(form.includes("validations:") && form.includes("required: true"), "issue form needs required field: " + f);
+  const ids = [...form.matchAll(/^\s+id:\s+([a-z][a-z0-9-]*)\s*$/gm)].map((match) => match[1]);
+  must(ids.length > 0, "issue form needs field ids: " + f);
+  must(new Set(ids).size === ids.length, "issue form duplicate field ids: " + f);
+  const fields = [...form.matchAll(/^\s+- type:\s+(input|textarea|markdown)\s*$/gm)];
+  must(fields.length > 0, "issue form needs supported field types: " + f);
 }
 const bot = read(".github/dependabot.yml");
 must(bot.includes("package-ecosystem: npm") && bot.includes("package-ecosystem: github-actions"), "missing dependency ecosystems");
