@@ -59,10 +59,15 @@ export class AnonymousTelemetryRateLimiter implements TelemetryRateLimiter {
   }
 
   consume(): RateLimitDecision {
-    const current = this.now();
+    let current: number;
+    try {
+      current = this.now();
+    } catch {
+      return { allowed: false, retryAfterSeconds: 1 };
+    }
 
     // Clock failure must deny requests, never silently remove the limit.
-    if (!Number.isFinite(current)) {
+    if (!Number.isSafeInteger(current)) {
       return { allowed: false, retryAfterSeconds: 1 };
     }
 
