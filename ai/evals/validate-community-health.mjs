@@ -34,6 +34,7 @@ for (const f of required.filter((p) => p.startsWith(".github/ISSUE_TEMPLATE/")))
   const form = read(f);
   must(form.includes("name:") && form.includes("description:") && form.includes("title:") && form.includes("body:"), "issue form missing required keys: " + f);
   must(form.includes("validations:") && form.includes("required: true"), "issue form needs required field: " + f);
+  must(form.includes("SECURITY.md"), "issue form must refer sensitive vulnerability reports to SECURITY.md: " + f);
   const ids = [...form.matchAll(/^\s+id:\s+([a-z][a-z0-9-]*)\s*$/gm)].map((match) => match[1]);
   must(ids.length > 0, "issue form needs field ids: " + f);
   must(new Set(ids).size === ids.length, "issue form duplicate field ids: " + f);
