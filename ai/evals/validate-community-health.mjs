@@ -23,6 +23,9 @@ must(contributing.includes("AGENTS.md") && contributing.includes("npm run verify
 must(contributing.includes("SECURITY.md") && contributing.includes("overrides"), "privacy/dependency review guidance missing");
 const security = read("SECURITY.md");
 must(security.includes("Report a vulnerability") && security.includes("公開Issue"), "private vulnerability reporting guidance missing");
+must(security.includes("main") && security.includes("SLA"), "security support scope / response guarantees unclear");
+const conduct = read("CODE_OF_CONDUCT.md");
+must(conduct.includes("プライバシー") && conduct.includes("再審査"), "conduct policy lacks privacy or fair enforcement");
 const pr = read(".github/pull_request_template.md");
 for (const section of ["目的", "仕様", "変更点", "影響範囲", "ロールバック", "スクリーンショット", "npm run verify"]) {
   must(pr.includes(section), "PR template is missing AGENTS.md §6 requirement: " + section);
