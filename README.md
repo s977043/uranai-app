@@ -36,6 +36,14 @@ npm run dev          # http://localhost:3000
 
 `eval:contracts` はモデル出力品質そのものを採点するものではありません。`ai/evals/` のfixture構造や必須のSafety/Evidence期待値を機械検証し、意味品質は `ai/evals/review-rubric.md` に基づくレビューで確認します。
 
+## Cloudflare Free 向けの静的サンプル（未公開）
+
+[marketing-static](./marketing-static/README.md) は、既存のNext.jsアプリ/PostgreSQLとは独立した、固定の内省カードの**ソース検証用**ディレクトリです。Workers Static Assetsでの将来の運用を検討していますが、現在は公開・デプロイの承認を受けていません。
+
+- コストを伴うAI生成、DOB/相談内容の収集、フォーム送信、決済、アクセス計測はありません。
+- `node --test marketing-static/tests/*.test.mjs` は `npm run verify` に統合済みです。
+- [3ループレビュー証跡](./marketing-static/REVIEW.md)を参照し、公開前に別途Human approval/実環境E2Eが必要です。
+
 ## Docker で起動する場合
 
 ```bash
