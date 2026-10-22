@@ -1,0 +1,34 @@
+name: Feature request
+description: ユーザー価値と検証条件を明確にした改善案
+title: "[Feature] "
+body:
+  - type: markdown
+    attributes:
+      value: "個人情報・相談全文・秘密情報を投稿しないでください。脆弱性の詳細はSECURITY.mdの非公開報告手順を参照してください。"
+  - type: textarea
+    id: user-problem
+    attributes:
+      label: 解決したいユーザーの課題
+      description: 誰の何を良くする提案ですか？個人情報は記載しないでください。
+    validations:
+      required: true
+  - type: textarea
+    id: hypothesis
+    attributes:
+      label: Experience Hypothesis / 最小Vertical Slice
+      description: 最小実装とLovability観察の仮説を記載してください。
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 検証可能な受入条件・安全条件
+      description: 回帰テストとHuman Gateを含めてください。
+    validations:
+      required: true
+  - type: textarea
+    id: non-goals
+    attributes:
+      label: 今回含めないこと
+    validations:
+      required: false

@@ -1,0 +1,26 @@
+name: Documentation
+description: ドキュメントの不足・誤記・整合性の改善
+title: "[Docs] "
+body:
+  - type: markdown
+    attributes:
+      value: "個人情報・相談全文・秘密情報を投稿しないでください。脆弱性の詳細はSECURITY.mdの非公開報告手順を参照してください。"
+  - type: input
+    id: target
+    attributes:
+      label: 対象文書・リンク
+      placeholder: docs/ または README のパス
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: 現在の問題
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 修正案・検証方法
+    validations:
+      required: true
