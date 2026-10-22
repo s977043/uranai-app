@@ -299,6 +299,12 @@ not connected to the central endpoint yet. Managed runtime/storage provisioning,
 environment separation, abuse/cost-control verification, provider Privacy review, and
 shared-surface E2E remain Phase D/E gates.
 
+## Telemetry ingress protection — Phase C.5
+
+- Issue #49: shared-surface fail-closed activation, anonymous per-instance request budget, explicit env controls, unit/route regression and CI validator.
+- Per-instance guard is only local defense-in-depth, not verified global abuse prevention, cost cap, or operational Evidence.
+- Do not advance observability until managed/shared E2E and production protections are actually verified.
+
 ## Current next gates
 
 ```text

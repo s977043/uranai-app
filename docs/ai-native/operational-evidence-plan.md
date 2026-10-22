@@ -21,7 +21,8 @@ Execution Receipt hardening           ✅
 Deployment/Evidence Decision          ✅ Phase A / PR #43
 
 Server ingestion core                 ✅ Phase B / #44 / PR #45
-PostgreSQL persistence + API route     ← Phase C / #46 / PR #48
+PostgreSQL persistence + API route     ✅ Phase C / #46 / PR #48
+Telemetry ingress local hardening       ← Phase C.5 / #49
 Central operational Evidence           🔒 Phase D/E
 Shared surface E2E                    🔒
 Metric observable                     🔒
@@ -234,6 +235,19 @@ Controlled Autonomy: blocked
 ```
 
 Browser Product Flowからcentral endpointへのnetwork sinkもまだ接続しない。
+
+
+## Phase C.5 — ingress protection before public provisioning
+
+Tracking: #49 / PR #51. This phase is testable without paid resources. Review: [telemetry-ingress-guard-review.md](./telemetry-ingress-guard-review.md).
+
+- Shared (including Vercel preview and production) must not enable telemetry merely by changing `TELEMETRY_INGESTION_ENABLED`. Require `TELEMETRY_SHARED_INGRESS_APPROVED=true` from the human owner **in addition** to ingestion flag.
+- Anonymous instance-local fixed window budget: 60 requests/60 seconds per app process, including invalid payloads. Return `429` with `Retry-After` before reading request bodies or acquiring DB resources when exceeded.
+- No IP, User-Agent, durable user ID, tracking cookie, or persistent rate-limit table is added.
+- A local budget is **not global per-project throttling or a spend ceiling**. Scaling, cold starts, distributed abuse, cloud provider logs, and direct endpoint attacks remain Phase D/E review items.
+- The config activation fence is **not** proof of verified edge enforcement. The Operational Evidence machine Contract keeps `abuse_control_verified=false` and `operational=false`. Do not set production approval until edge protection, cost alerts, runbooks and failure tests are independently verified.
+- `NODE_ENV=production` is gated even for non-Vercel runtime; `VERCEL_ENV` preview/production also gates. Local/test requires explicit ingestion flag.
+- Phase C.5 exit requires three validate/review/fix/re-review cycles, final head CI Green and PR merge.
 
 ## Phase D — Provider provisioning / deployment
 

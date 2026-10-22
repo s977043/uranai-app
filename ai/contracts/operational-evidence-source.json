@@ -45,7 +45,15 @@
     "operational": false,
     "verification_ref": null,
     "route_implemented": true,
-    "route_ref": "src/app/api/telemetry/route.ts"
+    "route_ref": "src/app/api/telemetry/route.ts",
+    "instance_local_budget_implemented": true,
+    "instance_local_budget_ref": "src/adapters/telemetry/ingressControls.ts",
+    "instance_request_limit_per_minute": 60,
+    "shared_activation_env": "TELEMETRY_SHARED_INGRESS_APPROVED",
+    "shared_activation_guard_implemented": true,
+    "shared_activation_guard_ref": "src/adapters/telemetry/ingressControls.ts",
+    "production_edge_abuse_control_verified": false,
+    "production_edge_abuse_control_ref": null
   },
   "privacy": {
     "identity_scope": "session_only",
