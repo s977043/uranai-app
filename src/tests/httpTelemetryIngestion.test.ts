@@ -185,6 +185,24 @@ describe("telemetry HTTP ingestion", () => {
     expect(factoryCalls).toBe(2);
   });
 
+  it("charges invalid payloads to the local budget without acquiring DB", async () => {
+    const limiter = new AnonymousTelemetryRateLimiter(() => 1_000, 1);
+    let factoryCalls = 0;
+    const options = {
+      enabled: true,
+      rateLimiter: limiter,
+      repositoryFactory: () => {
+        factoryCalls += 1;
+        return new InMemoryTelemetryEvidenceRepository();
+      },
+    };
+    const malformed = await handleTelemetryPost(jsonRequest("{not-json"), options);
+    const blocked = await handleTelemetryPost(jsonRequest(JSON.stringify(validEvent)), options);
+    expect(malformed.status).toBe(400);
+    expect(blocked.status).toBe(429);
+    expect(factoryCalls).toBe(0);
+  });
+
   it("contains repository failures behind a generic 503", async () => {
     const response = await handleTelemetryPost(
       jsonRequest(JSON.stringify(validEvent)),
@@ -249,7 +267,7 @@ describe("shared runtime activation guard", () => {
     expect(limiter.consume()).toEqual({ allowed: true });
     expect(limiter.consume()).toEqual({ allowed: false, retryAfterSeconds: 60 });
     now = -1;
-    expect(limiter.consume().allowed).toBe(false);
+    expect(limiter.consume()).toEqual({ allowed: false, retryAfterSeconds: 60 });
     now = Number.NaN;
     expect(limiter.consume()).toEqual({ allowed: false, retryAfterSeconds: 1 });
   });
