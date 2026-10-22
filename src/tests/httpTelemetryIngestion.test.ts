@@ -220,6 +220,15 @@ describe("shared runtime activation guard", () => {
     })).toBe(false);
   });
 
+  it("fails closed for unknown runtimes and preview overriding local NODE_ENV", () => {
+    expect(telemetryIngressEnabled({
+      enabled: "true", sharedApproved: undefined, nodeEnv: undefined, vercelEnv: undefined,
+    })).toBe(false);
+    expect(telemetryIngressEnabled({
+      enabled: "true", sharedApproved: undefined, nodeEnv: "development", vercelEnv: "preview",
+    })).toBe(false);
+  });
+
   it("blocks production on non-Vercel platforms too", () => {
     expect(telemetryIngressEnabled({
       enabled: "true", sharedApproved: undefined, nodeEnv: "production", vercelEnv: undefined,
