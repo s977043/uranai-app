@@ -35,7 +35,7 @@ Three sequential **role-based review / fix / re-review passes by one assistant**
 
 ## Loop 3 — Reliability / FinOps / launch safety
 
-**Verification:** GitHub [CI 39758828666](https://github.com/s977043/uranai-app/actions/runs/39758828666) completed **success** at commit `cea44cf36706e247d27f344481d615d3ec43a2fa`. The public app repo CI provides the root npm validations. Its result covers the implementation head before this review file was added; do not misstate it as final-head proof.
+**Verification:** GitHub [CI 39758828666](https://github.com/s977043/uranai-app/actions/runs/39758828666) completed **success** at commit `cea44cf36706e247d27f344481d615d3ec43a2fa`. The existing CI ran lint, typecheck, Vitest, PostgreSQL integration, AI contracts and build, but **did not run the new marketing-static Node tests**, because CI does not invoke the root `npm run verify`. A successful prior CI run was therefore **insufficient for the new feature**. This was a blocking coverage finding discovered during the third review.
 
 Visual smoke: local offline copies of `index.html` / `styles.css` / `app.mjs` were checked against their Git blob SHAs (`abae5027`, `3f8cb1ee`, `55544012`). Environment policy blocked `file://` and loopback browser navigation, so the exact source was injected via Playwright `page.set_content` and `add_style_tag/add_script_tag` into an isolated Chromium document; this **checks layout and client interactions, not deployment/network/CSP headers**.
 
@@ -43,11 +43,11 @@ Visual smoke: local offline copies of `index.html` / `styles.css` / `app.mjs` we
 - Mobile 390×844: same checks: PASS.
 - Exact-source screenshots generated for user review **outside Git**; PR media attachment / independent QA approval remains pending.
 
-**SRE finding:** source-level protections do not guarantee that headers, noindex, real account-scoped Free quotas and isolated hostname work on a deployed URL. No automatic Worker deployment or unwanted route should occur in a code-only PR.
+**SRE finding:** source-level protections do not guarantee that headers, noindex, real account-scoped Free quotas and isolated hostname work on a deployed URL. **CI coverage finding (HIGH):** `npm run verify` was updated, but the hosted CI calls individual scripts and therefore omitted `npm run test:marketing`. No automatic Worker deployment or unwanted route should occur in a code-only PR.
 
-**Fix:** record source-only rollout/rollback gates, per-stage limitations, account read-only inventory, model cost = zero *for this exact page only*, CDN verification and public-approval stop conditions in `README.md`. No automatic `wrangler deploy` script, provider credentials, new Next.js framework adaptation or model API added.
+**Fix:** explicitly add a hosted CI `Marketing static contract` step running `npm run test:marketing` ([commit `34364e0afe016c43f39a064877f89b7e6afcea5d`](https://github.com/s977043/uranai-app/commit/34364e0afe016c43f39a064877f89b7e6afcea5d)); record source-only rollout/rollback gates, stage limitations, account inventory, model cost = zero *for this exact page only*, CDN verification and public-approval conditions. No automatic `wrangler deploy`, credentials or paid/model API added.
 
-**Re-review:** this PR changes only non-executable marketing files and the root verify script; production ADR, Codex evaluation and paid offer remain unchanged. **Source-level design PASS. Hosting/billing/brand/legal and actual Cloudflare deployment: NOT VERIFIED / NOT AUTHORIZED.**
+**Re-review:** this PR changes only marketing source, documentation, the root verify script and a **required CI test step**; production ADR, Codex evaluation and paid offer remain unchanged. **Source-level design PASS. Hosting/billing/brand/legal and actual Cloudflare deployment: NOT VERIFIED / NOT AUTHORIZED.**
 
 ### Final-head CI / merge control
 
@@ -55,7 +55,7 @@ A merge is authorized only if: final-head `npm run verify` is green on the curre
 
 ## Outstanding evidence and dependencies
 
-- [ ] Current-head CI after review-record edit: check status and exact SHA (earlier 39758828666 was green).
+- [ ] **Final-head hosted CI that executes `npm run test:marketing`**, plus all existing checks, passing at exact reviewed SHA. Earlier run 39758828666 was green but did **not** execute the new suite.
 - [ ] Attach reviewed screenshots to GitHub PR for future collaborators (local snapshot rendered, not yet uploaded).
 - [ ] Independent external agent/human review (not claimed).
 - [ ] Public launch approval for draft brand/claims/privacy/SEO/worker hostname.
