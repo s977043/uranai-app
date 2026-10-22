@@ -38,6 +38,8 @@ test("static UI is non-submitting, Japanese, accessible and clearly marked a sam
   assert.match(html, /個別鑑定、カードの抽選、未来予測は行いません/);
   assert.match(html, /選択内容は送信・保存されません/);
   assert.equal((html.match(/type="button" data-theme=/g) || []).length, 3);
+  assert.equal((html.match(/aria-pressed="false"/g) || []).length, 3);
+  assert.match(html, /<noscript>/);
   assert.doesNotMatch(html, /<(form|input|textarea|iframe)\b/i);
   assert.doesNotMatch(html, /<script[^>]+src="https?:\/\//i);
   assert.doesNotMatch(html, /\b(¥1,980|購入|お申し込み|送料無料)\b/);
@@ -49,6 +51,8 @@ test("no model, telemetry, persistence, storage or network calls exist in site c
   const html = await read("../public/index.html");
   assert.doesNotMatch(js, /\b(fetch|XMLHttpRequest|sendBeacon|WebSocket|localStorage|sessionStorage)\b/);
   assert.doesNotMatch(js, /document\.cookie|navigator\.serviceWorker|innerHTML/);
+  assert.match(js, /prefers-reduced-motion/);
+  assert.match(js, /behavior: reducedMotion \? "auto" : "smooth"/);
   assert.doesNotMatch(html, /<link[^>]+href="https?:\/\//);
   assert.doesNotMatch(html + js, /OPENAI_API_KEY|DATABASE_URL|TELEMETRY_INGESTION_ENABLED/);
 });
