@@ -26,7 +26,7 @@ assert(contract.ingestion.production_edge_abuse_control_verified === false, "edg
 assert(contract.ingestion.operational === false, "telemetry must remain non-operational");
 assert(contract.operational_gate.status === "blocked", "operational gate must remain blocked");
 assert(controls.includes("TELEMETRY_INSTANCE_REQUESTS_PER_MINUTE = 60"), "code rate limit drift");
-assert(controls.includes('input.nodeEnv === "production"'), "production gating required");
+assert(controls.includes('input.nodeEnv === "development"') && controls.includes('input.nodeEnv === "test"'), "explicit local/test only gate required");
 assert(handler.includes("instanceRateLimiter") && handler.includes("status: 429"), "bounded HTTP budget required");
 assert(route.includes("TELEMETRY_SHARED_INGRESS_APPROVED") && route.includes("VERCEL_ENV"), "route must bind platform activation guard");
 assert(env.includes("TELEMETRY_INGESTION_ENABLED=false"), "ingestion must default disabled");
