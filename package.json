@@ -19,8 +19,8 @@
     "test:integration": "vitest run src/tests/integration/postgresTelemetryEvidence.integration.test.ts"
   },
   "dependencies": {
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "next": "15.5.25",
     "postgres": "3.4.9"
   },
