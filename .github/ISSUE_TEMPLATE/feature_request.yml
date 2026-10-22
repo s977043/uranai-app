@@ -2,6 +2,9 @@ name: Feature request
 description: ユーザー価値と検証条件を明確にした改善案
 title: "[Feature] "
 body:
+  - type: markdown
+    attributes:
+      value: "個人情報・相談全文・秘密情報を投稿しないでください。脆弱性の詳細はSECURITY.mdの非公開報告手順を参照してください。"
   - type: textarea
     id: user-problem
     attributes:
