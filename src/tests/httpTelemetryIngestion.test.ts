@@ -270,5 +270,13 @@ describe("shared runtime activation guard", () => {
     expect(limiter.consume()).toEqual({ allowed: false, retryAfterSeconds: 60 });
     now = Number.NaN;
     expect(limiter.consume()).toEqual({ allowed: false, retryAfterSeconds: 1 });
+
+    const thrownClock = new AnonymousTelemetryRateLimiter(() => {
+      throw new Error("clock unavailable");
+    });
+    expect(thrownClock.consume()).toEqual({ allowed: false, retryAfterSeconds: 1 });
+
+    const unsafeClock = new AnonymousTelemetryRateLimiter(() => Number.MAX_VALUE);
+    expect(unsafeClock.consume()).toEqual({ allowed: false, retryAfterSeconds: 1 });
   });
 });
