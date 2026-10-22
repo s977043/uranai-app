@@ -71,3 +71,10 @@ AI エージェント・人間ともに [`AGENTS.md`](./AGENTS.md) の手順に�
 ユーザー向けプロダクト開発は、MVPではなく **MLP First** を基本形とし、[`docs/product-development.md`](./docs/product-development.md) の `Experience Hypothesis → Vertical Slice → Lovability Review → User Observation → Polish Loop → MLP Release → Retention Validation` に従います。
 AI-Native事業運用の設計は [`docs/ai-native/README.md`](./docs/ai-native/README.md) を参照してください。
 GitHub Copilot 向けの補足は [`.github/copilot-instructions.md`](./.github/copilot-instructions.md) にあります。
+
+## 参加・セキュリティ
+
+- 開発への参加: [CONTRIBUTING.md](./CONTRIBUTING.md)
+- 行動規範: [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)
+- 脆弱性の非公開報告: [SECURITY.md](./SECURITY.md)
+- Issue/PRはGitHubテンプレートを利用してください。機密情報、トークン、相談全文を公開しないでください。
