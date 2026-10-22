@@ -20,12 +20,13 @@ type TelemetryActivation = {
 export function telemetryIngressEnabled(input: TelemetryActivation): boolean {
   if (input.enabled !== "true") return false;
 
-  const sharedRuntime =
-    input.nodeEnv === "production" ||
-    (input.vercelEnv !== undefined && input.vercelEnv !== "development");
+  // Unknown runtimes are shared by default; only explicit local/test can
+  // activate without a separately approved shared ingress.
+  const explicitlyLocal =
+    (input.nodeEnv === "development" || input.nodeEnv === "test") &&
+    (input.vercelEnv === undefined || input.vercelEnv === "development");
 
-  if (sharedRuntime && input.sharedApproved !== "true") return false;
-  return true;
+  return explicitlyLocal || input.sharedApproved === "true";
 }
 
 export type RateLimitDecision =
