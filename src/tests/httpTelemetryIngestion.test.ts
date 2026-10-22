@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { InMemoryTelemetryEvidenceRepository } from "@/adapters/telemetry/evidenceRepository";
+import { AnonymousTelemetryRateLimiter, telemetryIngressEnabled } from "@/adapters/telemetry/ingressControls";
 import {
   handleTelemetryPost,
   readBoundedBody,
@@ -159,6 +160,31 @@ describe("telemetry HTTP ingestion", () => {
     expect(result).toEqual({ ok: false, reason: "body_too_large" });
   });
 
+  it("does not read body or DB if anonymous budget is exhausted", async () => {
+    let now = 5_000;
+    const limiter = new AnonymousTelemetryRateLimiter(() => now, 1);
+    let factoryCalls = 0;
+    const options = {
+      enabled: true,
+      rateLimiter: limiter,
+      repositoryFactory: () => {
+        factoryCalls += 1;
+        return new InMemoryTelemetryEvidenceRepository();
+      },
+    };
+    const first = await handleTelemetryPost(jsonRequest(JSON.stringify(validEvent)), options);
+    const second = await handleTelemetryPost(jsonRequest(JSON.stringify(validEvent)), options);
+    expect(first.status).toBe(202);
+    expect(second.status).toBe(429);
+    expect(second.headers.get("retry-after")).toBe("60");
+    expect(factoryCalls).toBe(1);
+
+    now += 60_000;
+    const third = await handleTelemetryPost(jsonRequest(JSON.stringify(validEvent)), options);
+    expect(third.status).toBe(202);
+    expect(factoryCalls).toBe(2);
+  });
+
   it("contains repository failures behind a generic 503", async () => {
     const response = await handleTelemetryPost(
       jsonRequest(JSON.stringify(validEvent)),
@@ -186,3 +212,36 @@ function jsonRequest(body: string): Request {
     body,
   });
 }
+
+describe("shared runtime activation guard", () => {
+  it.each(["preview", "production", "staging"])("blocks Vercel %s without explicit approval", (vercelEnv) => {
+    expect(telemetryIngressEnabled({
+      enabled: "true", sharedApproved: undefined, nodeEnv: "production", vercelEnv,
+    })).toBe(false);
+  });
+
+  it("blocks production on non-Vercel platforms too", () => {
+    expect(telemetryIngressEnabled({
+      enabled: "true", sharedApproved: undefined, nodeEnv: "production", vercelEnv: undefined,
+    })).toBe(false);
+  });
+
+  it("permits explicit local test and requires exact true", () => {
+    const local = { enabled: "true", nodeEnv: "development", vercelEnv: undefined };
+    expect(telemetryIngressEnabled({ ...local, sharedApproved: undefined })).toBe(true);
+    expect(telemetryIngressEnabled({ ...local, enabled: "TRUE", sharedApproved: "true" })).toBe(false);
+    expect(telemetryIngressEnabled({ ...local, nodeEnv: "production", sharedApproved: "TRUE" })).toBe(false);
+    expect(telemetryIngressEnabled({ ...local, nodeEnv: "production", sharedApproved: "true" })).toBe(true);
+  });
+
+  it("accounts for invalid requests and fails closed on clock anomalies", () => {
+    let now = 0;
+    const limiter = new AnonymousTelemetryRateLimiter(() => now, 1);
+    expect(limiter.consume()).toEqual({ allowed: true });
+    expect(limiter.consume()).toEqual({ allowed: false, retryAfterSeconds: 60 });
+    now = -1;
+    expect(limiter.consume().allowed).toBe(false);
+    now = Number.NaN;
+    expect(limiter.consume()).toEqual({ allowed: false, retryAfterSeconds: 1 });
+  });
+});
