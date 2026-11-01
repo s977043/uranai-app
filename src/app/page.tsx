@@ -169,7 +169,7 @@ export default function Home() {
           <p className="text-xs font-medium uppercase tracking-[0.32em] text-violet-300">Reflection Reading</p>
           <h1 className="text-3xl font-semibold tracking-tight sm:text-5xl">迷いを、やさしく言語化する。</h1>
           <p className="mx-auto max-w-xl text-sm leading-7 text-slate-300 sm:text-base">
-            未来を決めつけるためではなく、今の気持ちを少し整理して、今日できる一歩を見つけるための一枚です。
+            テーマを選び、6種類の内省カードから1枚を見て、今日できる小さな一歩を考えます。未来を予測する鑑定ではありません。
           </p>
         </header>
 
@@ -199,9 +199,9 @@ export default function Home() {
             <div className="mx-auto my-7 flex h-40 w-28 items-center justify-center rounded-[1.4rem] border border-violet-200/30 bg-gradient-to-b from-violet-300/20 to-indigo-950 shadow-[0_0_50px_rgba(167,139,250,0.16)]">
               <span aria-hidden="true" className="text-4xl">✦</span>
             </div>
-            <h2 className="text-2xl font-medium">今のあなたに向けた一枚</h2>
+            <h2 className="text-2xl font-medium">テーマに合わせた内省カード</h2>
             <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-slate-300">
-              正解を当てるのではなく、今の見方を少し広げるために使います。
+              これはタロットカードの抽選ではなく、今の見方を広げるための内省カードです。
             </p>
             <div className="mt-7 flex flex-col items-center gap-3">
               <button
@@ -209,7 +209,7 @@ export default function Home() {
                 onClick={drawCard}
                 className="rounded-full bg-violet-200 px-7 py-3 text-sm font-semibold text-slate-950 transition hover:bg-violet-100 focus:outline-none focus:ring-2 focus:ring-white"
               >
-                一枚ひく
+                内省カードを見る
               </button>
               <button
                 type="button"
