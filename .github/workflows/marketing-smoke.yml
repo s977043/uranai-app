@@ -1,0 +1,55 @@
+name: Static UI smoke
+
+on:
+  pull_request:
+    paths:
+      - 'marketing-static/**'
+      - '.github/workflows/marketing-smoke.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'marketing-static/**'
+      - '.github/workflows/marketing-smoke.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: static-ui-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Prepare isolated QA tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          QA_TOOLS_DIR="$RUNNER_TEMP/uranai-static-tools"
+          mkdir -p "$QA_TOOLS_DIR"
+          printf '{"private":true}\n' > "$QA_TOOLS_DIR/package.json"
+          npm install --prefix "$QA_TOOLS_DIR" --ignore-scripts --no-audit --no-fund --package-lock=false playwright@1.56.1
+          node "$QA_TOOLS_DIR/node_modules/playwright/cli.js" install --with-deps chromium
+          echo "QA_TOOLS_DIR=$QA_TOOLS_DIR" >> "$GITHUB_ENV"
+          echo "QA_OUTPUT_DIR=$RUNNER_TEMP/uranai-static-evidence" >> "$GITHUB_ENV"
+      - name: Validate static contracts
+        run: node --test marketing-static/tests/*.test.mjs
+      - name: Run real Chromium against loopback fixture
+        run: node marketing-static/tests/browser-smoke.mjs
+      - name: Upload evidence without publishing the application
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: static-ui-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/uranai-static-evidence
+          retention-days: 14
+          if-no-files-found: warn
