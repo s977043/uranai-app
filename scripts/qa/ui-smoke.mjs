@@ -53,12 +53,18 @@ try {
       assert.ok(noOverflow, `${label}/${state}: horizontal overflow`);
       await page.screenshot({ path: path.join(output, `${label}-${state}.png`), fullPage: true });
     };
+    const assertTruthfulCardHeading = async () => {
+      await page.getByRole("heading", { name: "気持ちを整理する内省カード", exact: true }).waitFor({ state: "visible" });
+      assert.equal(await page.getByRole("heading", { name: "テーマに合わせた内省カード", exact: true }).count(), 0,
+        "card selection depends on the flow-ID, not the selected theme");
+    };
     await capture("entry");
     const firstTheme = page.getByRole("button", { name: /^今の自分/ });
     await page.keyboard.press("Tab");
     assert.equal(await firstTheme.evaluate(node => node === document.activeElement), true, "first action reachable by keyboard");
     await page.keyboard.press("Enter");
     assert.ok((await page.locator("main").innerText()).includes("タロットカードの抽選ではなく"));
+    await assertTruthfulCardHeading();
     await capture("before-card");
     await page.getByRole("button", { name: "内省カードを見る", exact: true }).click();
     await page.getByText("今日の一歩", { exact: true }).waitFor({ state: "visible" });
@@ -70,6 +76,7 @@ try {
     await page.getByRole("button", { name: "別のテーマで、もう一度", exact: true }).click();
     for (const theme of [/^仕事/, /^人間関係/]) {
       await page.getByRole("button", { name: theme }).click();
+      await assertTruthfulCardHeading();
       await page.getByRole("button", { name: "内省カードを見る", exact: true }).click();
       await page.getByText("今日の一歩", { exact: true }).waitFor({ state: "visible" });
       await page.getByRole("button", { name: "別のテーマで、もう一度", exact: true }).click();
@@ -79,7 +86,7 @@ try {
     assert.deepEqual(telemetryRequests, [], `${label}: central telemetry must remain disconnected`);
     assert.deepEqual(await context.cookies(), [], "no tracking cookie");
     assert.equal(await page.evaluate(() => localStorage.length), 0, "no cross-session persistence");
-    receipts.push({ viewport, states: ["entry", "keyboard-start", "before-card", "result", "feedback", "reset", "work", "relationship"], errors, externalRequests: unexpectedRequests.length, centralTelemetryRequests: telemetryRequests.length });
+    receipts.push({ viewport, states: ["entry", "keyboard-start", "before-card", "result", "feedback", "reset", "work", "relationship"], truthfulCardHeading: true, errors, externalRequests: unexpectedRequests.length, centralTelemetryRequests: telemetryRequests.length });
     await context.close();
   }
   await writeFile(path.join(output, "receipt.json"), JSON.stringify({ sha, browser: await browser.version(), baseURL, checks: receipts, scope: "Synthetic browser QA only; not user research, cloud deployment, CSP certification or production approval" }, null, 2) + "\n");
