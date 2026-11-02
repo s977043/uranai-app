@@ -199,7 +199,7 @@ export default function Home() {
             <div className="mx-auto my-7 flex h-40 w-28 items-center justify-center rounded-[1.4rem] border border-violet-200/30 bg-gradient-to-b from-violet-300/20 to-indigo-950 shadow-[0_0_50px_rgba(167,139,250,0.16)]">
               <span aria-hidden="true" className="text-4xl">✦</span>
             </div>
-            <h2 className="text-2xl font-medium">テーマに合わせた内省カード</h2>
+            <h2 className="text-2xl font-medium">気持ちを整理する内省カード</h2>
             <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-slate-300">
               これはタロットカードの抽選ではなく、今の見方を広げるための内省カードです。
             </p>
