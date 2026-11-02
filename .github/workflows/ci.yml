@@ -41,6 +41,9 @@ jobs:
       - name: Test
         run: npm run test
 
+      - name: Marketing static contract
+        run: npm run test:marketing
+
       - name: PostgreSQL integration
         run: npm run test:integration
         env:
