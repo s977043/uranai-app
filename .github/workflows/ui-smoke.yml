@@ -33,8 +33,6 @@ jobs:
       TELEMETRY_INGESTION_ENABLED: 'false'
       TELEMETRY_SHARED_INGRESS_APPROVED: 'false'
       QA_BASE_URL: http://127.0.0.1:3000
-      QA_TOOLS_DIR: ${{ runner.temp }}/uranai-ui-tools
-      QA_OUTPUT_DIR: ${{ runner.temp }}/uranai-ui-evidence
     steps:
       - uses: actions/checkout@v4
         with:
@@ -44,6 +42,11 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+      - name: Initialize isolated QA paths
+        shell: bash
+        run: |
+          echo "QA_TOOLS_DIR=$RUNNER_TEMP/uranai-ui-tools" >> "$GITHUB_ENV"
+          echo "QA_OUTPUT_DIR=$RUNNER_TEMP/uranai-ui-evidence" >> "$GITHUB_ENV"
       - run: npm ci
       - run: npm run build
       - name: Install isolated pinned QA tool
