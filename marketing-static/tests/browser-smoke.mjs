@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { createServer } from "node:http";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { samples } from "../public/app.mjs";
 
@@ -11,36 +13,59 @@ const { chromium } = createRequire(path.join(process.env.QA_TOOLS_DIR, "package.
 const output = process.env.QA_OUTPUT_DIR;
 assert.ok(output, "screenshot destination is required");
 await mkdir(output, { recursive: true });
+const receiptPath = path.join(output, "receipt.json");
+await rm(receiptPath, { force: true });
+const repoRoot = fileURLToPath(new URL("../../", import.meta.url));
 const root = new URL("../public/", import.meta.url);
+const sha = execFileSync("git", ["-C", repoRoot, "rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+const dirty = execFileSync("git", ["-C", repoRoot, "status", "--porcelain", "--", "marketing-static", ".github/workflows/marketing-smoke.yml"], { encoding: "utf8" }).trim();
+assert.equal(dirty, "", "QA evidence must be generated from committed, unchanged source");
+const sourceHashes = {};
+for (const name of ["index.html", "app.mjs", "styles.css", "robots.txt", "_headers"]) {
+  sourceHashes[name] = createHash("sha256").update(await readFile(new URL(name, root))).digest("hex");
+}
 const files = new Map([
   ["/", ["index.html", "text/html; charset=utf-8"]],
   ["/app.mjs", ["app.mjs", "text/javascript; charset=utf-8"]],
   ["/styles.css", ["styles.css", "text/css; charset=utf-8"]],
   ["/robots.txt", ["robots.txt", "text/plain; charset=utf-8"]],
 ]);
-// Interpret this simple static header fixture locally. This is NOT a Cloudflare emulator.
+// This fixture intentionally supports one global block only; it is NOT a Cloudflare emulator.
+const lines = (await readFile(new URL("_headers", root), "utf8")).split("\n");
+assert.equal(lines[0].trim(), "/*", "unsupported header fixture: expected one global rule");
 const headers = {};
-for (const line of (await readFile(new URL("_headers", root), "utf8")).split("\n").slice(1)) {
+for (const line of lines.slice(1)) {
+  if (!line.trim()) continue;
   const match = line.match(/^\s+([^:]+):\s*(.+)$/);
-  if (match) headers[match[1].trim()] = match[2].trim();
+  assert.ok(match, "unsupported header fixture: review new routes explicitly");
+  const name = match[1].trim().toLowerCase();
+  assert.equal(Object.hasOwn(headers, name), false, `duplicate header ${name}`);
+  headers[name] = match[2].trim();
 }
 const server = createServer(async (request, response) => {
   try {
-    const item = files.get(new URL(request.url, "http://127.0.0.1").pathname);
-    if (!item) { response.writeHead(404, headers); response.end("Not found"); return; }
+    const url = new URL(request.url, "http://127.0.0.1");
+    const item = files.get(url.pathname);
+    if (request.method !== "GET" || url.search || !item) {
+      response.writeHead(404, headers); response.end("Not found"); return;
+    }
     const bytes = await readFile(new URL(item[0], root));
-    response.writeHead(200, { ...headers, "Content-Type": item[1] });
+    response.writeHead(200, { ...headers, "content-type": item[1] });
     response.end(bytes);
   } catch {
     response.writeHead(500); response.end("QA fixture unavailable");
   }
 });
-await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
-const baseURL = `http://127.0.0.1:${server.address().port}`;
-const sha = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
-const browser = await chromium.launch();
+let browser;
 const results = [];
+const scope = "Loopback fixture and real Chromium; not Cloudflare deployed headers, authentication, user observation or publication approval";
 try {
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", resolve);
+  });
+  const baseURL = `http://127.0.0.1:${server.address().port}`;
+  browser = await chromium.launch();
   for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }]) {
     const context = await browser.newContext({ viewport, locale: "ja-JP", reducedMotion: "reduce", serviceWorkers: "block" });
     const errors = [];
@@ -92,9 +117,18 @@ try {
   await fallback.goto(baseURL);
   assert.ok(await fallback.locator("noscript").isVisible());
   await noJS.close();
-  await writeFile(path.join(output, "receipt.json"), JSON.stringify({ sha, browser: await browser.version(), results, noJS: true, scope: "Loopback fixture and real Chromium; not Cloudflare deployed headers, authentication, user observation or publication approval" }, null, 2) + "\n");
+  await writeFile(receiptPath, JSON.stringify({ status: "passed", sha, sourceHashes, browser: await browser.version(), results, noJS: true, scope }, null, 2) + "\n");
   console.log(`Static browser QA passed for ${sha}`);
+} catch (error) {
+  await writeFile(receiptPath, JSON.stringify({ status: "failed", sha, sourceHashes, results, error: error.message, scope }, null, 2) + "\n");
+  throw error;
 } finally {
-  await browser.close();
-  await new Promise(resolve => server.close(resolve));
+  try {
+    if (browser) await browser.close();
+  } finally {
+    if (server.listening) {
+      server.closeAllConnections();
+      await new Promise(resolve => server.close(resolve));
+    }
+  }
 }
