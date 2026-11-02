@@ -5,11 +5,13 @@ on:
     paths:
       - 'marketing-static/**'
       - '.github/workflows/marketing-smoke.yml'
+      - '.nvmrc'
   push:
     branches: [main]
     paths:
       - 'marketing-static/**'
       - '.github/workflows/marketing-smoke.yml'
+      - '.nvmrc'
 
 permissions:
   contents: read
@@ -23,11 +25,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
       - name: Prepare isolated QA tools
@@ -52,4 +54,4 @@ jobs:
           name: static-ui-evidence-${{ github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/uranai-static-evidence
           retention-days: 14
-          if-no-files-found: warn
+          if-no-files-found: error
