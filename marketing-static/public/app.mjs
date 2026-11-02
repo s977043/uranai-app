@@ -18,6 +18,7 @@ export const samples = Object.freeze({
 });
 
 export function getSample(theme) {
+  if (typeof theme !== "string") return null;
   return Object.hasOwn(samples, theme) ? samples[theme] : null;
 }
 
