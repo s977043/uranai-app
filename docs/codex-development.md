@@ -66,9 +66,10 @@ Playwright 1.56.1はアプリ依存を変えず別ディレクトリに導入し
 そのcheckoutが存在するとは限りません。アプリ用saved environmentを設定する場合は
 `s977043/uranai-app` を対象にし、Node 22・npm 11.12.1を選択、setupに
 `bash scripts/setup-dev.sh` を指定します。設定画面自体の変更は未実施です。
-環境からこのスクリプトを取得するには、ローカル変更を別途pushする必要があります。
-pushとドラフトPR作成は追加のユーザー承認に基づき実施します。
-merge・公開・有料API実行はこの整備には含みません。
+環境整備はPR #64で管理しています。マージ後は `main` をcheckoutして利用します。
+レビュー中は `codex/development-environment` を選択してください。
+リポジトリへのpush・PR更新・mergeは、ユーザーの指示と検証・レビュー・保護ルールに従います。
+保存済み環境への設定保存、公開、有料API実行は別の操作です。
 
 ## LP改善用の保存済み環境に入力する値
 
@@ -78,7 +79,7 @@ Next.jsの `/` は別のアプリ画面です。LPの訴求やデザインは今
 | 設定欄 | 値 |
 | --- | --- |
 | Repository | `s977043/uranai-app` |
-| Branch（PRのレビュー中） | `codex/development-environment` |
+| Branch | `main`（PR #64マージ前は `codex/development-environment`） |
 | Runtime | Node 22、npm 11.12.1、Bash、Chromium対応Linux |
 | Setup（checkoutルートで実行） | `bash scripts/setup-lp.sh` |
 | 検証 | `npm run verify` と `npm run test:lp:browser` |
@@ -111,7 +112,7 @@ ChromiumのOSライブラリが不足する別イメージでは、管理者側�
 別途 `npm run build` とDB結合検証は前述の手順を使います。
 
 保存済み環境の編集UI・更新APIは本セッションから利用できません。
-この設定表とリポジトリへのpushは用意しますが、saved environment自体への保存は未実施です。
+リポジトリ側の準備やPRのマージとは別に、saved environment自体への保存は未実施です。
 スマホのブラウザから127.0.0.1へ直接接続はできません。ホストに認証付きpreview機能が
 ある場合はその既存機能を使用し、無ければブラウザQAの画像を確認してください。
 公開トンネル・Cloudflareデプロイ・新しい公開URLは作成しません。
