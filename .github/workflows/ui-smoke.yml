@@ -1,0 +1,78 @@
+name: UI smoke
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/qa/**'
+      - '.github/workflows/ui-smoke.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/qa/**'
+      - '.github/workflows/ui-smoke.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ui-smoke-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      TELEMETRY_INGESTION_ENABLED: 'false'
+      TELEMETRY_SHARED_INGRESS_APPROVED: 'false'
+      QA_BASE_URL: http://127.0.0.1:3000
+      QA_TOOLS_DIR: ${{ runner.temp }}/uranai-ui-tools
+      QA_OUTPUT_DIR: ${{ runner.temp }}/uranai-ui-evidence
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Install isolated pinned QA tool
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$QA_TOOLS_DIR"
+          printf '{"private":true}\n' > "$QA_TOOLS_DIR/package.json"
+          npm install --prefix "$QA_TOOLS_DIR" --ignore-scripts --no-audit --no-fund --package-lock=false playwright@1.56.1
+          node "$QA_TOOLS_DIR/node_modules/playwright/cli.js" install --with-deps chromium
+      - name: Exercise built application on loopback
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run start -- --hostname 127.0.0.1 > "$RUNNER_TEMP/uranai-next.log" 2>&1 &
+          APP_PID=$!
+          trap 'kill "$APP_PID" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 60); do
+            if curl --silent --fail "$QA_BASE_URL" > /dev/null; then break; fi
+            kill -0 "$APP_PID"
+            sleep 1
+          done
+          curl --silent --fail "$QA_BASE_URL" > /dev/null
+          node scripts/qa/ui-smoke.mjs
+      - name: Preserve screenshots and exact source receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/uranai-ui-evidence
+          if-no-files-found: warn
+          retention-days: 14
