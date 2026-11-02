@@ -6,12 +6,18 @@ on:
       - 'marketing-static/**'
       - '.github/workflows/marketing-smoke.yml'
       - '.nvmrc'
+      - 'scripts/setup-lp.sh'
+      - 'scripts/check-lp.sh'
+      - 'package.json'
   push:
     branches: [main]
     paths:
       - 'marketing-static/**'
       - '.github/workflows/marketing-smoke.yml'
       - '.nvmrc'
+      - 'scripts/setup-lp.sh'
+      - 'scripts/check-lp.sh'
+      - 'package.json'
 
 permissions:
   contents: read

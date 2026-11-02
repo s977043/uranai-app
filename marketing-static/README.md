@@ -38,6 +38,20 @@ uranai-ai-ops  -> existing business, safety, model and sales gates unchanged
 
 ## Reproducible validation
 
+Local editing: run `bash scripts/setup-lp.sh` from the repository root with Node 22
+and npm 11.12.1, then `npm run dev:lp`. Open `http://127.0.0.1:4173`, edit
+`marketing-static/public/{index.html,styles.css,app.mjs}`, and reload the browser.
+The server reads assets on every request and disables caching; restart after editing `_headers`.
+It serves an explicit public-file allowlist on loopback, never the repository root.
+Use `LP_PORT=4174 npm run dev:lp` if the default port is occupied.
+
+`npm run test:lp:browser` runs the pinned browser QA, saves screenshots and a receipt
+in `.codex-local/lp-evidence/`, and stops its own ephemeral server. Commit LP/QA source
+changes locally first: the evidence runner deliberately rejects uncommitted source.
+It checks both page-top links and all three theme CTAs at desktop/mobile sizes.
+No signup, purchase or external CTA exists in this source. See
+[`../docs/codex-development.md`](../docs/codex-development.md) for saved-environment settings.
+
 ```bash
 node --test marketing-static/tests/*.test.mjs
 npm run verify

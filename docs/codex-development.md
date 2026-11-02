@@ -67,4 +67,51 @@ Playwright 1.56.1はアプリ依存を変えず別ディレクトリに導入し
 `s977043/uranai-app` を対象にし、Node 22・npm 11.12.1を選択、setupに
 `bash scripts/setup-dev.sh` を指定します。設定画面自体の変更は未実施です。
 環境からこのスクリプトを取得するには、ローカル変更を別途pushする必要があります。
-push・PR作成・merge・公開・有料API実行はこの整備には含みません。
+pushとドラフトPR作成は追加のユーザー承認に基づき実施します。
+merge・公開・有料API実行はこの整備には含みません。
+
+## LP改善用の保存済み環境に入力する値
+
+LPの正本はこのリポジトリの `marketing-static/public/` です。
+Next.jsの `/` は別のアプリ画面です。LPの訴求やデザインは今回変更していません。
+
+| 設定欄 | 値 |
+| --- | --- |
+| Repository | `s977043/uranai-app` |
+| Branch（PRのレビュー中） | `codex/development-environment` |
+| Runtime | Node 22、npm 11.12.1、Bash、Chromium対応Linux |
+| Setup（checkoutルートで実行） | `bash scripts/setup-lp.sh` |
+| 検証 | `npm run verify` と `npm run test:lp:browser` |
+| Preview | `npm run dev:lp` |
+| Preview URL | `http://127.0.0.1:4173` |
+| 編集対象 | `marketing-static/public/index.html`、`styles.css`、`app.mjs` |
+| Screenshot / receipt | `.codex-local/lp-evidence/`（Git対象外） |
+
+Node/npmをイメージで指定できない環境では、setup欄に次を入力します。
+checkoutのディレクトリを作業ディレクトリとする設定が前提です。
+
+```bash
+set -euo pipefail
+export npm_config_cache=/workspace/.cache/uranai-npm
+npm install --prefix /workspace/.tools/uranai-node --no-save --package-lock=false \
+  --no-audit --no-fund node@22.23.4 npm@11.12.1
+export PATH=/workspace/.tools/uranai-node/node_modules/.bin:$PATH
+bash scripts/setup-lp.sh
+```
+
+setupのPATH設定が次のシェルに引き継がれない環境では、作業開始時にも上記の
+`export PATH=...` を実行してください。基本のソース編集・previewはブラウザ依存不要です。
+ChromiumのOSライブラリが不足する別イメージでは、管理者側でPlaywright対応イメージを
+選択する必要があります。今回の環境では追加OSインストールなしで動作しました。
+
+プレビューは編集後にブラウザを再読込します。PC 1440×1000 / スマホ390×844で
+テーマCTA3つ、上部・下部リンク、はみ出し、JavaScript無効時表示を自動検証します。
+証跡生成前にはLP/QAの変更をローカルcommitしてください。テストが使うserverは
+自動起動・終了し、preview serverを別に立ち上げておく必要はありません。
+別途 `npm run build` とDB結合検証は前述の手順を使います。
+
+保存済み環境の編集UI・更新APIは本セッションから利用できません。
+この設定表とリポジトリへのpushは用意しますが、saved environment自体への保存は未実施です。
+スマホのブラウザから127.0.0.1へ直接接続はできません。ホストに認証付きpreview機能が
+ある場合はその既存機能を使用し、無ければブラウザQAの画像を確認してください。
+公開トンネル・Cloudflareデプロイ・新しい公開URLは作成しません。

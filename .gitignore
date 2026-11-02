@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/.codex-local/
 /.pnp
 .pnp.*
 .yarn/*

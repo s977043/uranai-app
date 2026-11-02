@@ -97,6 +97,16 @@ try {
       await page.screenshot({ path: path.join(output, `${viewport.width}-${state}.png`), fullPage: true });
     };
     await capture("entry");
+    const links = await page.locator("a[href]").evaluateAll(nodes => nodes.map(node => node.getAttribute("href")));
+    assert.ok(links.length > 0);
+    for (const href of links) {
+      assert.match(href, /^#[A-Za-z][\w-]*$/, "LP navigation must stay within this page");
+      assert.equal(await page.locator(href).count(), 1, `Missing link destination ${href}`);
+    }
+    for (const link of await page.locator("a[href]").all()) {
+      await link.click();
+      assert.equal(new URL(page.url()).hash, await link.getAttribute("href"));
+    }
     for (const [theme, expected] of Object.entries(samples)) {
       const button = page.locator(`button[data-theme="${theme}"]`);
       await button.focus();
@@ -112,7 +122,7 @@ try {
     assert.deepEqual(unexpectedRequests, []);
     assert.deepEqual(await context.cookies(), []);
     assert.deepEqual(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length })), { local: 0, session: 0 });
-    results.push({ viewport, themes: Object.keys(samples), exactText: true, keyboard: true, errors, unexpectedRequests, storageEntries: 0 });
+    results.push({ viewport, themes: Object.keys(samples), links, exactText: true, keyboard: true, errors, unexpectedRequests, storageEntries: 0 });
     await context.close();
   }
   const noJS = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 844 }, locale: "ja-JP", serviceWorkers: "block" });

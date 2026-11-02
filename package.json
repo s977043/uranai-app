@@ -7,6 +7,8 @@
   },
   "packageManager": "npm@11.12.1",
   "scripts": {
+    "dev:lp": "node marketing-static/dev-server.mjs",
+    "test:lp:browser": "bash scripts/check-lp.sh",
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
