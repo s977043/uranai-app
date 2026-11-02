@@ -11,6 +11,9 @@
 
 ## セットアップ（初回）
 
+Codex環境では [Codex開発手順](docs/codex-development.md) のバージョン確認と
+`bash scripts/setup-dev.sh` を利用できます。外部サービス不要のローカル設定を作成します。
+
 ```bash
 nvm use              # .nvmrc の Node に切り替え
 npm ci               # ロックファイルどおりに依存を導入
