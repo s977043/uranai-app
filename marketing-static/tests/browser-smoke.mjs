@@ -4,6 +4,7 @@ import { createServer } from "node:http";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
+import { samples } from "../public/app.mjs";
 
 assert.ok(process.env.QA_TOOLS_DIR, "pinned QA tool directory is required");
 const { chromium } = createRequire(path.join(process.env.QA_TOOLS_DIR, "package.json"))("playwright");
@@ -43,10 +44,14 @@ try {
   for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }]) {
     const context = await browser.newContext({ viewport, locale: "ja-JP", reducedMotion: "reduce", serviceWorkers: "block" });
     const errors = [];
-    const externalRequests = [];
+    const unexpectedRequests = [];
     await context.route("**/*", async route => {
-      if (new URL(route.request().url()).origin !== baseURL) { externalRequests.push(route.request().url()); await route.abort(); }
-      else await route.continue();
+      const request = route.request();
+      const url = new URL(request.url());
+      if (url.origin !== baseURL || !files.has(url.pathname) || url.search || request.method() !== "GET") {
+        unexpectedRequests.push({ method: request.method(), url: url.href });
+        await route.abort();
+      } else await route.continue();
     });
     const page = await context.newPage();
     page.on("pageerror", error => errors.push(error.message));
@@ -56,26 +61,30 @@ try {
     assert.equal(response.status(), 200);
     assert.match(await page.title(), /内省カード/);
     assert.match(response.headers()["content-security-policy"], /connect-src 'none'/);
+    assert.match(response.headers()["x-robots-tag"], /noindex/);
+    assert.equal(await page.locator('button[data-theme]').count(), 3);
+    assert.equal(await page.locator('button[aria-pressed="true"]').count(), 0);
     const capture = async state => {
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       await page.screenshot({ path: path.join(output, `${viewport.width}-${state}.png`), fullPage: true });
     };
     await capture("entry");
-    for (const theme of ["self", "work", "relations"]) {
+    for (const [theme, expected] of Object.entries(samples)) {
       const button = page.locator(`button[data-theme="${theme}"]`);
       await button.focus();
       await page.keyboard.press("Enter");
       assert.equal(await button.getAttribute("aria-pressed"), "true");
       assert.equal(await page.locator('button[aria-pressed="true"]').count(), 1);
-      assert.ok((await page.locator("#sample-question").innerText()).length > 10);
-      assert.match(await page.locator("#sample-action").innerText(), /今日できる一歩/);
+      assert.equal(await page.locator("#sample-label").innerText(), expected.label);
+      assert.equal(await page.locator("#sample-question").innerText(), expected.question);
+      assert.equal(await page.locator("#sample-action").innerText(), expected.action);
       await capture(theme);
     }
     assert.deepEqual(errors, []);
-    assert.deepEqual(externalRequests, []);
+    assert.deepEqual(unexpectedRequests, []);
     assert.deepEqual(await context.cookies(), []);
     assert.deepEqual(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length })), { local: 0, session: 0 });
-    results.push({ viewport, themes: ["self", "work", "relations"], keyboard: true, errors, externalRequests, storageEntries: 0 });
+    results.push({ viewport, themes: Object.keys(samples), exactText: true, keyboard: true, errors, unexpectedRequests, storageEntries: 0 });
     await context.close();
   }
   const noJS = await browser.newContext({ javaScriptEnabled: false });
