@@ -31,8 +31,9 @@ npm run dev          # http://localhost:3000
 | `npm run typecheck` | `tsc --noEmit` による型検査 |
 | `npm run test` | Vitest（1回実行） |
 | `npm run test:watch` | Vitest ウォッチ |
+| `npm run test:marketing` | 独立した静的体験のNode契約テスト |
 | `npm run eval:contracts` | AI-Native regression fixture の構造・必須contractを検証 |
-| `npm run verify` | lint → typecheck → test → AI eval contract validation をまとめて実行（PR 前必須） |
+| `npm run verify` | lint → typecheck → test → 静的体験テスト → AI eval contract validation（PR 前必須） |
 
 `eval:contracts` はモデル出力品質そのものを採点するものではありません。`ai/evals/` のfixture構造や必須のSafety/Evidence期待値を機械検証し、意味品質は `ai/evals/review-rubric.md` に基づくレビューで確認します。
 
@@ -78,3 +79,7 @@ GitHub Copilot 向けの補足は [`.github/copilot-instructions.md`](./.github/
 - 行動規範: [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)
 - 脆弱性の非公開報告: [SECURITY.md](./SECURITY.md)
 - Issue/PRはGitHubテンプレートを利用してください。機密情報、トークン、相談全文を公開しないでください。
+
+## 独立した静的体験（未公開）
+
+[marketing-static/README.md](./marketing-static/README.md) は固定の内省サンプルです。個別AI鑑定やタロット抽選ではなく、入力・送信・保存・課金を行いません。Next.jsアプリとPostgreSQLの設計は変更しません。ソースのマージはCloudflareへの公開承認ではありません。
