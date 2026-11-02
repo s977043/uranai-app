@@ -66,10 +66,7 @@ try {
   });
   const baseURL = `http://127.0.0.1:${server.address().port}`;
   browser = await chromium.launch();
-  for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }]) {
-    const context = await browser.newContext({ viewport, locale: "ja-JP", reducedMotion: "reduce", serviceWorkers: "block" });
-    const errors = [];
-    const unexpectedRequests = [];
+  const enforceRequestBoundary = async (context, unexpectedRequests) => {
     await context.route("**/*", async route => {
       const request = route.request();
       const url = new URL(request.url());
@@ -78,6 +75,12 @@ try {
         await route.abort();
       } else await route.continue();
     });
+  };
+  for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }]) {
+    const context = await browser.newContext({ viewport, locale: "ja-JP", reducedMotion: "reduce", serviceWorkers: "block" });
+    const errors = [];
+    const unexpectedRequests = [];
+    await enforceRequestBoundary(context, unexpectedRequests);
     const page = await context.newPage();
     page.on("pageerror", error => errors.push(error.message));
     page.on("console", message => { if (message.type() === "error") errors.push(message.text()); });
@@ -112,12 +115,24 @@ try {
     results.push({ viewport, themes: Object.keys(samples), exactText: true, keyboard: true, errors, unexpectedRequests, storageEntries: 0 });
     await context.close();
   }
-  const noJS = await browser.newContext({ javaScriptEnabled: false });
+  const noJS = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 844 }, locale: "ja-JP", serviceWorkers: "block" });
+  const noJSUnexpectedRequests = [];
+  const noJSErrors = [];
+  await enforceRequestBoundary(noJS, noJSUnexpectedRequests);
   const fallback = await noJS.newPage();
-  await fallback.goto(baseURL);
+  fallback.on("pageerror", error => noJSErrors.push(error.message));
+  fallback.on("console", message => { if (message.type() === "error") noJSErrors.push(message.text()); });
+  const fallbackResponse = await fallback.goto(baseURL, { waitUntil: "networkidle" });
+  assert.equal(fallbackResponse.status(), 200);
+  assert.match(await fallback.title(), /内省カード/);
   assert.ok(await fallback.locator("noscript").isVisible());
+  assert.equal(await fallback.locator('button[aria-pressed="true"]').count(), 0);
+  assert.deepEqual(await noJS.cookies(), []);
+  await fallback.screenshot({ path: path.join(output, "390-no-js.png"), fullPage: true });
+  assert.deepEqual(noJSUnexpectedRequests, []);
+  assert.deepEqual(noJSErrors, []);
   await noJS.close();
-  await writeFile(receiptPath, JSON.stringify({ status: "passed", sha, sourceHashes, browser: await browser.version(), results, noJS: true, scope }, null, 2) + "\n");
+  await writeFile(receiptPath, JSON.stringify({ status: "passed", sha, sourceHashes, browser: await browser.version(), results, noJS: true, noJSPrivacy: { errors: noJSErrors, unexpectedRequests: noJSUnexpectedRequests, cookies: 0 }, scope }, null, 2) + "\n");
   console.log(`Static browser QA passed for ${sha}`);
 } catch (error) {
   await writeFile(receiptPath, JSON.stringify({ status: "failed", sha, sourceHashes, results, error: error.message, scope }, null, 2) + "\n");
