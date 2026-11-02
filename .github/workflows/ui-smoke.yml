@@ -71,6 +71,7 @@ jobs:
           done
           curl --silent --fail "$QA_BASE_URL" > /dev/null
           node scripts/qa/ui-smoke.mjs
+          node scripts/qa/storage-failure.mjs
       - name: Preserve screenshots and exact source receipt
         if: always()
         uses: actions/upload-artifact@v4
