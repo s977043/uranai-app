@@ -24,7 +24,7 @@
   "dependencies": {
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "next": "15.5.25",
+    "next": "15.5.28",
     "postgres": "3.4.9"
   },
   "devDependencies": {
@@ -35,12 +35,12 @@
     "@tailwindcss/postcss": "^4",
     "tailwindcss": "^4",
     "eslint": "^9",
-    "eslint-config-next": "15.5.25",
+    "eslint-config-next": "15.5.28",
     "@eslint/eslintrc": "^3",
     "vitest": "^3"
   },
   "overrides": {
     "postcss": "^8.5.28",
-    "sharp": "^0.35.4"
+    "sharp": "^0.35.5"
   }
 }
