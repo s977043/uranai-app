@@ -55,7 +55,7 @@ jobs:
         run: node marketing-static/tests/browser-smoke.mjs
       - name: Upload evidence without publishing the application
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: static-ui-evidence-${{ github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/uranai-static-evidence
